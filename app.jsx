@@ -633,7 +633,7 @@ function GeorgesPizza() {
             <img 
               src="logo.png" 
               alt="George's Pizza" 
-              style={{ height: 70, width: 'auto' }} 
+              style={{ height: 110, width: 'auto', maxWidth: 180 }} 
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>

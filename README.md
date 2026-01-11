@@ -2,11 +2,11 @@
 
 **201 W. Girard Ave, Philadelphia, PA | Est. 1984**
 
-Online ordering system for George's Pizza. Built with React.
+Online ordering system for George's Pizza.
 
 ## 🚀 Live Site
 
-Visit: [your-username.github.io/georges-pizza](https://your-username.github.io/georges-pizza)
+Visit: https://deme-collab.github.io/georges-pizza/
 
 ## Features
 
@@ -14,16 +14,8 @@ Visit: [your-username.github.io/georges-pizza](https://your-username.github.io/g
 - ✅ Pizza customization (size, toppings, cooking preference)
 - ✅ Cheesesteaks, hoagies, wings, and more
 - ✅ Lunch specials (M-F 11am-2pm)
-- ✅ Family deals
 - ✅ Cart with tax calculation (8% Philadelphia)
-- ✅ Delivery zone validation
-- ✅ Coupon codes
 - ✅ Mobile-friendly / iPad optimized
-
-## Coupon Codes (for testing)
-
-- `WELCOME10` - 10% off first order
-- `FREEDELIVERY` - Free delivery
 
 ## Hours
 
