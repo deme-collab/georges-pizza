@@ -3975,7 +3975,10 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     }
   };
 
-  const handleCheckout = () => {
+  // Backend API URL - Change this to your Railway URL after deployment
+  const API_URL = 'georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
+  
+  const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
     if (!phone) return alert('Please enter your phone number');
     if (!email) return alert('Please enter your email');
@@ -3993,16 +3996,79 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     }
     
     setProcessing(true);
-    setTimeout(() => {
-      const deliveryInfo = orderType === 'delivery' 
-        ? `\n\nDelivery to:\n${customerName}\n${deliveryAddress.street}${deliveryAddress.apt ? `, ${deliveryAddress.apt}` : ''}\n${deliveryAddress.city}, PA ${deliveryAddress.zip}\n${phone}`
-        : '';
-      const scheduleInfo = scheduleType === 'scheduled'
-        ? `\n\nScheduled for: ${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
-        : `\nEstimated ${orderType}: ${estimate}`;
-      alert(`Order placed!\n\nName: ${customerName}\nReceipt sent to: ${email}${scheduleInfo}${deliveryInfo}`);
+    
+    // Build order data
+    const orderData = {
+      items: cart.map(item => ({
+        name: item.name,
+        price: item.price,
+        mods: item.mods || [],
+      })),
+      customerName: customerName.trim(),
+      customerEmail: email.trim(),
+      phone: phone.trim(),
+      orderType,
+      deliveryAddress: orderType === 'delivery' ? {
+        street: deliveryAddress.street,
+        apt: deliveryAddress.apt,
+        city: deliveryAddress.city || 'Philadelphia',
+        zip: deliveryAddress.zip,
+      } : null,
+      subtotal,
+      discount,
+      couponCode: couponApplied?.code || null,
+      deliveryFee: orderType === 'delivery' ? deliveryFeeAfterDiscount : 0,
+      tax,
+      tip: orderType === 'delivery' ? driverTip : 0,
+      total: finalTotal,
+      specialInstructions: specialInstructions.trim() || null,
+      scheduledTime: scheduleType === 'scheduled' 
+        ? `${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
+        : null,
+    };
+    
+    try {
+      const response = await fetch(`${API_URL}/api/place-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Success! Show confirmation
+        const scheduleInfo = scheduleType === 'scheduled'
+          ? `\n\nScheduled for: ${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
+          : `\nEstimated ${orderType}: ${estimate}`;
+        
+        alert(`🎉 Order #${result.orderNumber} Confirmed!\n\nA confirmation email has been sent to ${email}.${scheduleInfo}\n\n${result.testMode ? '(TEST MODE - No payment charged)' : 'Thank you for your payment!'}`);
+        
+        // Clear cart and go back to menu
+        setCart([]);
+        setCurrentView('home');
+        setSelectedCategory(null);
+        setCouponApplied(null);
+        setCouponCode('');
+        setSpecialInstructions('');
+        setDriverTip(0);
+        setCustomerName('');
+        setCustomerEmail('');
+        setPhone('');
+        setDeliveryAddress({ street: '', apt: '', city: 'Philadelphia', zip: '' });
+        
+      } else {
+        alert('Error placing order: ' + (result.error || 'Unknown error'));
+      }
+      
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Error connecting to server. Please try again or call us at (215) 236-6035.');
+    } finally {
       setProcessing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -4605,10 +4671,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum} 
         style={{ width: '100%', marginTop: 16, padding: 14, fontSize: 16 }}
       >
-        {processing ? 'Processing...' : `Pay $${finalTotal.toFixed(2)} with Card`}
+        {processing ? 'Processing...' : `🧪 Place Test Order ($${finalTotal.toFixed(2)})`}
       </button>
 
-      <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#666' }}>🔒 Secure payment powered by Stripe</div>
+      <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#666' }}>
+        🧪 TEST MODE - No payment will be charged
+      </div>
 
       {/* Alternative Delivery Partners - Always visible at bottom */}
       <div style={{ marginTop: 20, padding: 16, background: '#F5F5F5', border: '1px solid #ddd', textAlign: 'center' }}>
