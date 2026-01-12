@@ -8,27 +8,22 @@
     <meta name="keywords" content="George's Pizza, Philadelphia pizza, cheesesteaks, hoagies, Girard Ave, delivery, pickup">
     <meta name="theme-color" content="#C41E3A">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
     
-    <!-- iOS Web App -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="George's Pizza">
     
-    <!-- Open Graph for social sharing -->
     <meta property="og:title" content="George's Pizza - Order Online">
     <meta property="og:description" content="Philadelphia's favorite pizza since 1984. Order online for pickup or delivery.">
     <meta property="og:image" content="logo.png">
     <meta property="og:type" content="website">
     
-    <!-- React -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -43,7 +38,6 @@
         }
         #root { min-height: 100vh; }
         
-        /* Loading screen */
         .loading {
             display: flex;
             align-items: center;
@@ -53,8 +47,8 @@
             background: white;
         }
         .loading img {
-            width: 280px;
-            max-width: 80%;
+            width: 90%;
+            max-width: 500px;
             margin-bottom: 24px;
             animation: pulse 1.5s infinite;
         }
@@ -80,7 +74,6 @@
     
     <script type="text/babel" src="app.jsx"></script>
     <script type="text/babel">
-        // Render the app after script loads
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(GeorgesPizza));
     </script>
