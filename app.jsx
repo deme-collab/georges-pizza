@@ -3,6 +3,27 @@ const { useState, useEffect } = React;
 // George's Pizza - Complete Online Ordering System
 // 201 W. Girard Ave, Philadelphia - Est. 1984
 
+// Phone number formatting helper
+const formatPhoneNumber = (value) => {
+  // Remove all non-digits
+  const digits = value.replace(/\D/g, '');
+  
+  // Limit to 10 digits
+  const limited = digits.slice(0, 10);
+  
+  // Format as (XXX) XXX-XXXX
+  if (limited.length === 0) return '';
+  if (limited.length <= 3) return `(${limited}`;
+  if (limited.length <= 6) return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+  return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+};
+
+// Check if phone is valid (10 digits)
+const isValidPhone = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length === 10;
+};
+
 function GeorgesPizza() {
   const [orderType, setOrderType] = useState('pickup');
   const [cart, setCart] = useState([]);
@@ -2293,11 +2314,34 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   const isTurkeyHoagie = item.num === 3;
   const isBurger = item.num === 10;
   const isWrap = item.num === 15;
+  const isLunchWings = item.num === 9; // #9 4 Wings special
 
   const sodaOptions = ['Orange', 'Orange Mango', 'Grape', 'Black Cherry', 'Fruit Punch', 'Cola', 'Ginger Ale'];
   const wingSauces = ['Mild', 'Hot', 'BBQ', 'Plain'];
   const dipSauces = ['Honey Mustard', 'BBQ', 'Ranch', 'No Sauce'];
   const saladDressings = ['Ranch', 'Thousand Island', 'Creamy Italian', 'Lite Ranch', 'Honey Mustard', 'Bleu Cheese', 'Oil & Vinegar', 'No Dressing'];
+  
+  // Wing options for #9 (chicken wings style - not buffalo)
+  const lunchWingOpts = [
+    { id: 'wing-salt', name: 'Salt', price: 0 },
+    { id: 'wing-pepper', name: 'Pepper', price: 0 },
+    { id: 'wing-ketchup', name: 'Ketchup', price: 0 },
+    { id: 'wing-hot-sauce', name: 'Hot Sauce on the Side', price: 0 },
+    { id: 'wing-bleu-cheese', name: 'Bleu Cheese', price: 1 },
+    { id: 'wing-ranch', name: 'Ranch', price: 1 },
+  ];
+  const [lunchWingOptions, setLunchWingOptions] = useState([]);
+  
+  const toggleLunchWingOption = (id) => {
+    const opt = lunchWingOpts.find(o => o.id === id);
+    if (lunchWingOptions.includes(id)) {
+      setLunchWingOptions(prev => prev.filter(x => x !== id));
+      if (opt?.price) setExtraPrice(prev => prev - opt.price);
+    } else {
+      setLunchWingOptions(prev => [...prev, id]);
+      if (opt?.price) setExtraPrice(prev => prev + opt.price);
+    }
+  };
   
   const friesOpts = [
     { id: 'fries-salt', name: 'Salt', price: 0 },
@@ -2323,17 +2367,58 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { id: 'pepper', name: 'Pepper', price: 0 },
   ];
 
-  // Steak options (for #2, #4, #6)
-  const steakOpts = [
+  // Steak cheese choice (for #2, #4, #6) - American only for lunch specials
+  const steakCheeseOptions = ['American'];
+  const [steakCheese, setSteakCheese] = useState('American');
+  
+  // Steak add-ons (for #2, #4, #6)
+  const steakAddOns = [
     { id: 'steak-salt', name: 'Salt', price: 0 },
     { id: 'steak-pepper', name: 'Pepper', price: 0 },
     { id: 'steak-ketchup', name: 'Ketchup', price: 0 },
+    { id: 'steak-fried-onions', name: 'Fried Onions', price: 0 },
+    { id: 'steak-green-peppers', name: 'Green Peppers', price: 2 },
+    { id: 'steak-mushrooms', name: 'Mushrooms', price: 2 },
+    { id: 'steak-bacon', name: 'Bacon', price: 2 },
+    { id: 'steak-hot-peppers', name: 'Hot Peppers', price: 0 },
+    { id: 'steak-sweet-peppers', name: 'Sweet Peppers', price: 0 },
+    { id: 'steak-pepperoni', name: 'Pepperoni', price: 2 },
+    { id: 'steak-pizza-sauce', name: 'Pizza Sauce', price: 2 },
   ];
   const [steakOptions, setSteakOptions] = useState([]);
+  
+  // Steak extras (for #2, #4, #6)
+  const steakExtras = [
+    { id: 'extra-meat', name: 'Extra Meat', price: 3 },
+    { id: 'extra-cheese', name: 'Extra Cheese', price: 1 },
+  ];
+  const [steakExtraOptions, setSteakExtraOptions] = useState([]);
+  
+  // Toast the roll option
+  const [toastRoll, setToastRoll] = useState(false);
+  
   const hasSteak = [2, 4, 6].includes(item.num);
 
   const toggleSteakOption = (id) => {
-    setSteakOptions(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    const opt = steakAddOns.find(o => o.id === id);
+    if (steakOptions.includes(id)) {
+      setSteakOptions(prev => prev.filter(x => x !== id));
+      if (opt?.price) setExtraPrice(prev => prev - opt.price);
+    } else {
+      setSteakOptions(prev => [...prev, id]);
+      if (opt?.price) setExtraPrice(prev => prev + opt.price);
+    }
+  };
+  
+  const toggleSteakExtra = (id) => {
+    const opt = steakExtras.find(o => o.id === id);
+    if (steakExtraOptions.includes(id)) {
+      setSteakExtraOptions(prev => prev.filter(x => x !== id));
+      if (opt?.price) setExtraPrice(prev => prev - opt.price);
+    } else {
+      setSteakExtraOptions(prev => [...prev, id]);
+      if (opt?.price) setExtraPrice(prev => prev + opt.price);
+    }
   };
 
   const ingredientNames = {
@@ -2382,9 +2467,20 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   const getMods = () => {
     const mods = ['Lunch Special'];
     
-    if (wingsSauce) mods.push(wingsSauce + ' Sauce');
     if (fingersDip) mods.push(fingersDip);
     if (saladDressing) mods.push(saladDressing + ' Dressing');
+    
+    // Lunch wings options (#9) - chicken wing style
+    if (isLunchWings) {
+      if (lunchWingOptions.length === 0) {
+        mods.push('Wings: Plain');
+      } else {
+        lunchWingOptions.forEach(id => {
+          const opt = lunchWingOpts.find(o => o.id === id);
+          if (opt) mods.push('Wings: ' + opt.name);
+        });
+      }
+    }
     
     // Turkey hoagie removals
     if (isTurkeyHoagie) {
@@ -2416,12 +2512,26 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
       });
     }
     
-    // Steak options
+    // Steak options - full customization
     if (hasSteak) {
+      // Cheese
+      if (steakCheese && steakCheese !== 'No Cheese') {
+        mods.push(steakCheese + ' Cheese');
+      } else if (steakCheese === 'No Cheese') {
+        mods.push('No Cheese');
+      }
+      // Add-ons
       steakOptions.forEach(id => {
-        const opt = steakOpts.find(o => o.id === id);
-        if (opt) mods.push('Steak: ' + opt.name);
+        const opt = steakAddOns.find(o => o.id === id);
+        if (opt) mods.push(opt.name);
       });
+      // Extras
+      steakExtraOptions.forEach(id => {
+        const opt = steakExtras.find(o => o.id === id);
+        if (opt) mods.push(opt.name);
+      });
+      // Toast the roll
+      if (toastRoll) mods.push('Toast the Roll');
     }
     
     // Wrap removals
@@ -2430,10 +2540,18 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
       if (removed.length > 0) mods.push('NO: ' + removed.map(id => ingredientNames[id] || id).join(', '));
     }
     
-    friesOptions.forEach(id => {
-      const f = friesOpts.find(x => x.id === id);
-      if (f) mods.push('Fries: ' + f.name);
-    });
+    // Fries options - show Plain if no selections
+    if (hasFries) {
+      if (friesOptions.length === 0) {
+        mods.push('Fries: Plain');
+      } else {
+        friesOptions.forEach(id => {
+          const f = friesOpts.find(x => x.id === id);
+          if (f) mods.push('Fries: ' + f.name);
+        });
+      }
+    }
+    
     if (soda) mods.push("Frank's " + soda);
     return mods;
   };
@@ -2446,7 +2564,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
 
   const canAdd = () => {
     if (!soda) return false;
-    if (hasWings && !wingsSauce) return false;
+    // Wings #9 uses checkboxes, no required selection
     if (hasFingers && !fingersDip) return false;
     if (isChefSalad && !saladDressing) return false;
     return true;
@@ -2462,14 +2580,15 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
             $10 Lunch Special • No Substitutions
           </div>
 
-          {/* Wings Sauce */}
-          {hasWings && (
+          {/* Wings Options for #9 (chicken wing style - checkboxes) */}
+          {isLunchWings && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>WING SAUCE *</div>
-              {wingSauces.map(s => (
-                <label key={s} className="radio-row">
-                  <input type="radio" name="wings" checked={wingsSauce === s} onChange={() => setWingsSauce(s)} />
-                  <span style={{ flex: 1 }}>{s}</span>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>WING OPTIONS</div>
+              {lunchWingOpts.map(opt => (
+                <label key={opt.id} className="checkbox-row">
+                  <input type="checkbox" checked={lunchWingOptions.includes(opt.id)} onChange={() => toggleLunchWingOption(opt.id)} />
+                  <span style={{ flex: 1 }}>{opt.name}</span>
+                  <span style={{ color: opt.price > 0 ? '#C41E3A' : '#228B22', fontWeight: 600 }}>{opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'FREE'}</span>
                 </label>
               ))}
             </div>
@@ -2581,16 +2700,53 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
 
           {/* Steak Options (#2, #4, #6) */}
           {hasSteak && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>STEAK OPTIONS</div>
-              {steakOpts.map(opt => (
-                <label key={opt.id} className="checkbox-row">
-                  <input type="checkbox" checked={steakOptions.includes(opt.id)} onChange={() => toggleSteakOption(opt.id)} />
-                  <span style={{ flex: 1 }}>{opt.name}</span>
+            <>
+              {/* Cheese Choice */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>CHEESE</div>
+                <div style={{ fontSize: 11, color: '#666', fontStyle: 'italic', marginBottom: 8 }}>
+                  Lunch specials come with American cheese only
+                </div>
+                <label className="radio-row">
+                  <input type="radio" name="steakCheese" checked={steakCheese === 'American'} onChange={() => setSteakCheese('American')} />
+                  <span style={{ flex: 1 }}>American Cheese</span>
+                  <span style={{ color: '#228B22', fontWeight: 600 }}>INCLUDED</span>
+                </label>
+              </div>
+              
+              {/* Add-Ons */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>ADD-ONS</div>
+                {steakAddOns.map(opt => (
+                  <label key={opt.id} className="checkbox-row">
+                    <input type="checkbox" checked={steakOptions.includes(opt.id)} onChange={() => toggleSteakOption(opt.id)} />
+                    <span style={{ flex: 1 }}>{opt.name}</span>
+                    <span style={{ color: opt.price > 0 ? '#C41E3A' : '#228B22', fontWeight: 600 }}>{opt.price > 0 ? `+$${opt.price}` : 'FREE'}</span>
+                  </label>
+                ))}
+              </div>
+              
+              {/* Extras */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>EXTRAS</div>
+                {steakExtras.map(opt => (
+                  <label key={opt.id} className="checkbox-row">
+                    <input type="checkbox" checked={steakExtraOptions.includes(opt.id)} onChange={() => toggleSteakExtra(opt.id)} />
+                    <span style={{ flex: 1 }}>{opt.name}</span>
+                    <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${opt.price.toFixed(2)}</span>
+                  </label>
+                ))}
+              </div>
+              
+              {/* Toast the Roll */}
+              <div style={{ marginBottom: 16 }}>
+                <label className="checkbox-row">
+                  <input type="checkbox" checked={toastRoll} onChange={() => setToastRoll(!toastRoll)} />
+                  <span style={{ flex: 1 }}>Toast the Roll</span>
                   <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>
                 </label>
-              ))}
-            </div>
+              </div>
+            </>
           )}
 
           {/* Grilled Chicken Wrap (#15) */}
@@ -3976,11 +4132,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   };
 
   // Backend API URL - Change this to your Railway URL after deployment
-  const API_URL = 'https://georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
+  const API_URL = 'https://your-app.railway.app'; // TODO: Update with your Railway URL
   
   const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
     if (!phone) return alert('Please enter your phone number');
+    if (!isValidPhone(phone)) return alert('Please enter a valid 10-digit phone number');
     if (!email) return alert('Please enter your email');
     if (orderType === 'delivery') {
       if (!deliveryAddress.street) return alert('Please enter your street address');
@@ -4372,10 +4529,19 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
             <input
               type="tel"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={e => setPhone(formatPhoneNumber(e.target.value))}
               placeholder="(215) 555-1234"
-              style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
+              style={{ 
+                width: '100%', 
+                padding: 10, 
+                fontSize: 14, 
+                border: `2px solid ${phone && !isValidPhone(phone) ? '#C41E3A' : '#ddd'}`, 
+                fontFamily: 'inherit' 
+              }}
             />
+            {phone && !isValidPhone(phone) && (
+              <div style={{ fontSize: 11, color: '#C41E3A', marginTop: 4 }}>Please enter a valid 10-digit phone number</div>
+            )}
           </div>
           
           <div style={{ marginBottom: 10 }}>
@@ -4519,10 +4685,19 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
             <input
               type="tel"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={e => setPhone(formatPhoneNumber(e.target.value))}
               placeholder="(215) 555-1234"
-              style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
+              style={{ 
+                width: '100%', 
+                padding: 10, 
+                fontSize: 14, 
+                border: `2px solid ${phone && !isValidPhone(phone) ? '#C41E3A' : '#ddd'}`, 
+                fontFamily: 'inherit' 
+              }}
             />
+            {phone && !isValidPhone(phone) && (
+              <div style={{ fontSize: 11, color: '#C41E3A', marginTop: 4 }}>Please enter a valid 10-digit phone number</div>
+            )}
           </div>
         )}
 
