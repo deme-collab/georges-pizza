@@ -184,9 +184,9 @@ function GeorgesPizza() {
   ];
 
   const hotSandwichesMenu = [
-    { name: 'Meatball', desc: 'With Sauce & Provolone on a Long Roll', price: 12, hasHotSandwichMods: true },
-    { name: 'Italian Sausage', desc: 'With Green Peppers, Onions & Melted Provolone on a Long Roll', price: 12, hasHotSandwichMods: true },
-    { name: 'Chicken Parmesan', desc: 'With Pizza Cheese, Melted Provolone & Homemade Sauce on a Long Roll', price: 12, hasHotSandwichMods: true },
+    { name: 'Meatball', desc: 'Toasted with Sauce & Melted Provolone on a Long Roll', price: 12, hasHotSandwichMods: true },
+    { name: 'Italian Sausage', desc: 'Toasted with Green Peppers, Onions & Melted Provolone on a Long Roll', price: 12, hasHotSandwichMods: true },
+    { name: 'Chicken Parmesan', desc: 'Toasted with Pizza Cheese, Melted Provolone & Homemade Sauce on a Long Roll', price: 12, hasHotSandwichMods: true },
   ];
 
   const sandwichesMenu = [
@@ -652,9 +652,9 @@ function GeorgesPizza() {
             onClick={() => { setCurrentView('home'); setSelectedCategory(null); }}
           >
             <img 
-              src="logo.png" 
+              src="logo-header.png" 
               alt="George's Pizza" 
-              style={{ height: 110, width: 'auto', maxWidth: 180 }} 
+              style={{ height: 80, width: 'auto', maxWidth: 200 }} 
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
@@ -1395,6 +1395,9 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         title: 'Customize Your Hoagie',
         required: [],
         optional: [
+          { id: 'salt', name: 'Salt', price: 0 },
+          { id: 'pepper', name: 'Pepper', price: 0 },
+          { id: 'olive-oil', name: 'Olive Oil', price: 0 },
           { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
           { id: 'oregano', name: 'Oregano', price: 0 },
           { id: 'extra-meat', name: 'Extra Meat', price: 3 },
@@ -2351,6 +2354,9 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   ];
   
   const hoagieExtraOpts = [
+    { id: 'salt', name: 'Salt', price: 0 },
+    { id: 'pepper', name: 'Pepper', price: 0 },
+    { id: 'olive-oil', name: 'Olive Oil', price: 0 },
     { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
     { id: 'oregano', name: 'Oregano', price: 0 },
   ];
@@ -4132,7 +4138,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   };
 
   // Backend API URL - Change this to your Railway URL after deployment
-  const API_URL = 'https://georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
+  const API_URL = 'https://your-app.railway.app'; // TODO: Update with your Railway URL
   
   const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
