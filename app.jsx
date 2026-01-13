@@ -1731,6 +1731,28 @@ function GenericCustomizer({ item, onClose, onAdd }) {
             </div>
           ))}
 
+          {/* Hoagie Ingredients - show FIRST for hoagies */}
+          {options.hoagieIngredients && options.hoagieIngredients.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+                INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
+              </div>
+              {options.hoagieIngredients.map(ing => (
+                <label key={ing.id} className="checkbox-row">
+                  <input type="checkbox" checked={includedIngredients.includes(ing.id)} onChange={() => toggleIngredient(ing.id)} />
+                  <span style={{ 
+                    flex: 1, 
+                    textDecoration: !includedIngredients.includes(ing.id) ? 'line-through' : 'none',
+                    color: !includedIngredients.includes(ing.id) ? '#999' : 'inherit'
+                  }}>
+                    {ing.name}
+                  </span>
+                  <span style={{ color: '#228B22', fontWeight: 600, fontSize: 11 }}>INCLUDED</span>
+                </label>
+              ))}
+            </div>
+          )}
+
           {/* Optional extras */}
           {options.optional.length > 0 && (
             <div style={{ marginBottom: 16 }}>
@@ -1766,28 +1788,6 @@ function GenericCustomizer({ item, onClose, onAdd }) {
                   <span style={{ color: opt.price > 0 ? '#C41E3A' : '#228B22', fontWeight: 600 }}>
                     {opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'FREE'}
                   </span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* Hoagie Ingredients */}
-          {options.hoagieIngredients && options.hoagieIngredients.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
-                INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
-              </div>
-              {options.hoagieIngredients.map(ing => (
-                <label key={ing.id} className="checkbox-row">
-                  <input type="checkbox" checked={includedIngredients.includes(ing.id)} onChange={() => toggleIngredient(ing.id)} />
-                  <span style={{ 
-                    flex: 1, 
-                    textDecoration: !includedIngredients.includes(ing.id) ? 'line-through' : 'none',
-                    color: !includedIngredients.includes(ing.id) ? '#999' : 'inherit'
-                  }}>
-                    {ing.name}
-                  </span>
-                  <span style={{ color: '#228B22', fontWeight: 600, fontSize: 11 }}>INCLUDED</span>
                 </label>
               ))}
             </div>
@@ -3430,13 +3430,27 @@ function CaliforniaBurgerCustomizer({ item, onClose, onAdd }) {
 
 // ============ SEAFOOD PLATTER CUSTOMIZER ============
 function SeafoodPlatterCustomizer({ item, onClose, onAdd }) {
-  const [spk, setSpk] = useState(false);
+  // Fries options - separate checkboxes
+  const [friesSalt, setFriesSalt] = useState(false);
+  const [friesPepper, setFriesPepper] = useState(false);
+  const [friesKetchup, setFriesKetchup] = useState(false);
+  // Other options
   const [extraTartar, setExtraTartar] = useState(false);
   const [noColeSlaw, setNoColeSlaw] = useState(false);
 
   const getMods = () => {
     const mods = [];
-    if (spk) mods.push('Salt, Pepper, Ketchup');
+    // Fries options
+    const friesOpts = [];
+    if (friesSalt) friesOpts.push('Salt');
+    if (friesPepper) friesOpts.push('Pepper');
+    if (friesKetchup) friesOpts.push('Ketchup');
+    if (friesOpts.length > 0) {
+      mods.push('Fries: ' + friesOpts.join(', '));
+    } else {
+      mods.push('Fries: Plain');
+    }
+    // Other options
     if (extraTartar) mods.push('Extra Tartar Sauce');
     if (noColeSlaw) mods.push('No Cole Slaw');
     return mods;
@@ -3453,14 +3467,30 @@ function SeafoodPlatterCustomizer({ item, onClose, onAdd }) {
           </div>
 
           <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
-            PLATTER OPTIONS (FREE)
+            FRIES OPTIONS
           </div>
           
           <label className="checkbox-row">
-            <input type="checkbox" checked={spk} onChange={() => setSpk(!spk)} />
-            <span style={{ flex: 1 }}>SPK (Salt, Pepper, Ketchup on Fries)</span>
+            <input type="checkbox" checked={friesSalt} onChange={() => setFriesSalt(!friesSalt)} />
+            <span style={{ flex: 1 }}>Salt</span>
             <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>
           </label>
+          
+          <label className="checkbox-row">
+            <input type="checkbox" checked={friesPepper} onChange={() => setFriesPepper(!friesPepper)} />
+            <span style={{ flex: 1 }}>Pepper</span>
+            <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>
+          </label>
+          
+          <label className="checkbox-row">
+            <input type="checkbox" checked={friesKetchup} onChange={() => setFriesKetchup(!friesKetchup)} />
+            <span style={{ flex: 1 }}>Ketchup</span>
+            <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>
+          </label>
+
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, marginTop: 16, color: '#666' }}>
+            PLATTER OPTIONS
+          </div>
           
           <label className="checkbox-row">
             <input type="checkbox" checked={extraTartar} onChange={() => setExtraTartar(!extraTartar)} />
@@ -4138,7 +4168,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   };
 
   // Backend API URL - Change this to your Railway URL after deployment
-  const API_URL = 'https://georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
+  const API_URL = 'https://your-app.railway.app'; // TODO: Update with your Railway URL
   
   const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
