@@ -4174,7 +4174,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   };
 
   // Backend API URL - Change this to your Railway URL after deployment
-  const API_URL = 'https://your-app.railway.app'; // TODO: Update with your Railway URL
+  const API_URL = 'https://georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
   
   const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
