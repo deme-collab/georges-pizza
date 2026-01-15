@@ -655,8 +655,14 @@ function GeorgesPizza() {
               src="logo-header.png" 
               alt="George's Pizza" 
               style={{ height: 80, width: 'auto', maxWidth: 200 }} 
-              onError={(e) => { e.target.style.display = 'none'; }}
+              onError={(e) => { 
+                e.target.style.display = 'none'; 
+                e.target.nextSibling.style.display = 'block';
+              }}
             />
+            <div style={{ display: 'none', fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, color: '#C41E3A' }}>
+              GEORGE'S PIZZA
+            </div>
           </div>
 
           {/* Order Type Toggle */}
@@ -769,7 +775,7 @@ function GeorgesPizza() {
               }}>
                 What are you hungry for?
               </h1>
-              <p style={{ color: '#666', fontSize: 14 }}>📞 215-236-6035 • 215-236-5288</p>
+              <p style={{ color: '#666', fontSize: 14 }}>📞 215-236-5288 • 215-236-6035</p>
             </div>
 
             {/* Category Grid */}
@@ -4168,7 +4174,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   };
 
   // Backend API URL - Change this to your Railway URL after deployment
-  const API_URL = 'https://georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
+  const API_URL = 'https://your-app.railway.app'; // TODO: Update with your Railway URL
   
   const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
@@ -4258,7 +4264,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
       
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Error connecting to server. Please try again or call us at (215) 236-6035.');
+      alert('Error connecting to server. Please try again or call us at (215) 236-5288.');
     } finally {
       setProcessing(false);
     }
@@ -4307,7 +4313,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
           <button type="button" onClick={() => onNavigateToCategory('drinks')} style={{ flex: 1, minWidth: 100, padding: '10px 12px', background: 'white', border: '2px solid #C41E3A', color: '#C41E3A', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
             + Drinks & Chips
           </button>
-          <button type="button" onClick={() => onNavigateToCategory('desserts')} style={{ flex: 1, minWidth: 100, padding: '10px 12px', background: 'white', border: '2px solid #C41E3A', color: '#C41E3A', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
+          <button type="button" onClick={() => onNavigateToCategory('drinks')} style={{ flex: 1, minWidth: 100, padding: '10px 12px', background: 'white', border: '2px solid #C41E3A', color: '#C41E3A', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
             + Desserts
           </button>
         </div>
