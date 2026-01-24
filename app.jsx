@@ -4195,6 +4195,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     }
     
     setProcessing(true);
+    let orderSuccess = false; // Track if order was successful
     
     // Build order data
     const orderData = {
@@ -4238,6 +4239,8 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
       const result = await response.json();
       
       if (result.success) {
+        orderSuccess = true; // Mark as successful
+        
         // Success! Show confirmation
         const scheduleInfo = scheduleType === 'scheduled'
           ? `\n\nScheduled for: ${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
@@ -4263,8 +4266,11 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
       }
       
     } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Error connecting to server. Please try again or call us at (215) 236-5288.');
+      // Only show error if order wasn't already successful
+      if (!orderSuccess) {
+        console.error('Checkout error:', error);
+        alert('Error connecting to server. Please try again or call us at (215) 236-5288.');
+      }
     } finally {
       setProcessing(false);
     }
