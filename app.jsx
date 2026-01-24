@@ -17,13 +17,52 @@ const STORE_HOURS = {
   6: { open: 11, close: 23 },  // Sat: 11am-11pm
 };
 
-// Simple check if store is currently open
-function checkIfStoreOpen() {
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Format hour to readable string
+function formatHour(hour) {
+  if (hour === 0 || hour === 12) return '12pm';
+  if (hour < 12) return `${hour}am`;
+  return `${hour - 12}pm`;
+}
+
+// Get store status with details
+function getStoreStatus() {
   const now = new Date();
   const day = now.getDay();
   const hour = now.getHours();
   const hours = STORE_HOURS[day];
-  return hour >= hours.open && hour < hours.close;
+  const isOpen = hour >= hours.open && hour < hours.close;
+  
+  if (isOpen) {
+    return {
+      isOpen: true,
+      message: `Open until ${formatHour(hours.close)}`
+    };
+  } else {
+    // Find next opening
+    let nextDay = day;
+    let daysAhead = 0;
+    
+    // If before today's opening
+    if (hour < hours.open) {
+      return {
+        isOpen: false,
+        message: `Opens today at ${formatHour(hours.open)}`
+      };
+    }
+    
+    // After closing, find next day
+    nextDay = (day + 1) % 7;
+    daysAhead = 1;
+    const nextHours = STORE_HOURS[nextDay];
+    const dayName = daysAhead === 1 ? 'tomorrow' : DAY_NAMES[nextDay];
+    
+    return {
+      isOpen: false,
+      message: `Opens ${dayName} at ${formatHour(nextHours.open)}`
+    };
+  }
 }
 
 // Phone number formatting helper
@@ -64,11 +103,11 @@ function GeorgesPizza() {
   const [cartNotification, setCartNotification] = useState(null);
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
   const [familyDealCustomizing, setFamilyDealCustomizing] = useState(null);
-  const [isStoreOpen, setIsStoreOpen] = useState(checkIfStoreOpen());
+  const [storeStatus, setStoreStatus] = useState(getStoreStatus());
   
   // Update store status every minute
   useEffect(() => {
-    const interval = setInterval(() => setIsStoreOpen(checkIfStoreOpen()), 60000);
+    const interval = setInterval(() => setStoreStatus(getStoreStatus()), 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -744,22 +783,6 @@ function GeorgesPizza() {
         <div className="checkered-bottom" />
       </header>
 
-      {/* Store Status Banner */}
-      <div style={{
-        background: isStoreOpen ? 'linear-gradient(90deg, #228B22, #2E8B2E)' : 'linear-gradient(90deg, #C41E3A, #a01830)',
-        color: 'white',
-        padding: '10px 16px',
-        textAlign: 'center',
-        fontSize: 14,
-        fontWeight: 600
-      }}>
-        {isStoreOpen ? (
-          <span>✅ We're Open!</span>
-        ) : (
-          <span>⏰ We're currently closed. You can still place orders for later!</span>
-        )}
-      </div>
-
       {/* Cart Added Notification Toast */}
       {cartNotification && (
         <div 
@@ -821,7 +844,16 @@ function GeorgesPizza() {
               }}>
                 What are you hungry for?
               </h1>
-              <p style={{ color: '#666', fontSize: 14 }}>📞 215-236-5288 • 215-236-6035</p>
+              <p style={{ color: '#666', fontSize: 14 }}>
+                <span style={{ 
+                  color: storeStatus.isOpen ? '#228B22' : '#C41E3A',
+                  fontWeight: 600 
+                }}>
+                  {storeStatus.isOpen ? '✅' : '⏰'} {storeStatus.message}
+                </span>
+                {' • '}
+                <span>📞 215-236-5288</span>
+              </p>
             </div>
 
             {/* Category Grid */}
