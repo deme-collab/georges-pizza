@@ -1391,6 +1391,7 @@ function GeorgesPizza() {
             setSpecialInstructions={setSpecialInstructions}
             driverTip={driverTip}
             setDriverTip={setDriverTip}
+            storeStatus={storeStatus}
           />
         )}
       </main>
@@ -4485,7 +4486,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 }
 
 // ============ CHECKOUT VIEW ============
-function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip }) {
+function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus }) {
   const [processing, setProcessing] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [zipError, setZipError] = useState('');
