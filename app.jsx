@@ -113,7 +113,7 @@ function MaintenancePage({ message }) {
           <p style={{ fontSize: 14, color: '#666', margin: '0 0 12px 0' }}>Or order through:</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a 
-              href="https://www.doordash.com/store/george's-pizza-philadelphia-24498442/"
+              href="https://www.doordash.com/store/george's-pizza-philadelphia-24587019/34286951/?event_type=autocomplete&pickup=false"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -129,7 +129,7 @@ function MaintenancePage({ message }) {
               DoorDash
             </a>
             <a 
-              href="https://www.grubhub.com/restaurant/georges-pizza-201-w-girard-ave-philadelphia/2992837"
+              href="https://www.grubhub.com/restaurant/georges-pizza-201-w-girard-ave-philadelphia/68611"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -145,7 +145,7 @@ function MaintenancePage({ message }) {
               GrubHub
             </a>
             <a 
-              href="https://slicelife.com/restaurants/pa/philadelphia/19123/george-s-pizza/menu"
+              href="https://slicelife.com/restaurants/pa/philadelphia/19123/george-s-pizza-philadelphia/menu"
               target="_blank"
               rel="noopener noreferrer"
               style={{
