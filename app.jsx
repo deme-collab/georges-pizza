@@ -3,6 +3,394 @@ const { useState, useEffect } = React;
 // George's Pizza - Complete Online Ordering System
 // 201 W. Girard Ave, Philadelphia - Est. 1984
 
+// =============================================================================
+// STORE HOURS & HOLIDAY CONFIGURATION
+// =============================================================================
+
+const STORE_HOURS = {
+  0: { open: 14, close: 22, name: 'Sunday' },      // Sun: 2pm-10pm
+  1: { open: 11, close: 22, name: 'Monday' },      // Mon: 11am-10pm
+  2: { open: 11, close: 22, name: 'Tuesday' },     // Tue: 11am-10pm
+  3: { open: 11, close: 22, name: 'Wednesday' },   // Wed: 11am-10pm
+  4: { open: 11, close: 22, name: 'Thursday' },    // Thu: 11am-10pm
+  5: { open: 11, close: 23, name: 'Friday' },      // Fri: 11am-11pm
+  6: { open: 11, close: 23, name: 'Saturday' },    // Sat: 11am-11pm
+};
+
+// Calculate Easter Sunday (Computus algorithm)
+const getEasterSunday = (year) => {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0-indexed
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month, day);
+};
+
+// Get Thanksgiving (4th Thursday of November)
+const getThanksgiving = (year) => {
+  const nov1 = new Date(year, 10, 1); // November 1
+  const dayOfWeek = nov1.getDay();
+  const firstThursday = dayOfWeek <= 4 ? (4 - dayOfWeek + 1) : (11 - dayOfWeek + 4 + 1);
+  return new Date(year, 10, firstThursday + 21); // 4th Thursday
+};
+
+// Get Memorial Day (last Monday of May)
+const getMemorialDay = (year) => {
+  const may31 = new Date(year, 4, 31);
+  const dayOfWeek = may31.getDay();
+  const lastMonday = dayOfWeek === 1 ? 31 : 31 - (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+  return new Date(year, 4, lastMonday);
+};
+
+// Check if a date is a holiday we're closed
+const isHoliday = (date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  
+  // Fixed holidays
+  if (month === 0 && day === 1) return { closed: true, name: "New Year's Day" };
+  if (month === 6 && day === 4) return { closed: true, name: "Independence Day" };
+  if (month === 11 && day === 25) return { closed: true, name: "Christmas Day" };
+  
+  // Easter Sunday
+  const easter = getEasterSunday(year);
+  if (month === easter.getMonth() && day === easter.getDate()) {
+    return { closed: true, name: "Easter Sunday" };
+  }
+  
+  // Thanksgiving
+  const thanksgiving = getThanksgiving(year);
+  if (month === thanksgiving.getMonth() && day === thanksgiving.getDate()) {
+    return { closed: true, name: "Thanksgiving" };
+  }
+  
+  // Memorial Day
+  const memorial = getMemorialDay(year);
+  if (month === memorial.getMonth() && day === memorial.getDate()) {
+    return { closed: true, name: "Memorial Day" };
+  }
+  
+  return { closed: false, name: null };
+};
+
+// Check if store is currently open
+const getStoreStatus = () => {
+  const now = new Date();
+  const holiday = isHoliday(now);
+  
+  if (holiday.closed) {
+    return { 
+      isOpen: false, 
+      reason: `Closed for ${holiday.name}`,
+      nextOpen: getNextOpenTime(now)
+    };
+  }
+  
+  const dayOfWeek = now.getDay();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTime = currentHour + (currentMinute / 60);
+  
+  const hours = STORE_HOURS[dayOfWeek];
+  
+  if (currentTime >= hours.open && currentTime < hours.close) {
+    const closeTime = hours.close > 12 ? `${hours.close - 12}pm` : `${hours.close}pm`;
+    return { 
+      isOpen: true, 
+      reason: `Open until ${closeTime}`,
+      closesAt: hours.close
+    };
+  } else {
+    return { 
+      isOpen: false, 
+      reason: currentTime < hours.open ? 'Not yet open today' : 'Closed for the day',
+      nextOpen: getNextOpenTime(now)
+    };
+  }
+};
+
+// Get next opening time
+const getNextOpenTime = (fromDate) => {
+  const date = new Date(fromDate);
+  const currentHour = date.getHours();
+  const todayHours = STORE_HOURS[date.getDay()];
+  
+  // If before opening today and not a holiday
+  if (currentHour < todayHours.open && !isHoliday(date).closed) {
+    const openTime = todayHours.open > 12 ? `${todayHours.open - 12}pm` : `${todayHours.open}am`;
+    return `Today at ${openTime === '11am' ? '11am' : openTime}`;
+  }
+  
+  // Check next 7 days
+  for (let i = 1; i <= 7; i++) {
+    const nextDate = new Date(date);
+    nextDate.setDate(date.getDate() + i);
+    
+    if (!isHoliday(nextDate).closed) {
+      const dayName = i === 1 ? 'Tomorrow' : nextDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const hours = STORE_HOURS[nextDate.getDay()];
+      const openTime = hours.open === 11 ? '11am' : hours.open === 14 ? '2pm' : `${hours.open}am`;
+      return `${dayName} at ${openTime}`;
+    }
+  }
+  
+  return 'Soon';
+};
+
+// Format hours for display
+const formatHoursForDay = (dayNum) => {
+  const hours = STORE_HOURS[dayNum];
+  const openStr = hours.open === 11 ? '11am' : hours.open === 14 ? '2pm' : `${hours.open}am`;
+  const closeStr = hours.close === 22 ? '10pm' : hours.close === 23 ? '11pm' : `${hours.close}pm`;
+  return `${openStr} - ${closeStr}`;
+};
+
+// =============================================================================
+// SITE STATUS CHECK (from status.json)
+// =============================================================================
+
+const STATUS_URL = 'https://deme-collab.github.io/Georges-Pizza/status.json';
+
+// =============================================================================
+// MAINTENANCE/CLOSED PAGE COMPONENT
+// =============================================================================
+
+function MaintenancePage({ message }) {
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 20,
+      fontFamily: "'Oswald', 'Arial Narrow', sans-serif"
+    }}>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 40, 
+        maxWidth: 500, 
+        width: '100%',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+      }}>
+        {/* Logo */}
+        <div style={{ marginBottom: 24 }}>
+          <img 
+            src="logo.png" 
+            alt="George's Pizza" 
+            style={{ maxWidth: 200, height: 'auto' }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'block';
+            }}
+          />
+          <h1 style={{ 
+            display: 'none',
+            color: '#C41E3A', 
+            fontSize: 32, 
+            margin: 0,
+            fontFamily: "'Oswald', sans-serif"
+          }}>GEORGE'S PIZZA</h1>
+        </div>
+        
+        {/* Message */}
+        <div style={{ 
+          background: '#FFF3E0', 
+          border: '2px solid #FF9800', 
+          borderRadius: 8, 
+          padding: 20, 
+          marginBottom: 24 
+        }}>
+          <p style={{ 
+            fontSize: 18, 
+            color: '#333', 
+            margin: 0,
+            lineHeight: 1.5
+          }}>
+            {message || "We're experiencing technical difficulties. Please call us to place your order."}
+          </p>
+        </div>
+        
+        {/* Phone Numbers */}
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontSize: 14, color: '#666', margin: '0 0 10px 0' }}>Call us to order:</p>
+          <a href="tel:215-236-5288" style={{ 
+            display: 'block',
+            fontSize: 28, 
+            fontWeight: 700, 
+            color: '#C41E3A', 
+            textDecoration: 'none',
+            marginBottom: 8
+          }}>
+            📞 (215) 236-5288
+          </a>
+          <a href="tel:215-236-6035" style={{ 
+            display: 'block',
+            fontSize: 20, 
+            color: '#666', 
+            textDecoration: 'none'
+          }}>
+            (215) 236-6035
+          </a>
+        </div>
+        
+        {/* Hours */}
+        <div style={{ 
+          background: '#f5f5f5', 
+          borderRadius: 8, 
+          padding: 16, 
+          marginBottom: 24,
+          textAlign: 'left'
+        }}>
+          <p style={{ fontWeight: 700, margin: '0 0 10px 0', textAlign: 'center' }}>Hours of Operation</p>
+          <div style={{ fontSize: 14, lineHeight: 1.8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Mon - Thu:</span><span>11am - 10pm</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Fri - Sat:</span><span>11am - 11pm</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Sunday:</span><span>2pm - 10pm</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Alternative Ordering */}
+        <div>
+          <p style={{ fontSize: 14, color: '#666', margin: '0 0 12px 0' }}>Or order through:</p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a 
+              href="https://www.doordash.com/store/george's-pizza-philadelphia-24498442/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                background: '#FF3008',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600
+              }}
+            >
+              DoorDash
+            </a>
+            <a 
+              href="https://www.grubhub.com/restaurant/georges-pizza-201-w-girard-ave-philadelphia/2992837"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                background: '#F63440',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600
+              }}
+            >
+              GrubHub
+            </a>
+            <a 
+              href="https://slicelife.com/restaurants/pa/philadelphia/19123/george-s-pizza/menu"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                background: '#E85D26',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600
+              }}
+            >
+              Slice
+            </a>
+          </div>
+        </div>
+        
+        {/* Address */}
+        <p style={{ 
+          fontSize: 12, 
+          color: '#999', 
+          marginTop: 24,
+          marginBottom: 0 
+        }}>
+          201 W. Girard Ave, Philadelphia, PA • Est. 1984
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// STORE STATUS BANNER COMPONENT
+// =============================================================================
+
+function StoreStatusBanner({ status, onScheduleClick }) {
+  if (status.isOpen) {
+    return (
+      <div style={{
+        background: 'linear-gradient(90deg, #228B22, #2E8B2E)',
+        color: 'white',
+        padding: '8px 16px',
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: 600
+      }}>
+        ✅ We're Open! {status.reason}
+      </div>
+    );
+  }
+  
+  return (
+    <div style={{
+      background: 'linear-gradient(90deg, #C41E3A, #a01830)',
+      color: 'white',
+      padding: '12px 16px',
+      textAlign: 'center'
+    }}>
+      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
+        ⏰ {status.reason}
+      </div>
+      <div style={{ fontSize: 13 }}>
+        Opens {status.nextOpen} • 
+        <button 
+          onClick={onScheduleClick}
+          style={{
+            background: 'rgba(255,255,255,0.2)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: 4,
+            marginLeft: 8,
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: 600
+          }}
+        >
+          Schedule Order →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Phone number formatting helper
 const formatPhoneNumber = (value) => {
   // Remove all non-digits
@@ -41,6 +429,70 @@ function GeorgesPizza() {
   const [cartNotification, setCartNotification] = useState(null);
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
   const [familyDealCustomizing, setFamilyDealCustomizing] = useState(null);
+  
+  // Site status states
+  const [siteEnabled, setSiteEnabled] = useState(true);
+  const [siteMessage, setSiteMessage] = useState('');
+  const [storeStatus, setStoreStatus] = useState(getStoreStatus());
+  const [statusLoading, setStatusLoading] = useState(true);
+  
+  // Check site status from GitHub
+  useEffect(() => {
+    const checkSiteStatus = async () => {
+      try {
+        // Add cache buster to prevent caching
+        const response = await fetch(`${STATUS_URL}?t=${Date.now()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSiteEnabled(data.siteEnabled !== false);
+          setSiteMessage(data.message || '');
+        }
+      } catch (error) {
+        console.log('Could not fetch site status, defaulting to enabled');
+        setSiteEnabled(true);
+      }
+      setStatusLoading(false);
+    };
+    
+    checkSiteStatus();
+    // Recheck every 5 minutes
+    const interval = setInterval(checkSiteStatus, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Update store status every minute
+  useEffect(() => {
+    const updateStatus = () => setStoreStatus(getStoreStatus());
+    const interval = setInterval(updateStatus, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Show maintenance page if site is disabled
+  if (statusLoading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: '#1a1a1a'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <img 
+            src="logo.png" 
+            alt="George's Pizza" 
+            style={{ maxWidth: 280, marginBottom: 20 }}
+            onError={(e) => e.target.style.display = 'none'}
+          />
+          <div style={{ color: 'white', fontSize: 18 }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!siteEnabled) {
+    return <MaintenancePage message={siteMessage} />;
+  }
 
   // Delivery zone ZIP codes, minimum, fee, and tax
   const DELIVERY_ZONES = ['19122', '19123', '19125', '19106'];
@@ -713,6 +1165,15 @@ function GeorgesPizza() {
         </div>
         <div className="checkered-bottom" />
       </header>
+      
+      {/* Store Status Banner */}
+      <StoreStatusBanner 
+        status={storeStatus} 
+        onScheduleClick={() => {
+          setScheduleType('scheduled');
+          setCurrentView('checkout');
+        }}
+      />
 
       {/* Cart Added Notification Toast */}
       {cartNotification && (
@@ -4033,19 +4494,32 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const estimate = orderType === 'pickup' ? '~15 minutes' : '35-45 minutes';
+  
+  // Auto-switch to scheduled mode when store is closed
+  useEffect(() => {
+    if (!storeStatus.isOpen && scheduleType === 'asap') {
+      setScheduleType('scheduled');
+    }
+  }, [storeStatus.isOpen]);
 
-  // Generate available dates (today + next 3 days)
+  // Generate available dates (today + next 6 days, skip holidays)
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 7; i++) { // Extend to 7 days
       const date = new Date(today);
       date.setDate(today.getDate() + i);
+      
+      // Skip holidays
+      const holiday = isHoliday(date);
+      if (holiday.closed) continue;
+      
       const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       dates.push({
         value: date.toISOString().split('T')[0],
         label: dayName,
-        dayOfWeek: date.getDay()
+        dayOfWeek: date.getDay(),
+        isToday: i === 0
       });
     }
     return dates;
@@ -4058,12 +4532,13 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     if (!selectedDateInfo) return [];
     
     const dayOfWeek = selectedDateInfo.dayOfWeek;
-    const isToday = scheduledDate === new Date().toISOString().split('T')[0];
+    const isToday = selectedDateInfo.isToday;
     const now = new Date();
     
-    // Store hours: Mon-Thu 11am-10pm, Fri-Sat 11am-11pm, Sun 2pm-10pm
-    let openHour = dayOfWeek === 0 ? 14 : 11; // Sunday opens at 2pm
-    let closeHour = (dayOfWeek === 5 || dayOfWeek === 6) ? 23 : 22; // Fri/Sat close at 11pm
+    // Use STORE_HOURS config
+    const hours = STORE_HOURS[dayOfWeek];
+    const openHour = hours.open;
+    const closeHour = hours.close;
     
     const times = [];
     for (let hour = openHour; hour < closeHour; hour++) {
@@ -4071,9 +4546,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         const timeDate = new Date();
         timeDate.setHours(hour, min, 0, 0);
         
-        // For today, only show times at least 1 hour from now
+        // For today, require at least 30 minutes from now
         if (isToday) {
-          const minTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+          const minTime = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
           if (timeDate <= minTime) continue;
         }
         
@@ -4086,6 +4561,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     }
     return times;
   };
+  
+  // Check if ASAP ordering is available (store is open and not a holiday)
+  const canOrderASAP = storeStatus.isOpen;
 
   // Check if delivery minimum is met (based on subtotal before fees/tax)
   const isBelowDeliveryMinimum = orderType === 'delivery' && subtotal < deliveryMinimum;
@@ -4190,6 +4668,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
       if (isBelowDeliveryMinimum) return alert(`Delivery minimum is $${deliveryMinimum}. Please add more items or switch to pickup.`);
     }
     if (cart.length === 0) return alert('Your cart is empty');
+    
+    // Validate ASAP orders when store is closed
+    if (scheduleType === 'asap' && !canOrderASAP) {
+      return alert("We're currently closed. Please schedule your order for when we're open.");
+    }
+    
     if (scheduleType === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       return alert('Please select a date and time for your scheduled order.');
     }
@@ -4477,19 +4961,27 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <button
             type="button"
-            onClick={() => { setScheduleType('asap'); setScheduledDate(''); setScheduledTime(''); }}
+            onClick={() => { 
+              if (canOrderASAP) {
+                setScheduleType('asap'); 
+                setScheduledDate(''); 
+                setScheduledTime(''); 
+              }
+            }}
+            disabled={!canOrderASAP}
             style={{
               flex: 1,
               padding: '12px 16px',
               background: scheduleType === 'asap' ? '#C41E3A' : 'white',
-              color: scheduleType === 'asap' ? 'white' : '#333',
+              color: scheduleType === 'asap' ? 'white' : (canOrderASAP ? '#333' : '#999'),
               border: `2px solid ${scheduleType === 'asap' ? '#C41E3A' : '#ddd'}`,
               fontWeight: 600,
-              cursor: 'pointer',
-              fontSize: 14
+              cursor: canOrderASAP ? 'pointer' : 'not-allowed',
+              fontSize: 14,
+              opacity: canOrderASAP ? 1 : 0.6
             }}
           >
-            🚀 ASAP
+            🚀 ASAP {!canOrderASAP && '(Closed)'}
           </button>
           <button
             type="button"
@@ -4509,9 +5001,15 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
           </button>
         </div>
 
-        {scheduleType === 'asap' && (
+        {scheduleType === 'asap' && canOrderASAP && (
           <div style={{ background: '#E8F5E9', padding: 12, fontSize: 14, color: '#2E7D32' }}>
             ✓ Your order will be ready {estimate}
+          </div>
+        )}
+        
+        {scheduleType === 'asap' && !canOrderASAP && (
+          <div style={{ background: '#FFF3E0', padding: 12, fontSize: 14, color: '#E65100' }}>
+            ⏰ We're currently closed. Please schedule your order for when we're open.
           </div>
         )}
 
