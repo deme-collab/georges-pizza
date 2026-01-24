@@ -84,6 +84,34 @@ const isHoliday = (date) => {
   return { closed: false, name: null };
 };
 
+// Get next opening time
+const getNextOpenTime = (fromDate) => {
+  const date = new Date(fromDate);
+  const currentHour = date.getHours();
+  const todayHours = STORE_HOURS[date.getDay()];
+  
+  // If before opening today and not a holiday
+  if (currentHour < todayHours.open && !isHoliday(date).closed) {
+    const openTime = todayHours.open > 12 ? `${todayHours.open - 12}pm` : `${todayHours.open}am`;
+    return `Today at ${openTime === '11am' ? '11am' : openTime}`;
+  }
+  
+  // Check next 7 days
+  for (let i = 1; i <= 7; i++) {
+    const nextDate = new Date(date);
+    nextDate.setDate(date.getDate() + i);
+    
+    if (!isHoliday(nextDate).closed) {
+      const dayName = i === 1 ? 'Tomorrow' : nextDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const hours = STORE_HOURS[nextDate.getDay()];
+      const openTime = hours.open === 11 ? '11am' : hours.open === 14 ? '2pm' : `${hours.open}am`;
+      return `${dayName} at ${openTime}`;
+    }
+  }
+  
+  return 'Soon';
+};
+
 // Check if store is currently open
 const getStoreStatus = () => {
   const now = new Date();
@@ -118,34 +146,6 @@ const getStoreStatus = () => {
       nextOpen: getNextOpenTime(now)
     };
   }
-};
-
-// Get next opening time
-const getNextOpenTime = (fromDate) => {
-  const date = new Date(fromDate);
-  const currentHour = date.getHours();
-  const todayHours = STORE_HOURS[date.getDay()];
-  
-  // If before opening today and not a holiday
-  if (currentHour < todayHours.open && !isHoliday(date).closed) {
-    const openTime = todayHours.open > 12 ? `${todayHours.open - 12}pm` : `${todayHours.open}am`;
-    return `Today at ${openTime === '11am' ? '11am' : openTime}`;
-  }
-  
-  // Check next 7 days
-  for (let i = 1; i <= 7; i++) {
-    const nextDate = new Date(date);
-    nextDate.setDate(date.getDate() + i);
-    
-    if (!isHoliday(nextDate).closed) {
-      const dayName = i === 1 ? 'Tomorrow' : nextDate.toLocaleDateString('en-US', { weekday: 'long' });
-      const hours = STORE_HOURS[nextDate.getDay()];
-      const openTime = hours.open === 11 ? '11am' : hours.open === 14 ? '2pm' : `${hours.open}am`;
-      return `${dayName} at ${openTime}`;
-    }
-  }
-  
-  return 'Soon';
 };
 
 // Format hours for display
@@ -433,7 +433,7 @@ function GeorgesPizza() {
   // Site status states
   const [siteEnabled, setSiteEnabled] = useState(true);
   const [siteMessage, setSiteMessage] = useState('');
-  const [storeStatus, setStoreStatus] = useState(getStoreStatus());
+  const [storeStatus, setStoreStatus] = useState(() => getStoreStatus());
   const [statusLoading, setStatusLoading] = useState(true);
   
   // Check site status from GitHub
