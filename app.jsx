@@ -376,10 +376,16 @@ function GeorgesPizza() {
   const [cartNotification, setCartNotification] = useState(null);
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
   const [familyDealCustomizing, setFamilyDealCustomizing] = useState(null);
-  const [storeStatus, setStoreStatus] = useState(getStoreStatus());
+  const [storeStatus, setStoreStatus] = useState(() => getStoreStatus());
   const [siteEnabled, setSiteEnabled] = useState(true);
   const [siteMessage, setSiteMessage] = useState('');
   const [siteStatusLoaded, setSiteStatusLoaded] = useState(false);
+  const [lunchAvailable, setLunchAvailable] = useState(() => {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    return day >= 1 && day <= 5 && hour >= 11 && hour < 14;
+  });
   
   // Check site status from GitHub (maintenance mode toggle)
   useEffect(() => {
@@ -407,6 +413,18 @@ function GeorgesPizza() {
   // Update store status every minute
   useEffect(() => {
     const interval = setInterval(() => setStoreStatus(getStoreStatus()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Update lunch availability every minute
+  useEffect(() => {
+    const checkLunch = () => {
+      const now = new Date();
+      const day = now.getDay();
+      const hour = now.getHours();
+      setLunchAvailable(day >= 1 && day <= 5 && hour >= 11 && hour < 14);
+    };
+    const interval = setInterval(checkLunch, 60000);
     return () => clearInterval(interval);
   }, []);
   
@@ -443,21 +461,6 @@ function GeorgesPizza() {
   const DELIVERY_MINIMUM = 15;
   const DELIVERY_FEE = 3;
   const TAX_RATE = 0.08; // 8% Philadelphia sales tax
-
-  // Check if currently in lunch special window (M-F 11am-2pm)
-  const isLunchTime = () => {
-    const now = new Date();
-    const day = now.getDay();
-    const hour = now.getHours();
-    return day >= 1 && day <= 5 && hour >= 11 && hour < 14;
-  };
-
-  const [lunchAvailable, setLunchAvailable] = useState(isLunchTime());
-
-  useEffect(() => {
-    const interval = setInterval(() => setLunchAvailable(isLunchTime()), 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   const addToCart = (item) => {
     setCart([...cart, { ...item, id: Date.now() }]);
