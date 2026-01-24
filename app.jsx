@@ -4,6 +4,180 @@ const { useState, useEffect } = React;
 // 201 W. Girard Ave, Philadelphia - Est. 1984
 
 // =============================================================================
+// SITE STATUS URL (for maintenance mode toggle via GitHub)
+// =============================================================================
+
+const STATUS_URL = 'https://deme-collab.github.io/georges-pizza/status.json';
+
+// =============================================================================
+// MAINTENANCE PAGE COMPONENT
+// =============================================================================
+
+function MaintenancePage({ message }) {
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 20,
+      fontFamily: "'Oswald', 'Arial Narrow', sans-serif"
+    }}>
+      <div style={{ 
+        background: 'white', 
+        borderRadius: 12, 
+        padding: 40, 
+        maxWidth: 500, 
+        width: '100%',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+      }}>
+        {/* Logo */}
+        <div style={{ marginBottom: 24 }}>
+          <img 
+            src="logo.png" 
+            alt="George's Pizza" 
+            style={{ maxWidth: 200, height: 'auto' }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+        
+        {/* Message */}
+        <div style={{ 
+          background: '#FFF3E0', 
+          border: '2px solid #FF9800', 
+          borderRadius: 8, 
+          padding: 20, 
+          marginBottom: 24 
+        }}>
+          <p style={{ 
+            fontSize: 18, 
+            color: '#333', 
+            margin: 0,
+            lineHeight: 1.5
+          }}>
+            {message || "We're experiencing technical difficulties. Please call us to place your order."}
+          </p>
+        </div>
+        
+        {/* Phone Numbers */}
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ fontSize: 14, color: '#666', margin: '0 0 10px 0' }}>Call us to order:</p>
+          <a href="tel:215-236-5288" style={{ 
+            display: 'block',
+            fontSize: 28, 
+            fontWeight: 700, 
+            color: '#C41E3A', 
+            textDecoration: 'none',
+            marginBottom: 8
+          }}>
+            📞 (215) 236-5288
+          </a>
+          <a href="tel:215-236-6035" style={{ 
+            display: 'block',
+            fontSize: 20, 
+            color: '#666', 
+            textDecoration: 'none'
+          }}>
+            (215) 236-6035
+          </a>
+        </div>
+        
+        {/* Hours */}
+        <div style={{ 
+          background: '#f5f5f5', 
+          borderRadius: 8, 
+          padding: 16, 
+          marginBottom: 24,
+          textAlign: 'left'
+        }}>
+          <p style={{ fontWeight: 700, margin: '0 0 10px 0', textAlign: 'center' }}>Hours of Operation</p>
+          <div style={{ fontSize: 14, lineHeight: 1.8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Mon - Thu:</span><span>11am - 10pm</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Fri - Sat:</span><span>11am - 11pm</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Sunday:</span><span>2pm - 10pm</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Alternative Ordering */}
+        <div>
+          <p style={{ fontSize: 14, color: '#666', margin: '0 0 12px 0' }}>Or order through:</p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a 
+              href="https://www.doordash.com/store/george's-pizza-philadelphia-24498442/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                background: '#FF3008',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600
+              }}
+            >
+              DoorDash
+            </a>
+            <a 
+              href="https://www.grubhub.com/restaurant/georges-pizza-201-w-girard-ave-philadelphia/2992837"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                background: '#F63440',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600
+              }}
+            >
+              GrubHub
+            </a>
+            <a 
+              href="https://slicelife.com/restaurants/pa/philadelphia/19123/george-s-pizza/menu"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px',
+                background: '#E85D26',
+                color: 'white',
+                borderRadius: 6,
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 600
+              }}
+            >
+              Slice
+            </a>
+          </div>
+        </div>
+        
+        {/* Address */}
+        <p style={{ 
+          fontSize: 12, 
+          color: '#999', 
+          marginTop: 24,
+          marginBottom: 0 
+        }}>
+          201 W. Girard Ave, Philadelphia, PA • Est. 1984
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
 // STORE HOURS & HOLIDAY CONFIGURATION
 // =============================================================================
 
@@ -203,12 +377,66 @@ function GeorgesPizza() {
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
   const [familyDealCustomizing, setFamilyDealCustomizing] = useState(null);
   const [storeStatus, setStoreStatus] = useState(getStoreStatus());
+  const [siteEnabled, setSiteEnabled] = useState(true);
+  const [siteMessage, setSiteMessage] = useState('');
+  const [siteStatusLoaded, setSiteStatusLoaded] = useState(false);
+  
+  // Check site status from GitHub (maintenance mode toggle)
+  useEffect(() => {
+    const checkSiteStatus = async () => {
+      try {
+        const response = await fetch(`${STATUS_URL}?t=${Date.now()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSiteEnabled(data.siteEnabled !== false);
+          setSiteMessage(data.message || '');
+        }
+      } catch (error) {
+        console.log('Could not fetch site status, defaulting to enabled');
+        setSiteEnabled(true);
+      }
+      setSiteStatusLoaded(true);
+    };
+    
+    checkSiteStatus();
+    // Recheck every 5 minutes
+    const interval = setInterval(checkSiteStatus, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
   
   // Update store status every minute
   useEffect(() => {
     const interval = setInterval(() => setStoreStatus(getStoreStatus()), 60000);
     return () => clearInterval(interval);
   }, []);
+  
+  // Show loading while checking site status
+  if (!siteStatusLoaded) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: '#1a1a1a'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <img 
+            src="logo.png" 
+            alt="George's Pizza" 
+            style={{ maxWidth: 200, marginBottom: 20 }}
+            onError={(e) => e.target.style.display = 'none'}
+          />
+          <div style={{ color: 'white', fontSize: 16 }}>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show maintenance page if site is disabled
+  if (!siteEnabled) {
+    return <MaintenancePage message={siteMessage} />;
+  }
 
   // Delivery zone ZIP codes, minimum, fee, and tax
   const DELIVERY_ZONES = ['19122', '19123', '19125', '19106'];
