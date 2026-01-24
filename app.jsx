@@ -4,7 +4,7 @@ const { useState, useEffect } = React;
 // 201 W. Girard Ave, Philadelphia - Est. 1984
 
 // =============================================================================
-// STORE HOURS CONFIGURATION
+// STORE HOURS & HOLIDAY CONFIGURATION
 // =============================================================================
 
 const STORE_HOURS = {
@@ -26,41 +26,140 @@ function formatHour(hour) {
   return `${hour - 12}pm`;
 }
 
+// =============================================================================
+// HOLIDAY CALCULATIONS
+// =============================================================================
+
+// Calculate Easter Sunday (Computus algorithm)
+function getEasterSunday(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return { month, day };
+}
+
+// Get Thanksgiving (4th Thursday of November)
+function getThanksgiving(year) {
+  const nov1 = new Date(year, 10, 1);
+  const dayOfWeek = nov1.getDay();
+  const firstThursday = dayOfWeek <= 4 ? (4 - dayOfWeek + 1) : (11 - dayOfWeek + 4 + 1);
+  return { month: 10, day: firstThursday + 21 };
+}
+
+// Get Memorial Day (last Monday of May)
+function getMemorialDay(year) {
+  const may31 = new Date(year, 4, 31);
+  const dayOfWeek = may31.getDay();
+  const lastMonday = dayOfWeek === 1 ? 31 : 31 - (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+  return { month: 4, day: lastMonday };
+}
+
+// Check if a specific date is a holiday
+function isHoliday(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  
+  // Fixed holidays
+  if (month === 0 && day === 1) return "New Year's Day";
+  if (month === 6 && day === 4) return "Independence Day";
+  if (month === 11 && day === 25) return "Christmas Day";
+  
+  // Easter Sunday
+  const easter = getEasterSunday(year);
+  if (month === easter.month && day === easter.day) return "Easter Sunday";
+  
+  // Thanksgiving
+  const thanksgiving = getThanksgiving(year);
+  if (month === thanksgiving.month && day === thanksgiving.day) return "Thanksgiving";
+  
+  // Memorial Day
+  const memorial = getMemorialDay(year);
+  if (month === memorial.month && day === memorial.day) return "Memorial Day";
+  
+  return null;
+}
+
+// =============================================================================
+// STORE STATUS
+// =============================================================================
+
 // Get store status with details
 function getStoreStatus() {
   const now = new Date();
   const day = now.getDay();
   const hour = now.getHours();
   const hours = STORE_HOURS[day];
+  
+  // Check if today is a holiday
+  const holiday = isHoliday(now);
+  if (holiday) {
+    // Find next non-holiday opening
+    for (let i = 1; i <= 7; i++) {
+      const nextDate = new Date(now);
+      nextDate.setDate(now.getDate() + i);
+      if (!isHoliday(nextDate)) {
+        const nextDay = nextDate.getDay();
+        const nextHours = STORE_HOURS[nextDay];
+        const dayName = i === 1 ? 'tomorrow' : DAY_NAMES[nextDay];
+        return {
+          isOpen: false,
+          message: `Closed for ${holiday} • Opens ${dayName} at ${formatHour(nextHours.open)}`,
+          isHoliday: true
+        };
+      }
+    }
+  }
+  
   const isOpen = hour >= hours.open && hour < hours.close;
   
   if (isOpen) {
     return {
       isOpen: true,
-      message: `Open until ${formatHour(hours.close)}`
+      message: `Open until ${formatHour(hours.close)}`,
+      isHoliday: false
     };
   } else {
-    // Find next opening
-    let nextDay = day;
-    let daysAhead = 0;
-    
     // If before today's opening
     if (hour < hours.open) {
       return {
         isOpen: false,
-        message: `Opens today at ${formatHour(hours.open)}`
+        message: `Opens today at ${formatHour(hours.open)}`,
+        isHoliday: false
       };
     }
     
-    // After closing, find next day
-    nextDay = (day + 1) % 7;
-    daysAhead = 1;
-    const nextHours = STORE_HOURS[nextDay];
-    const dayName = daysAhead === 1 ? 'tomorrow' : DAY_NAMES[nextDay];
+    // After closing, find next opening (check for holidays)
+    for (let i = 1; i <= 7; i++) {
+      const nextDate = new Date(now);
+      nextDate.setDate(now.getDate() + i);
+      if (!isHoliday(nextDate)) {
+        const nextDay = nextDate.getDay();
+        const nextHours = STORE_HOURS[nextDay];
+        const dayName = i === 1 ? 'tomorrow' : DAY_NAMES[nextDay];
+        return {
+          isOpen: false,
+          message: `Opens ${dayName} at ${formatHour(nextHours.open)}`,
+          isHoliday: false
+        };
+      }
+    }
     
     return {
       isOpen: false,
-      message: `Opens ${dayName} at ${formatHour(nextHours.open)}`
+      message: `Opens soon`,
+      isHoliday: false
     };
   }
 }
@@ -1008,6 +1107,7 @@ function GeorgesPizza() {
             setSpecialInstructions={setSpecialInstructions}
             driverTip={driverTip}
             setDriverTip={setDriverTip}
+            storeStatus={storeStatus}
           />
         )}
       </main>
@@ -4102,7 +4202,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 }
 
 // ============ CHECKOUT VIEW ============
-function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip }) {
+function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus }) {
   const [processing, setProcessing] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [zipError, setZipError] = useState('');
@@ -4116,14 +4216,19 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   const getAvailableDates = () => {
     const dates = [];
     const today = new Date();
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 7; i++) { // Look ahead 7 days
       const date = new Date(today);
       date.setDate(today.getDate() + i);
+      
+      // Skip holidays
+      if (isHoliday(date)) continue;
+      
       const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       dates.push({
         value: date.toISOString().split('T')[0],
         label: dayName,
-        dayOfWeek: date.getDay()
+        dayOfWeek: date.getDay(),
+        isToday: i === 0
       });
     }
     return dates;
@@ -4136,12 +4241,13 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     if (!selectedDateInfo) return [];
     
     const dayOfWeek = selectedDateInfo.dayOfWeek;
-    const isToday = scheduledDate === new Date().toISOString().split('T')[0];
+    const isToday = selectedDateInfo.isToday;
     const now = new Date();
     
-    // Store hours: Mon-Thu 11am-10pm, Fri-Sat 11am-11pm, Sun 2pm-10pm
-    let openHour = dayOfWeek === 0 ? 14 : 11; // Sunday opens at 2pm
-    let closeHour = (dayOfWeek === 5 || dayOfWeek === 6) ? 23 : 22; // Fri/Sat close at 11pm
+    // Use STORE_HOURS config
+    const hours = STORE_HOURS[dayOfWeek];
+    const openHour = hours.open;
+    const closeHour = hours.close;
     
     const times = [];
     for (let hour = openHour; hour < closeHour; hour++) {
@@ -4149,9 +4255,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         const timeDate = new Date();
         timeDate.setHours(hour, min, 0, 0);
         
-        // For today, only show times at least 1 hour from now
+        // For today, require at least 30 minutes from now
         if (isToday) {
-          const minTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+          const minTime = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
           if (timeDate <= minTime) continue;
         }
         
@@ -4268,6 +4374,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
       if (isBelowDeliveryMinimum) return alert(`Delivery minimum is $${deliveryMinimum}. Please add more items or switch to pickup.`);
     }
     if (cart.length === 0) return alert('Your cart is empty');
+    
+    // Check ASAP when store is closed
+    if (scheduleType === 'asap' && !storeStatus.isOpen) {
+      return alert("We're currently closed. Please schedule your order for when we're open.");
+    }
+    
     if (scheduleType === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       return alert('Please select a date and time for your scheduled order.');
     }
@@ -4555,19 +4667,27 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <button
             type="button"
-            onClick={() => { setScheduleType('asap'); setScheduledDate(''); setScheduledTime(''); }}
+            onClick={() => { 
+              if (storeStatus.isOpen) {
+                setScheduleType('asap'); 
+                setScheduledDate(''); 
+                setScheduledTime(''); 
+              }
+            }}
+            disabled={!storeStatus.isOpen}
             style={{
               flex: 1,
               padding: '12px 16px',
               background: scheduleType === 'asap' ? '#C41E3A' : 'white',
-              color: scheduleType === 'asap' ? 'white' : '#333',
+              color: scheduleType === 'asap' ? 'white' : (storeStatus.isOpen ? '#333' : '#999'),
               border: `2px solid ${scheduleType === 'asap' ? '#C41E3A' : '#ddd'}`,
               fontWeight: 600,
-              cursor: 'pointer',
-              fontSize: 14
+              cursor: storeStatus.isOpen ? 'pointer' : 'not-allowed',
+              fontSize: 14,
+              opacity: storeStatus.isOpen ? 1 : 0.6
             }}
           >
-            🚀 ASAP
+            🚀 ASAP {!storeStatus.isOpen && '(Closed)'}
           </button>
           <button
             type="button"
@@ -4587,9 +4707,15 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
           </button>
         </div>
 
-        {scheduleType === 'asap' && (
+        {scheduleType === 'asap' && storeStatus.isOpen && (
           <div style={{ background: '#E8F5E9', padding: 12, fontSize: 14, color: '#2E7D32' }}>
             ✓ Your order will be ready {estimate}
+          </div>
+        )}
+        
+        {scheduleType === 'asap' && !storeStatus.isOpen && (
+          <div style={{ background: '#FFF3E0', padding: 12, fontSize: 14, color: '#E65100' }}>
+            ⏰ We're currently closed. Please schedule your order for when we're open.
           </div>
         )}
 
