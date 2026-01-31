@@ -465,11 +465,12 @@ cash"
                 <h3>Quick Reference</h3>
                 <p>
                     <code>ch steak</code> = Cheese Steak<br>
-                    <code>spk</code> = Spinach | <code>fr.on</code> = Fried Onions<br>
+                    <code>spk</code> = Salt, Pepper, Ketchup | <code>spin</code> = Spinach<br>
+                    <code>fr.on</code> = Fried Onions | <code>grpep</code> = Green Peppers<br>
                     <code>wiz</code> = Whiz | <code>prov</code> = Provolone<br>
-                    <code>sm/lg/xl</code> = Size | <code>works</code> = Everything<br>
-                    <code>cash</code> or <code>card</code> = Payment<br>
-                    <code>ex</code> or <code>xtra</code> = Extra
+                    <code>sm/lg/xl</code> = Size | <code>xmeat</code> = Extra Meat<br>
+                    <code>for here</code> = Dine In | <code>to go</code> = Take Out<br>
+                    <code>cash</code> or <code>card</code> = Payment
                 </p>
             </div>
         </div>
@@ -484,7 +485,7 @@ cash"
             <div class="summary-card">
                 <div class="summary-header">
                     <h2>WALK-IN ORDER</h2>
-                    <div class="order-type-badge">🏃 PICKUP</div>
+                    <div class="order-type-badge" id="orderTypeBadge">📦 TO GO</div>
                 </div>
                 
                 <div class="summary-items" id="summaryItems">
@@ -664,6 +665,16 @@ cash"
                 </div>
             `;
             document.getElementById('summaryTotals').innerHTML = totalsHTML;
+            
+            // Order type badge (Dine In vs To Go)
+            const orderTypeBadge = document.getElementById('orderTypeBadge');
+            if (order.orderType === 'dine_in') {
+                orderTypeBadge.innerHTML = '🍽️ DINE IN';
+                orderTypeBadge.style.background = '#2196F3';
+            } else {
+                orderTypeBadge.innerHTML = '📦 TO GO';
+                orderTypeBadge.style.background = '#4CAF50';
+            }
             
             // Payment badge
             const paymentBadge = document.getElementById('paymentBadge');
