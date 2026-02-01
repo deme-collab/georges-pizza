@@ -4649,7 +4649,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     };
     
     try {
-      const response = await fetch(`${API_URL}/api/place-order`, {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
