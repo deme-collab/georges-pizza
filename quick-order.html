@@ -637,11 +637,32 @@ cash"
             for (const item of order.items) {
                 const qty = item.quantity > 1 ? `${item.quantity}x ` : '';
                 const price = (item.price * (item.quantity || 1)).toFixed(2);
+                
+                // Build mods display
+                let modsHTML = '';
+                if (item.isSpecial && item.specialMods) {
+                    // Lunch special - show grouped mods
+                    if (item.mods && item.mods.length > 0) {
+                        modsHTML += `<div class="item-mods"><strong>Main:</strong> ${item.mods.join(', ')}</div>`;
+                    }
+                    if (item.specialMods.fries && item.specialMods.fries.length > 0) {
+                        modsHTML += `<div class="item-mods"><strong>Fries:</strong> ${item.specialMods.fries.join(', ')}</div>`;
+                    }
+                    if (item.specialMods.drink && item.specialMods.drink.length > 0) {
+                        modsHTML += `<div class="item-mods"><strong>Drink:</strong> ${item.specialMods.drink.join(', ')}</div>`;
+                    }
+                } else {
+                    // Regular item
+                    if (item.mods && item.mods.length > 0) {
+                        modsHTML = `<div class="item-mods">${item.mods.join(', ')}</div>`;
+                    }
+                }
+                
                 itemsHTML += `
                     <div class="summary-item">
                         <div>
                             <div class="item-name">${qty}${item.name}</div>
-                            ${item.mods && item.mods.length > 0 ? `<div class="item-mods">${item.mods.join(', ')}</div>` : ''}
+                            ${modsHTML}
                         </div>
                         <div class="item-price">$${price}</div>
                     </div>
