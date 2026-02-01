@@ -604,11 +604,23 @@ cash"
             orderError.style.display = 'none';
             
             try {
+                // 30 second timeout for AI processing
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
                 const response = await fetch(`${API_URL}/api/internal/quick-order/parse`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pin: currentPin, rawText: text })
+                    body: JSON.stringify({ pin: currentPin, rawText: text }),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status}`);
+                }
                 
                 const data = await response.json();
                 
@@ -619,7 +631,12 @@ cash"
                     showOrderError(data.error || 'Could not parse order. Try again.');
                 }
             } catch (error) {
-                showOrderError('Connection error. Try again.');
+                if (error.name === 'AbortError') {
+                    showOrderError('Request timed out. AI may be slow - try again.');
+                } else {
+                    console.error('Parse error:', error);
+                    showOrderError('Connection error: ' + error.message);
+                }
             }
             
             submitBtn.disabled = false;
@@ -636,7 +653,7 @@ cash"
             let itemsHTML = '';
             for (const item of order.items) {
                 const qty = item.quantity > 1 ? `${item.quantity}x ` : '';
-                const price = (item.price * (item.quantity || 1)).toFixed(2);
+                const price = item.price.toFixed(2);  // Already includes quantity from backend
                 
                 // Build mods display
                 let modsHTML = '';
