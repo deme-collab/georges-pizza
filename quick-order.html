@@ -747,11 +747,17 @@ cash"
             
             // Payment badge
             const paymentBadge = document.getElementById('paymentBadge');
-            if (order.paymentType === 'card' || order.paymentType === 'credit') {
+            if (order.paymentType === 'prepaid') {
+                paymentBadge.className = 'payment-badge';
+                paymentBadge.style.background = '#9C27B0';
+                paymentBadge.innerHTML = '✅ PREPAID';
+            } else if (order.paymentType === 'card' || order.paymentType === 'credit') {
                 paymentBadge.className = 'payment-badge card';
+                paymentBadge.style.background = '';
                 paymentBadge.innerHTML = '💳 CARD';
             } else {
                 paymentBadge.className = 'payment-badge cash';
+                paymentBadge.style.background = '';
                 paymentBadge.innerHTML = '💵 CASH';
             }
             
