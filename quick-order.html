@@ -697,6 +697,16 @@ cash"
                     <span>Tax (8%)</span>
                     <span>$${order.tax.toFixed(2)}</span>
                 </div>
+            `;
+            if (order.cardFee) {
+                totalsHTML += `
+                <div class="total-row">
+                    <span>Card Fee</span>
+                    <span>$${order.cardFee.toFixed(2)}</span>
+                </div>
+                `;
+            }
+            totalsHTML += `
                 <div class="total-row grand-total">
                     <span>TOTAL</span>
                     <span>$${order.total.toFixed(2)}</span>
@@ -770,7 +780,11 @@ cash"
             
             // Payment badge
             const paymentBadge = document.getElementById('paymentBadge');
-            if (order.paymentType === 'prepaid') {
+            if (order.paymentType === 'prepaid_card') {
+                paymentBadge.className = 'payment-badge';
+                paymentBadge.style.background = '#9C27B0';
+                paymentBadge.innerHTML = '💳 PREPAID - CREDIT CARD';
+            } else if (order.paymentType === 'prepaid') {
                 paymentBadge.className = 'payment-badge';
                 paymentBadge.style.background = '#9C27B0';
                 paymentBadge.innerHTML = '✅ PREPAID';
