@@ -714,6 +714,37 @@ cash"
                 orderTypeBadge.style.background = '#4CAF50';
             }
             
+            // Vendor badge (3rd party delivery)
+            let vendorBadgeHTML = '';
+            if (order.vendor) {
+                const vendorColors = {
+                    'doordash': '#FF3008',
+                    'ubereats': '#06C167',
+                    'simplemenu': '#FF9800',
+                    'grubhub': '#F63440'
+                };
+                const vendorNames = {
+                    'doordash': '🚗 DOORDASH',
+                    'ubereats': '🚙 UBER EATS',
+                    'simplemenu': '📱 SIMPLE MENU',
+                    'grubhub': '🍔 GRUBHUB'
+                };
+                const color = vendorColors[order.vendor.toLowerCase()] || '#9C27B0';
+                const name = vendorNames[order.vendor.toLowerCase()] || `📦 ${order.vendor.toUpperCase()}`;
+                vendorBadgeHTML = `<div style="background: ${color}; color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; font-size: 18px; margin-bottom: 8px; text-align: center;">${name}</div>`;
+            }
+            
+            // Insert vendor badge before order type badge
+            const badgeContainer = orderTypeBadge.parentElement;
+            const existingVendorBadge = document.getElementById('vendorBadge');
+            if (existingVendorBadge) existingVendorBadge.remove();
+            if (vendorBadgeHTML) {
+                const vendorDiv = document.createElement('div');
+                vendorDiv.id = 'vendorBadge';
+                vendorDiv.innerHTML = vendorBadgeHTML;
+                badgeContainer.insertBefore(vendorDiv, badgeContainer.firstChild);
+            }
+            
             // Payment badge
             const paymentBadge = document.getElementById('paymentBadge');
             if (order.paymentType === 'card' || order.paymentType === 'credit') {
