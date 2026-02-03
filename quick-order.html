@@ -704,14 +704,37 @@ cash"
             `;
             document.getElementById('summaryTotals').innerHTML = totalsHTML;
             
-            // Order type badge (Dine In vs To Go)
+            // Order type badge (Dine In, To Go, or Delivery)
             const orderTypeBadge = document.getElementById('orderTypeBadge');
-            if (order.orderType === 'dine_in') {
+            if (order.orderType === 'delivery') {
+                orderTypeBadge.innerHTML = '🚗 DELIVERY';
+                orderTypeBadge.style.background = '#E91E63';
+            } else if (order.orderType === 'dine_in') {
                 orderTypeBadge.innerHTML = '🍽️ DINE IN';
                 orderTypeBadge.style.background = '#2196F3';
             } else {
                 orderTypeBadge.innerHTML = '📦 TO GO';
                 orderTypeBadge.style.background = '#4CAF50';
+            }
+            
+            // Delivery info display
+            const existingDeliveryInfo = document.getElementById('deliveryInfo');
+            if (existingDeliveryInfo) existingDeliveryInfo.remove();
+            
+            if (order.delivery) {
+                const deliveryHTML = `
+                    <div id="deliveryInfo" style="background: #FCE4EC; border: 2px solid #E91E63; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <div style="font-weight: bold; color: #C2185B; margin-bottom: 8px; font-size: 16px;">📍 DELIVER TO:</div>
+                        <div style="font-size: 18px; font-weight: bold;">${order.delivery.address || ''}</div>
+                        ${order.delivery.apt ? `<div style="font-size: 16px;">${order.delivery.apt}</div>` : ''}
+                        ${order.delivery.phone ? `<div style="margin-top: 8px; font-size: 16px;">📞 ${order.delivery.phone}</div>` : ''}
+                    </div>
+                `;
+                const badgeContainer = orderTypeBadge.parentElement;
+                const deliveryDiv = document.createElement('div');
+                deliveryDiv.id = 'deliveryInfo';
+                deliveryDiv.innerHTML = deliveryHTML;
+                badgeContainer.insertBefore(deliveryDiv, orderTypeBadge.nextSibling);
             }
             
             // Vendor badge (3rd party delivery)
