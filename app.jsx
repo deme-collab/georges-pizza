@@ -796,7 +796,7 @@ function GeorgesPizza() {
   const drinksMenu = [
     { name: 'Soda (20 oz.)', desc: 'Pepsi, 7up, Canada Dry, Arizona Tea, Mt Dew, Diet Pepsi, Sunkist, Root Beer', price: 2.50, has20ozChoice: true },
     { name: 'Soda (Can)', desc: "Day's Sodas", price: 1, hasCanChoice: true },
-    { name: 'Soda (2 Liter)', desc: "Pepsi, 7up, Day's Ginger Ale, Grape, Orange", price: 4, has2LiterChoice: true },
+    { name: 'Soda (2 Liter)', desc: "Pepsi, Day's Ginger Ale, Grape, Orange", price: 4, has2LiterChoice: true },
     { name: 'Water (16 oz.)', price: 1 },
     { name: 'Hot Coffee (Small)', price: 2 },
     { name: 'Hot Coffee (Large)', price: 4 },
