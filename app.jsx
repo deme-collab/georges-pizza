@@ -1214,7 +1214,7 @@ function GeorgesPizza() {
             </div>
 
             {/* Lunch Specials */}
-            <div className="yellow-section" style={{ marginBottom: 20 }}> {/* TESTING: removed disabled class */}
+            <div className={`yellow-section${!lunchAvailable ? ' disabled' : ''}`} style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div>
                   <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#8B4513' }}>
@@ -1237,7 +1237,7 @@ function GeorgesPizza() {
                   <div
                     key={s.num}
                     className="menu-item"
-                    onClick={() => setLunchCustomizing(s)} // TESTING: removed lunchAvailable check
+                    onClick={() => lunchAvailable && setLunchCustomizing(s)}
                     style={{ background: 'white', padding: '8px 10px', border: '1px solid #ddd', cursor: 'pointer' }}
                   >
                     <div>
