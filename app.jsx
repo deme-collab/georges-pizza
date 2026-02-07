@@ -74,7 +74,7 @@ function MaintenancePage({ message }) {
             textDecoration: 'none',
             marginBottom: 8
           }}>
-            📞 (215) 236-5288
+            ðŸ“ž (215) 236-5288
           </a>
           <a href="tel:215-236-6035" style={{ 
             display: 'block',
@@ -170,7 +170,7 @@ function MaintenancePage({ message }) {
           marginTop: 24,
           marginBottom: 0 
         }}>
-          201 W. Girard Ave, Philadelphia, PA • Est. 1984
+          201 W. Girard Ave, Philadelphia, PA â€¢ Est. 1984
         </p>
       </div>
     </div>
@@ -289,7 +289,7 @@ function getStoreStatus() {
         const dayName = i === 1 ? 'tomorrow' : DAY_NAMES[nextDay];
         return {
           isOpen: false,
-          message: `Closed for ${holiday} • Opens ${dayName} at ${formatHour(nextHours.open)}`,
+          message: `Closed for ${holiday} â€¢ Opens ${dayName} at ${formatHour(nextHours.open)}`,
           isHoliday: true
         };
       }
@@ -783,7 +783,7 @@ function GeorgesPizza() {
     { name: 'Pizza Fries', prices: { small: 7, large: 9 }, hasCondiments: true, hasSize: true },
     { name: 'Mozzarella Fries', desc: 'Fries topped with melted mozzarella', prices: { small: 7, large: 9 }, hasCondiments: true, hasSize: true },
     { name: 'Mega Fries', desc: 'Mozzarella, Cheese Whiz & Bacon', price: 9, hasCondiments: true },
-    { name: 'Onion Rings (12)', price: 5, hasCondiments: true },
+    { name: 'Onion Rings (12)', price: 6, hasCondiments: true },
     { name: 'Mozzarella Sticks (6)', price: 7, hasDippingSauce: true },
     { name: 'Fried Broccoli & Cheese (8)', price: 8 },
     { name: 'Jalapeno Poppers (6)', price: 8, hasDippingSauce: true },
@@ -812,7 +812,7 @@ function GeorgesPizza() {
     { name: 'Strawberry Shortcake', price: 5 },
     { name: 'Carrot Cake', price: 5 },
     { name: 'Ice Cream Pint', desc: 'Chocolate, Vanilla, or Strawberry', price: 5.5, hasIceCreamChoice: true },
-    { name: 'Milk Shake (16 oz.)', desc: 'Made with Bassetts Ice Cream • Chocolate, Vanilla, Strawberry, or Black & White', price: 5.5, hasMilkshakeChoice: true },
+    { name: 'Milk Shake (16 oz.)', desc: 'Made with Bassetts Ice Cream â€¢ Chocolate, Vanilla, Strawberry, or Black & White', price: 5.5, hasMilkshakeChoice: true },
   ];
 
   return (
@@ -1107,7 +1107,7 @@ function GeorgesPizza() {
             onClick={() => setCurrentView('checkout')}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            🛒 Cart ({cart.length}) ${cartTotal.toFixed(2)}
+            ðŸ›’ Cart ({cart.length}) ${cartTotal.toFixed(2)}
           </button>
         </div>
         <div className="checkered-bottom" />
@@ -1135,7 +1135,7 @@ function GeorgesPizza() {
             borderRadius: 8,
           }}
         >
-          <span style={{ fontSize: 20 }}>✓</span>
+          <span style={{ fontSize: 20 }}>âœ“</span>
           <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, fontSize: 16 }}>
             {cartNotification} added to cart!
           </span>
@@ -1153,7 +1153,7 @@ function GeorgesPizza() {
               marginLeft: 10,
             }}
           >
-            VIEW CART →
+            VIEW CART â†’
           </button>
         </div>
       )}
@@ -1179,10 +1179,10 @@ function GeorgesPizza() {
                   color: storeStatus.isOpen ? '#228B22' : '#C41E3A',
                   fontWeight: 600 
                 }}>
-                  {storeStatus.isOpen ? '✅' : '⏰'} {storeStatus.message}
+                  {storeStatus.isOpen ? 'âœ…' : 'â°'} {storeStatus.message}
                 </span>
-                {' • '}
-                <span>📞 215-236-5288</span>
+                {' â€¢ '}
+                <span>ðŸ“ž 215-236-5288</span>
               </p>
             </div>
 
@@ -1220,11 +1220,11 @@ function GeorgesPizza() {
                   <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#8B4513' }}>
                     $10 LUNCH SPECIALS
                   </div>
-                  <div style={{ fontSize: 12, color: '#666' }}>Mon-Fri 11am-2pm • No Substitutions</div>
+                  <div style={{ fontSize: 12, color: '#666' }}>Mon-Fri 11am-2pm â€¢ No Substitutions</div>
                 </div>
                 {lunchAvailable ? (
                   <span className="pulse" style={{ background: '#228B22', color: 'white', padding: '4px 10px', fontFamily: "'Oswald', sans-serif", fontSize: 11 }}>
-                    ● AVAILABLE NOW
+                    â— AVAILABLE NOW
                   </span>
                 ) : (
                   <span style={{ background: '#666', color: 'white', padding: '4px 10px', fontFamily: "'Oswald', sans-serif", fontSize: 11 }}>
@@ -1274,7 +1274,7 @@ function GeorgesPizza() {
             <div style={{ background: '#1a1a1a', color: 'white', padding: 20, marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, textAlign: 'center', fontSize: 13 }}>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>LOCATION</div>201 W. Girard Ave<br/>Philadelphia, PA</div>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>HOURS</div>Mon-Thu: 11am-10pm<br/>Fri-Sat: 11am-11pm<br/>Sun: 2pm-10pm</div>
-              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>$15 min • $3 fee<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span></div>
+              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>$15 min â€¢ $3 fee<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span></div>
             </div>
           </>
         )}
@@ -1426,7 +1426,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
       <div className="red-banner">{title}</div>
       <div className="menu-section-content">
         <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
-          Small 10" • Large 14" • X-Large 16" | Additional Topping $3
+          Small 10" â€¢ Large 14" â€¢ X-Large 16" | Additional Topping $3
         </div>
         {items.map((item, i) => (
           <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
@@ -1454,14 +1454,14 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
 
   return (
     <div>
-      <button type="button" onClick={onBack} className="btn-outline" style={{ marginBottom: 16 }}>← Back to Menu</button>
+      <button type="button" onClick={onBack} className="btn-outline" style={{ marginBottom: 16 }}>â† Back to Menu</button>
 
       {categoryId === 'pizza' && (
         <>
           {/* Half & Half Pizza Builder */}
           <div className="menu-section" style={{ marginBottom: 20 }}>
             <div className="green-stripe" />
-            <div className="red-banner">🍕 Build a Half & Half Pizza</div>
+            <div className="red-banner">ðŸ• Build a Half & Half Pizza</div>
             <div className="menu-section-content">
               <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
                 Want different toppings on each half? Build your perfect combination! Large & X-Large only. Priced as the more expensive half.
@@ -1472,7 +1472,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
               >
                 <div style={{ flex: 1 }}>
                   <span className="item-name">Half & Half Pizza</span>
-                  <div className="item-desc">Large 14" or X-Large 16" • Priced by most expensive half</div>
+                  <div className="item-desc">Large 14" or X-Large 16" â€¢ Priced by most expensive half</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <button type="button"
@@ -1575,7 +1575,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
                 </div>
               ))}
               <div style={{ marginTop: 12, padding: 10, background: '#FFF8DC', border: '1px solid #DAA520', fontSize: 12 }}>
-                <strong>Extras:</strong> Extra Beef +$3 • Extra Chicken +$1.50 • Extra Cheese +$1
+                <strong>Extras:</strong> Extra Beef +$3 â€¢ Extra Chicken +$1.50 â€¢ Extra Cheese +$1
               </div>
             </div>
           </div>
@@ -1584,7 +1584,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
 
       {categoryId === 'hoagies' && (
         <>
-          {renderSimpleMenu('Hoagies & Grinders', hoagiesMenu, 'Our Hoagies Travel! Fresh for 24 Hours. Prepared with the Finest Deli Meats & Cheeses. | Extra Meat +$3 • Extra Cheese +$1.50')}
+          {renderSimpleMenu('Hoagies & Grinders', hoagiesMenu, 'Our Hoagies Travel! Fresh for 24 Hours. Prepared with the Finest Deli Meats & Cheeses. | Extra Meat +$3 â€¢ Extra Cheese +$1.50')}
           {renderSimpleMenu('Hot Sandwiches', hotSandwichesMenu, 'Served on a Long Roll')}
         </>
       )}
@@ -1620,12 +1620,12 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
         </>
       )}
 
-      {categoryId === 'burgers' && renderSimpleMenu('Hamburgers', burgersMenu, 'Lettuce & Tomato +$1 • Extra Cheese +$1')}
+      {categoryId === 'burgers' && renderSimpleMenu('Hamburgers', burgersMenu, 'Lettuce & Tomato +$1 â€¢ Extra Cheese +$1')}
 
       {categoryId === 'gyros' && (
         <>
           {renderSimpleMenu('Greek Specialty Gyros', gyrosWrapsMenu.gyros, 'Served with Lettuce, Tomato, Onion & Tzatziki Sauce')}
-          {renderSimpleMenu('Wraps', gyrosWrapsMenu.wraps, 'Flour Tortilla • Served with Lettuce, Tomato, Onions, French Fries & Cole Slaw')}
+          {renderSimpleMenu('Wraps', gyrosWrapsMenu.wraps, 'Flour Tortilla â€¢ Served with Lettuce, Tomato, Onions, French Fries & Cole Slaw')}
           {renderSimpleMenu('Quesadillas', gyrosWrapsMenu.quesadillas, 'All Quesadillas Come with Green Peppers, Fried Onions & Side of Sour Cream')}
         </>
       )}
@@ -2998,7 +2998,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
         <div style={{ padding: 16, maxHeight: '70vh', overflowY: 'auto' }}>
           
           <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', padding: 10, marginBottom: 16, fontSize: 14, color: '#8B4513', fontWeight: 600 }}>
-            $10 Lunch Special • No Substitutions
+            $10 Lunch Special â€¢ No Substitutions
           </div>
 
           {/* Wings Options for #9 (chicken wing style - checkboxes) */}
@@ -3276,7 +3276,7 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
         <div style={{ padding: 16 }}>
           
           <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', padding: 10, marginBottom: 16, fontSize: 13, color: '#8B4513' }}>
-            Two 14" Large Plain Pizzas • Add toppings for +${toppingPrice} each
+            Two 14" Large Plain Pizzas â€¢ Add toppings for +${toppingPrice} each
           </div>
 
           {/* Pizza 1 Toppings */}
@@ -3343,7 +3343,7 @@ function StromboliMenu({ stromboliMenu, onAddToCart }) {
       <div className="red-banner">Strombolis</div>
       <div className="menu-section-content">
         <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
-          Small or Large • Green Peppers, Mushrooms, Grilled Onions available FREE • Extra Topping: Sm +$3 / Lg +$4
+          Small or Large â€¢ Green Peppers, Mushrooms, Grilled Onions available FREE â€¢ Extra Topping: Sm +$3 / Lg +$4
         </div>
         {stromboliMenu.items.map((item, i) => (
           <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
@@ -3495,7 +3495,7 @@ function SaladsMenu({ items, onAddToCart }) {
       <div className="red-banner">Salads</div>
       <div className="menu-section-content">
         <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
-          All salads available in Small or Large • Extra Meat or Cheese +$3
+          All salads available in Small or Large â€¢ Extra Meat or Cheese +$3
         </div>
         {items.map((item, i) => (
           <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
@@ -3703,7 +3703,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
               <button type="button" 
                 onClick={() => setDressingQty(Math.max(1, dressingQty - 1))}
                 style={{ width: 30, height: 30, border: '1px solid #ddd', background: 'white', cursor: 'pointer', fontSize: 16 }}
-              >−</button>
+              >âˆ’</button>
               <span style={{ fontWeight: 600, minWidth: 20, textAlign: 'center' }}>{dressingQty}</span>
               <button type="button"
                 onClick={() => setDressingQty(dressingQty + 1)}
@@ -3992,7 +3992,7 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
                   onClick={() => setPepperoniType('pork')}
                   style={{ flex: 1 }}
                 >
-                  <div style={{ fontSize: 14 }}>🐷 Pork</div>
+                  <div style={{ fontSize: 14 }}>ðŸ· Pork</div>
                   <div style={{ fontSize: 11, opacity: 0.8 }}>Traditional</div>
                 </button>
                 <button type="button"
@@ -4000,7 +4000,7 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
                   onClick={() => setPepperoniType('beef')}
                   style={{ flex: 1 }}
                 >
-                  <div style={{ fontSize: 14 }}>🐄 Beef</div>
+                  <div style={{ fontSize: 14 }}>ðŸ„ Beef</div>
                   <div style={{ fontSize: 11, opacity: 0.8 }}>Halal Option</div>
                 </button>
               </div>
@@ -4117,7 +4117,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="red-banner">🍕 Build Half & Half Pizza</div>
+        <div className="red-banner">ðŸ• Build Half & Half Pizza</div>
         <div style={{ padding: 16 }}>
           
           <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', padding: 10, marginBottom: 16, fontSize: 13, color: '#8B4513' }}>
@@ -4183,7 +4183,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
                   onClick={() => setPepperoniType('pork')}
                   style={{ flex: 1 }}
                 >
-                  <div style={{ fontSize: 14 }}>🐷 Pork</div>
+                  <div style={{ fontSize: 14 }}>ðŸ· Pork</div>
                   <div style={{ fontSize: 11, opacity: 0.8 }}>Traditional</div>
                 </button>
                 <button type="button"
@@ -4191,7 +4191,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
                   onClick={() => setPepperoniType('beef')}
                   style={{ flex: 1 }}
                 >
-                  <div style={{ fontSize: 14 }}>🐄 Beef</div>
+                  <div style={{ fontSize: 14 }}>ðŸ„ Beef</div>
                   <div style={{ fontSize: 11, opacity: 0.8 }}>Halal Option</div>
                 </button>
               </div>
@@ -4667,7 +4667,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
           ? `\n\nScheduled for: ${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
           : `\nEstimated ${orderType}: ${estimate}`;
         
-        alert(`🎉 Order #${result.orderNumber} Confirmed!\n\nA confirmation email has been sent to ${email}.${scheduleInfo}\n\n${result.testMode ? '(TEST MODE - No payment charged)' : 'Thank you for your payment!'}`);
+        alert(`ðŸŽ‰ Order #${result.orderNumber} Confirmed!\n\nA confirmation email has been sent to ${email}.${scheduleInfo}\n\n${result.testMode ? '(TEST MODE - No payment charged)' : 'Thank you for your payment!'}`);
         
         // Clear cart and go back to menu
         setCart([]);
@@ -4699,7 +4699,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
 
   return (
     <div>
-      <button type="button" onClick={onBack} className="btn-outline" style={{ marginBottom: 16 }}>← Continue Ordering</button>
+      <button type="button" onClick={onBack} className="btn-outline" style={{ marginBottom: 16 }}>â† Continue Ordering</button>
       
       {/* 1. YOUR ITEMS */}
       <div className="red-banner">Your Items</div>
@@ -4716,7 +4716,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontWeight: 700, color: '#C41E3A' }}>${item.price.toFixed(2)}</span>
-                  <button type="button" onClick={() => onRemove(item.id)} style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+                  <button type="button" onClick={() => onRemove(item.id)} style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', cursor: 'pointer', fontSize: 11 }}>âœ•</button>
                 </div>
               </div>
             ))}
@@ -4731,7 +4731,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
       {/* 2. FORGOT SOMETHING? - Upsells */}
       <div style={{ background: '#FFF8E1', border: '2px solid #FFB300', padding: 16, marginTop: 16 }}>
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 10, color: '#666' }}>
-          🍟 FORGOT SOMETHING?
+          ðŸŸ FORGOT SOMETHING?
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" onClick={() => onNavigateToCategory('sides')} style={{ flex: 1, minWidth: 100, padding: '10px 12px', background: 'white', border: '2px solid #C41E3A', color: '#C41E3A', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
@@ -4767,7 +4767,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
               fontFamily: "'Oswald', sans-serif",
             }}
           >
-            🏃 PICKUP
+            ðŸƒ PICKUP
             <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, fontFamily: 'inherit' }}>~15 minutes</div>
           </button>
           <button
@@ -4785,13 +4785,13 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
               fontFamily: "'Oswald', sans-serif",
             }}
           >
-            🚗 DELIVERY
-            <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, fontFamily: 'inherit' }}>35-45 minutes • $3 fee</div>
+            ðŸš— DELIVERY
+            <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, fontFamily: 'inherit' }}>35-45 minutes â€¢ $3 fee</div>
           </button>
         </div>
         {orderType === 'delivery' && isBelowDeliveryMinimum && (
           <div style={{ background: '#FFF3CD', color: '#856404', padding: 10, marginTop: 12, fontSize: 13, textAlign: 'center', fontWeight: 600 }}>
-            ⚠️ Delivery minimum is ${deliveryMinimum}. Add ${amountNeededForMinimum.toFixed(2)} more.
+            âš ï¸ Delivery minimum is ${deliveryMinimum}. Add ${amountNeededForMinimum.toFixed(2)} more.
           </div>
         )}
       </div>
@@ -4802,7 +4802,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         {couponApplied ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, background: '#E8F5E9', border: '1px solid #228B22' }}>
             <div>
-              <span style={{ fontWeight: 700, color: '#228B22' }}>✓ {couponApplied.code}</span>
+              <span style={{ fontWeight: 700, color: '#228B22' }}>âœ“ {couponApplied.code}</span>
               <span style={{ marginLeft: 8, color: '#666', fontSize: 13 }}>({couponApplied.desc})</span>
             </div>
             <button type="button" onClick={removeCoupon} style={{ background: 'none', border: 'none', color: '#C41E3A', cursor: 'pointer', fontWeight: 600 }}>Remove</button>
@@ -4829,7 +4829,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
             TIP YOUR DRIVER
           </div>
           <div style={{ fontSize: 12, color: '#228B22', marginBottom: 12 }}>
-            💚 100% of your tip goes directly to the driver.
+            ðŸ’š 100% of your tip goes directly to the driver.
           </div>
           
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
@@ -4918,7 +4918,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
               opacity: storeStatus.isOpen ? 1 : 0.6
             }}
           >
-            🚀 ASAP {!storeStatus.isOpen && '(Closed)'}
+            ðŸš€ ASAP {!storeStatus.isOpen && '(Closed)'}
           </button>
           <button
             type="button"
@@ -4934,19 +4934,19 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
               fontSize: 14
             }}
           >
-            📅 Schedule
+            ðŸ“… Schedule
           </button>
         </div>
 
         {scheduleType === 'asap' && storeStatus.isOpen && (
           <div style={{ background: '#E8F5E9', padding: 12, fontSize: 14, color: '#2E7D32' }}>
-            ✓ Your order will be ready {estimate}
+            âœ“ Your order will be ready {estimate}
           </div>
         )}
         
         {scheduleType === 'asap' && !storeStatus.isOpen && (
           <div style={{ background: '#FFF3E0', padding: 12, fontSize: 14, color: '#E65100' }}>
-            ⏰ We're currently closed. Please schedule your order for when we're open.
+            â° We're currently closed. Please schedule your order for when we're open.
           </div>
         )}
 
@@ -4984,7 +4984,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
 
         {scheduleType === 'scheduled' && scheduledDate && scheduledTime && (
           <div style={{ background: '#E3F2FD', padding: 12, fontSize: 14, color: '#1565C0', marginTop: 12 }}>
-            📅 Scheduled for {getAvailableDates().find(d => d.value === scheduledDate)?.label} at {getAvailableTimes().find(t => t.value === scheduledTime)?.label}
+            ðŸ“… Scheduled for {getAvailableDates().find(d => d.value === scheduledDate)?.label} at {getAvailableTimes().find(t => t.value === scheduledTime)?.label}
           </div>
         )}
       </div>
@@ -5084,7 +5084,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
           {zipError === 'outside' && (
             <div style={{ marginTop: 12, padding: 12, background: '#FFF0F0', border: '2px solid #C41E3A', borderRadius: 4 }}>
               <div style={{ fontWeight: 700, color: '#C41E3A', marginBottom: 8 }}>
-                😔 Sorry, this ZIP code is outside our delivery zone
+                ðŸ˜” Sorry, this ZIP code is outside our delivery zone
               </div>
               <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
                 We deliver to: {deliveryZones.join(', ')}
@@ -5108,7 +5108,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
                     fontSize: 14,
                   }}
                 >
-                  🚗 DoorDash
+                  ðŸš— DoorDash
                 </a>
                 <a 
                   href="https://www.ubereats.com/store/georges-pizza/example" 
@@ -5127,7 +5127,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
                     fontSize: 14,
                   }}
                 >
-                  🍔 UberEats
+                  ðŸ” UberEats
                 </a>
               </div>
             </div>
@@ -5135,7 +5135,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
 
           {!zipError && (
             <div style={{ marginTop: 10, padding: 8, background: '#E8F5E9', fontSize: 12, color: '#228B22' }}>
-              ✓ We deliver to: {deliveryZones.join(', ')} • ${deliveryMinimum} minimum
+              âœ“ We deliver to: {deliveryZones.join(', ')} â€¢ ${deliveryMinimum} minimum
             </div>
           )}
         </div>
@@ -5248,7 +5248,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
           textAlign: 'center'
         }}>
           <div style={{ fontWeight: 600, color: '#856404', marginBottom: 4 }}>
-            ⚠️ Delivery Minimum Not Met
+            âš ï¸ Delivery Minimum Not Met
           </div>
           <div style={{ fontSize: 13, color: '#856404' }}>
             Add ${amountNeededForMinimum.toFixed(2)} more to your order for delivery (${deliveryMinimum} minimum)
@@ -5258,7 +5258,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
             onClick={onBack}
             style={{ marginTop: 10, fontSize: 12 }}
           >
-            ← Add More Items
+            â† Add More Items
           </button>
         </div>
       )}
@@ -5305,14 +5305,14 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
 
           {subtotal >= 45 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, color: '#228B22' }}>
-              <span>🎉 FREE 2 Liter Soda!</span>
+              <span>ðŸŽ‰ FREE 2 Liter Soda!</span>
               <span style={{ fontWeight: 600 }}>$0.00</span>
             </div>
           )}
           
           {subtotal > 0 && subtotal < 45 && (
             <div style={{ fontSize: 12, color: '#666', paddingTop: 8, fontStyle: 'italic' }}>
-              💡 Add ${(45 - subtotal).toFixed(2)} more for a FREE 2 Liter Soda!
+              ðŸ’¡ Add ${(45 - subtotal).toFixed(2)} more for a FREE 2 Liter Soda!
             </div>
           )}
           
@@ -5329,11 +5329,11 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum} 
         style={{ width: '100%', marginTop: 16, padding: 14, fontSize: 16 }}
       >
-        {processing ? 'Processing...' : `🧪 Place Test Order ($${finalTotal.toFixed(2)})`}
+        {processing ? 'Processing...' : `ðŸ§ª Place Test Order ($${finalTotal.toFixed(2)})`}
       </button>
 
       <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#666' }}>
-        🧪 TEST MODE - No payment will be charged
+        ðŸ§ª TEST MODE - No payment will be charged
       </div>
 
       {/* Alternative Delivery Partners - Always visible at bottom */}
