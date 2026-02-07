@@ -2802,7 +2802,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { id: 'steak-mushrooms', name: 'Mushrooms', price: 2 },
     { id: 'steak-bacon', name: 'Bacon', price: 2 },
     { id: 'steak-hot-peppers', name: 'Hot Peppers', price: 0 },
-    { id: 'steak-sweet-peppers', name: 'Sweet Peppers', price: 0 },
+    { id: 'steak-sweet-peppers', name: 'Sweet Peppers', price: 1 },
     { id: 'steak-pepperoni', name: 'Pepperoni', price: 2 },
     { id: 'steak-pizza-sauce', name: 'Pizza Sauce', price: 2 },
   ];
