@@ -1464,7 +1464,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
             <div className="red-banner">🍕 Build a Half & Half Pizza</div>
             <div className="menu-section-content">
               <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
-                Want different toppings on each half? Build your perfect combination! Large & X-Large only. Priced as the more expensive half.
+                Want different toppings on each half? Build your perfect combination! Large & X-Large only.
               </div>
               <div 
                 className="menu-item" 
