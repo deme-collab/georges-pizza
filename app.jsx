@@ -610,7 +610,7 @@ function GeorgesPizza() {
       { name: '5 Chicken Wings Platter', desc: 'With fries, coleslaw & garlic bread', price: 15, hasChickenWingsMods: true, hasWingPlatterMods: true },
     ],
     buffalo: [
-      { name: '10 Buffalo Wings', desc: '1 Mild, Hot, or BBQ & Blue Cheese', price: 12, hasBuffaloMods: true },
+      { name: '10 Buffalo Wings', desc: 'Your Choice of 1 Mild, Hot, or BBQ Sauce & 1 Blue Cheese included', price: 12, hasBuffaloMods: true },
       { name: '10 Buffalo Wings Platter', desc: 'With fries', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
       { name: '10 Wing Dings (Breaded)', price: 15, hasBuffaloMods: true },
       { name: '10 Wing Dings Platter', desc: 'With fries, coleslaw & garlic bread', price: 18, hasBuffaloMods: true, hasWingPlatterMods: true },
@@ -1782,8 +1782,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         optional: [
           { id: 'sauce-on-side', name: 'Sauce on the Side', price: 0 },
           { id: 'extra-sauce', name: 'Extra Sauce', price: 0.75 },
-          { id: 'celery', name: 'Celery Sticks', price: 0 },
-          { id: 'extra bleu-cheese', name: 'Bleu Cheese', price: 1 },
+          { id: 'extra-bleu-cheese', name: 'Extra Bleu Cheese', price: 1 },
           { id: 'ranch', name: 'Ranch', price: 1 },
         ],
         hasPlatterFries: item.hasWingPlatterMods,
