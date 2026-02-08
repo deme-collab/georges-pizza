@@ -1783,7 +1783,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           { id: 'sauce-on-side', name: 'Sauce on the Side', price: 0 },
           { id: 'extra-sauce', name: 'Extra Sauce', price: 0.75 },
           { id: 'celery', name: 'Celery Sticks', price: 0 },
-          { id: 'bleu-cheese', name: 'Bleu Cheese', price: 1 },
+          { id: 'extra bleu-cheese', name: 'Bleu Cheese', price: 1 },
           { id: 'ranch', name: 'Ranch', price: 1 },
         ],
         hasPlatterFries: item.hasWingPlatterMods,
