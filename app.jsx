@@ -611,13 +611,13 @@ function GeorgesPizza() {
     ],
     buffalo: [
       { name: '10 Buffalo Wings', desc: 'Your Choice of 1 Mild, Hot, or BBQ Sauce & 1 Blue Cheese included', price: 12, hasBuffaloMods: true },
-      { name: '10 Buffalo Wings Platter', desc: 'With fries', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
+      { name: '10 Buffalo Wings Platter', desc: 'With fries, coleslaw & garlic bread', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
       { name: '10 Wing Dings (Breaded)', price: 15, hasBuffaloMods: true },
       { name: '10 Wing Dings Platter', desc: 'With fries, coleslaw & garlic bread', price: 18, hasBuffaloMods: true, hasWingPlatterMods: true },
     ],
     nuggets: [
       { name: '10 Nuggets', desc: 'Honey Mustard, BBQ, or Ranch', price: 8, hasDipChoice: true },
-      { name: '10 Nuggets Platter', desc: 'With fries, coleslaw, & garlic bread', price: 13, hasDipChoice: true, hasWingPlatterMods: true },
+      { name: '10 Nuggets Platter', desc: 'With fries, coleslaw, & garlic bread', price: 14, hasDipChoice: true, hasWingPlatterMods: true },
       { name: '20 Nuggets', price: 16, hasDipChoice: true },
       { name: '20 Nuggets Platter', desc: 'With fries, coleslaw & garlic bread', price: 18, hasDipChoice: true, hasWingPlatterMods: true },
     ],
