@@ -757,10 +757,9 @@ function GeorgesPizza() {
   const gyrosWrapsMenu = {
     gyros: [
       { name: 'Gyro', price: 10, hasGyroMods: true },
-      { name: 'Gyro with Platter', desc: 'With fries & drink', price: 12, hasGyroMods: true },
-      { name: 'Chicken Gyro', price: 10, hasGyroMods: true },
-      { name: 'Chicken Gyro with Platter', price: 12, hasGyroMods: true },
+      { name: 'Gyro with Platter', desc: 'With fries', price: 13, hasGyroMods: true },
       { name: 'Grilled Chicken Gyro', desc: 'Lettuce, Tomato, Onion & Tzatziki', price: 10, hasGyroMods: true },
+      { name: 'Grilled Chicken Gyro with Platter', desc: 'With fries', price: 13, hasGyroMods: true },
     ],
     wraps: [
       { name: 'Italian Hoagie Wrap', desc: 'With Fries & Cole Slaw', price: 12, hasWrapMods: true, ingredients: ['provolone', 'ham', 'genoa-salami', 'cappicola', 'lettuce', 'tomato', 'onion', 'oil'] },
