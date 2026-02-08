@@ -770,7 +770,7 @@ function GeorgesPizza() {
       { name: "George's Special Cheese Steak Wrap", desc: 'Onion, Green Peppers, Pepperoni, Mushrooms, Sauce & Provolone', price: 13, hasWrapMods: true, ingredients: ['steak', 'provolone', 'onion', 'green-peppers', 'pepperoni', 'mushrooms', 'sauce'] },
     ],
     quesadillas: [
-      { name: 'Veggie Quesadilla', desc: 'Tomatoes, Mushrooms, Green Peppers, Fried Onions', price: 11, hasQuesadillaMods: true, ingredients: ['tomatoes', 'mushrooms', 'green-peppers', 'fried-onions', 'sour-cream'] },
+      { name: 'Veggie Quesadilla', desc: 'Tomatoes, Mushrooms, Green Peppers, Fried Onions', price: 13, hasQuesadillaMods: true, ingredients: ['tomatoes', 'mushrooms', 'green-peppers', 'fried-onions', 'sour-cream'] },
       { name: 'Grilled Chicken Quesadilla', desc: 'With Green Peppers, Fried Onions', price: 13, hasQuesadillaMods: true, ingredients: ['grilled-chicken', 'green-peppers', 'fried-onions', 'sour-cream'] },
       { name: 'Ground Beef Quesadilla', desc: 'With Green Peppers, Fried Onions', price: 13, hasQuesadillaMods: true, ingredients: ['ground-beef', 'green-peppers', 'fried-onions', 'sour-cream'] },
     ],
