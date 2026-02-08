@@ -540,7 +540,7 @@ function GeorgesPizza() {
       { name: 'Spinach', desc: 'Fresh Spinach on Garlic Base', prices: { small: 12, large: 13, xlarge: 17 } },
       { name: 'Broccoli', desc: 'Fresh Broccoli on Garlic Base', prices: { small: 12, large: 15, xlarge: 19 } },
       { name: 'Vegetarian', desc: 'Broccoli, Green Peppers, Onions, Tomatoes & Mushrooms', prices: { small: 14, large: 18, xlarge: 19 } },
-      { name: 'Ricotta & Mozzarella', desc: 'Creamy Ricotta & Mozzarella Blend', prices: { small: 11, large: 15, xlarge: 17 } },
+      { name: 'Ricotta & Mozzarella', desc: 'Creamy Ricotta & Mozzarella Blend', prices: { small: 12, large: 15, xlarge: 17 } },
       { name: 'Greek', desc: 'Feta, Mozzarella, Spinach, Tomatoes, Olives & Oregano', prices: { small: 14, large: 18, xlarge: 19 } },
       { name: 'Hawaiian', desc: 'Sweet Pineapple & Sliced Ham', prices: { small: 14, large: 18, xlarge: 19 } },
     ],
