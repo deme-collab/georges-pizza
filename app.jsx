@@ -518,7 +518,7 @@ function GeorgesPizza() {
       { name: 'Ham', desc: 'Sliced Ham', prices: { small: 11, large: 14, xlarge: 17 } },
       { name: 'Onion', desc: 'Fresh Onions', prices: { small: 11, large: 14, xlarge: 17 } },
       { name: 'Green Peppers', desc: 'Fresh Green Peppers', prices: { small: 11, large: 14, xlarge: 17 } },
-      { name: 'Ground Beef', desc: 'Seasoned Ground Beef', prices: { small: 11, large: 14, xlarge: 17 } },
+      { name: 'Ground Beef', desc: 'Seasoned Ground Beef', prices: { small: 11, large: 14, xlarge: 18 } },
       { name: 'Imported Anchovies', desc: 'Imported Anchovies', prices: { small: 12, large: 15, xlarge: 19 } },
       { name: 'Black Olives', desc: 'Sliced Black Olives', prices: { small: 12, large: 15, xlarge: 18 } },
       { name: 'Bacon', desc: 'Crispy Bacon', prices: { small: 12, large: 15, xlarge: 19 } },
