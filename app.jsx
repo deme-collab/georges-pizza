@@ -758,7 +758,7 @@ function GeorgesPizza() {
     gyros: [
       { name: 'Gyro', price: 10, hasGyroMods: true },
       { name: 'Gyro with Platter', desc: 'With fries', price: 13, hasGyroMods: true },
-      { name: 'Grilled Chicken Gyro', desc: 'Lettuce, Tomato, Onion & Tzatziki', price: 10, hasGyroMods: true },
+      { name: 'Grilled Chicken Gyro', price: 10, hasGyroMods: true },
       { name: 'Grilled Chicken Gyro with Platter', desc: 'With fries', price: 13, hasGyroMods: true },
     ],
     wraps: [
