@@ -613,7 +613,7 @@ function GeorgesPizza() {
       { name: '10 Buffalo Wings', desc: 'Your Choice of 1 Mild, Hot, or BBQ Sauce & 1 Blue Cheese included', price: 12, hasBuffaloMods: true },
       { name: '10 Buffalo Wings Platter', desc: 'With fries, coleslaw & garlic bread', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
       { name: '10 Wing Dings (Breaded)', price: 15, hasBuffaloMods: true },
-      { name: '10 Wing Dings Platter', desc: 'With fries, coleslaw & garlic bread', price: 18, hasBuffaloMods: true, hasWingPlatterMods: true },
+      { name: '10 Wing Dings Platter', desc: 'With fries, coleslaw & garlic bread', price: 20, hasBuffaloMods: true, hasWingPlatterMods: true },
     ],
     nuggets: [
       { name: '10 Nuggets', desc: 'Honey Mustard, BBQ, or Ranch', price: 8, hasDipChoice: true },
@@ -1777,7 +1777,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
       return {
         title: 'Customize Your Buffalo Wings',
         required: [
-          { id: 'sauce', name: 'Sauce', options: ['Mild', 'Hot', 'BBQ', 'Plain'] }
+          { id: 'sauce', name: 'Sauce', options: ['Mild', 'Hot', 'BBQ', 'Dry - No Sauce'] }
         ],
         optional: [
           { id: 'sauce-on-side', name: 'Sauce on the Side', price: 0 },
