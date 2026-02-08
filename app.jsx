@@ -729,10 +729,10 @@ function GeorgesPizza() {
   ];
 
   const pastaMenu = [
-    { name: 'Pasta with Tomato Sauce', desc: 'With Garlic Bread & Salad', price: 11, hasPastaChoice: true },
-    { name: 'Pasta with Meatballs', desc: 'Fresh Handcrafted Meatballs', price: 14, hasPastaChoice: true },
-    { name: 'Pasta with Italian Sausage', price: 14, hasPastaChoice: true },
-    { name: 'Pasta with Chicken Breast', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Tomato Sauce', desc: 'With Garlic Bread & Salad', price: 12, hasPastaChoice: true },
+    { name: 'Pasta with Meatballs', desc: 'Fresh Handcrafted Meatballs', price: 15, hasPastaChoice: true },
+    { name: 'Pasta with Italian Sausage', price: 15, hasPastaChoice: true },
+    { name: 'Pasta with Chicken Breast', price: 15, hasPastaChoice: true },
   ];
 
   const seafoodMenu = [
