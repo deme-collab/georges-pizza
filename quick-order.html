@@ -429,9 +429,9 @@
     <div class="container">
         <!-- PIN Screen -->
         <div class="pin-screen" id="pinScreen">
-            <h1>ðŸ• George's Quick Order</h1>
+            <h1>🍕 George's Quick Order</h1>
             <p>Enter PIN to access</p>
-            <input type="password" class="pin-input" id="pinInput" maxlength="6" inputmode="numeric" placeholder="â€¢â€¢â€¢â€¢">
+            <input type="password" class="pin-input" id="pinInput" maxlength="6" inputmode="numeric" placeholder="••••">
             <div class="pin-error" id="pinError"></div>
             <button class="pin-btn" id="pinBtn" onclick="verifyPin()">ENTER</button>
         </div>
@@ -439,7 +439,7 @@
         <!-- Order Entry Screen -->
         <div class="order-screen" id="orderScreen">
             <div class="header">
-                <h1>ðŸ• Quick Order</h1>
+                <h1>🍕 Quick Order</h1>
                 <p>George's Pizza - Walk-In Orders</p>
             </div>
             
@@ -478,14 +478,14 @@ cash"
         <!-- Summary Screen -->
         <div class="summary-screen" id="summaryScreen">
             <div class="header">
-                <h1>ðŸ“‹ Order Summary</h1>
+                <h1>📋 Order Summary</h1>
                 <p>Review before printing</p>
             </div>
             
             <div class="summary-card">
                 <div class="summary-header">
                     <h2>WALK-IN ORDER</h2>
-                    <div class="order-type-badge" id="orderTypeBadge">ðŸ“¦ TO GO</div>
+                    <div class="order-type-badge" id="orderTypeBadge">📦 TO GO</div>
                 </div>
                 
                 <div class="summary-items" id="summaryItems">
@@ -497,7 +497,7 @@ cash"
                 </div>
                 
                 <div class="payment-badge cash" id="paymentBadge">
-                    ðŸ’µ CASH
+                    💵 CASH
                 </div>
                 
                 <div class="summary-notes" id="summaryNotes" style="display: none;">
@@ -506,14 +506,14 @@ cash"
             </div>
             
             <div class="action-buttons">
-                <button class="edit-btn" onclick="editOrder()">âœï¸ EDIT</button>
-                <button class="print-btn" id="printBtn" onclick="printOrder()">ðŸ–¨ï¸ PRINT</button>
+                <button class="edit-btn" onclick="editOrder()">✏️ EDIT</button>
+                <button class="print-btn" id="printBtn" onclick="printOrder()">🖨️ PRINT</button>
             </div>
         </div>
         
         <!-- Success Screen -->
         <div class="success-screen" id="successScreen">
-            <div class="success-icon">âœ…</div>
+            <div class="success-icon">✅</div>
             <h2>Order Sent to Kitchen!</h2>
             <div class="order-num" id="successOrderNum">#5001</div>
             <button class="new-order-btn" onclick="newOrder()">NEW ORDER</button>
@@ -725,13 +725,13 @@ cash"
             // Order type badge (Dine In, To Go, or Delivery)
             const orderTypeBadge = document.getElementById('orderTypeBadge');
             if (order.orderType === 'delivery') {
-                orderTypeBadge.innerHTML = 'ðŸš— DELIVERY';
+                orderTypeBadge.innerHTML = '🚗 DELIVERY';
                 orderTypeBadge.style.background = '#E91E63';
             } else if (order.orderType === 'dine_in') {
-                orderTypeBadge.innerHTML = 'ðŸ½ï¸ DINE IN';
+                orderTypeBadge.innerHTML = '🍽️ DINE IN';
                 orderTypeBadge.style.background = '#2196F3';
             } else {
-                orderTypeBadge.innerHTML = 'ðŸ“¦ TO GO';
+                orderTypeBadge.innerHTML = '📦 TO GO';
                 orderTypeBadge.style.background = '#4CAF50';
             }
             
@@ -742,10 +742,10 @@ cash"
             if (order.delivery) {
                 const deliveryHTML = `
                     <div id="deliveryInfo" style="background: #FCE4EC; border: 2px solid #E91E63; border-radius: 8px; padding: 12px; margin: 8px 0;">
-                        <div style="font-weight: bold; color: #C2185B; margin-bottom: 8px; font-size: 16px;">ðŸ“ DELIVER TO:</div>
+                        <div style="font-weight: bold; color: #C2185B; margin-bottom: 8px; font-size: 16px;">📍 DELIVER TO:</div>
                         <div style="font-size: 18px; font-weight: bold;">${order.delivery.address || ''}</div>
                         ${order.delivery.apt ? `<div style="font-size: 16px;">${order.delivery.apt}</div>` : ''}
-                        ${order.delivery.phone ? `<div style="margin-top: 8px; font-size: 16px;">ðŸ“ž ${order.delivery.phone}</div>` : ''}
+                        ${order.delivery.phone ? `<div style="margin-top: 8px; font-size: 16px;">📞 ${order.delivery.phone}</div>` : ''}
                     </div>
                 `;
                 const badgeContainer = orderTypeBadge.parentElement;
@@ -765,13 +765,13 @@ cash"
                     'grubhub': '#F63440'
                 };
                 const vendorNames = {
-                    'doordash': 'ðŸš— DOORDASH',
-                    'ubereats': 'ðŸš™ UBER EATS',
-                    'simplemenu': 'ðŸ“± SIMPLE MENU',
-                    'grubhub': 'ðŸ” GRUBHUB'
+                    'doordash': '🚗 DOORDASH',
+                    'ubereats': '🚙 UBER EATS',
+                    'simplemenu': '📱 SIMPLE MENU',
+                    'grubhub': '📍 GRUBHUB'
                 };
                 const color = vendorColors[order.vendor.toLowerCase()] || '#9C27B0';
-                const name = vendorNames[order.vendor.toLowerCase()] || `ðŸ“¦ ${order.vendor.toUpperCase()}`;
+                const name = vendorNames[order.vendor.toLowerCase()] || `📦 ${order.vendor.toUpperCase()}`;
                 vendorBadgeHTML = `<div style="background: ${color}; color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; font-size: 18px; margin-bottom: 8px; text-align: center;">${name}</div>`;
             }
             
@@ -791,25 +791,25 @@ cash"
             if (order.paymentType === 'prepaid_card') {
                 paymentBadge.className = 'payment-badge';
                 paymentBadge.style.background = '#9C27B0';
-                paymentBadge.innerHTML = 'ðŸ’³ PREPAID - CREDIT CARD';
+                paymentBadge.innerHTML = '💳 PREPAID - CREDIT CARD';
             } else if (order.paymentType === 'prepaid') {
                 paymentBadge.className = 'payment-badge';
                 paymentBadge.style.background = '#9C27B0';
-                paymentBadge.innerHTML = 'âœ… PREPAID';
+                paymentBadge.innerHTML = '✅ PREPAID';
             } else if (order.paymentType === 'card' || order.paymentType === 'credit') {
                 paymentBadge.className = 'payment-badge card';
                 paymentBadge.style.background = '';
-                paymentBadge.innerHTML = 'ðŸ’³ CARD';
+                paymentBadge.innerHTML = '💳 CARD';
             } else {
                 paymentBadge.className = 'payment-badge cash';
                 paymentBadge.style.background = '';
-                paymentBadge.innerHTML = 'ðŸ’µ CASH';
+                paymentBadge.innerHTML = '💵 CASH';
             }
             
             // Notes
             const notesDiv = document.getElementById('summaryNotes');
             if (order.notes) {
-                notesDiv.textContent = 'âš ï¸ ' + order.notes;
+                notesDiv.textContent = '⚠️ ' + order.notes;
                 notesDiv.style.display = 'block';
             } else {
                 notesDiv.style.display = 'none';
@@ -856,7 +856,7 @@ cash"
             
             printBtn.disabled = false;
             document.querySelector('.edit-btn').disabled = false;
-            printBtn.innerHTML = 'ðŸ–¨ï¸ PRINT';
+            printBtn.innerHTML = '🖨️ PRINT';
         }
         
         function newOrder() {
