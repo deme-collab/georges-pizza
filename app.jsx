@@ -2047,7 +2047,11 @@ function GenericCustomizer({ item, onClose, onAdd }) {
   };
 
   const getTotalPrice = () => {
-    let price = item.price + getExtrasPrice() + getPlatterFriesPrice();
+    let price = item.price + getExtrasPrice();
+    // Only add fries options price if fries are included (or not a wrap)
+    if (!item.hasWrapMods || includeFries) {
+      price += getPlatterFriesPrice();
+    }
     // Wraps: -$2 for sandwich only (no fries & coleslaw)
     if (item.hasWrapMods && !includeFries) {
       price -= 2;
@@ -2070,9 +2074,15 @@ function GenericCustomizer({ item, onClose, onAdd }) {
     
     // For hoagies/sandwiches/wraps, track what was removed from ingredients
     if ((options.isHoagie || options.isSandwich || options.isWrap) && item.ingredients) {
-      // Wrap: note if sandwich only (no fries)
+      // Wrap: note if sandwich only (no fries), or add fries customizations
       if (item.hasWrapMods && !includeFries) {
         mods.push('** SANDWICH ONLY - NO FRIES **');
+      } else if (item.hasWrapMods && includeFries && platterFriesOptions.length > 0) {
+        const friesModNames = platterFriesOptions.map(id => {
+          const opt = platterFriesOpts.find(o => o.id === id);
+          return opt ? opt.name : id;
+        });
+        mods.push('Fries: ' + friesModNames.join(', '));
       }
       const removed = item.ingredients.filter(ing => !includedIngredients.includes(ing));
       if (removed.length > 0) {
@@ -2246,21 +2256,43 @@ function GenericCustomizer({ item, onClose, onAdd }) {
 
           {/* Wrap Fries & Coleslaw Option */}
           {options.isWrap && (
-            <div style={{ marginBottom: 16, padding: 12, background: includeFries ? '#f0fdf0' : '#fff8f0', borderRadius: 8, border: includeFries ? '2px solid #228B22' : '2px dashed #ccc' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 15 }}>
-                <input 
-                  type="checkbox" 
-                  checked={includeFries} 
-                  onChange={() => setIncludeFries(!includeFries)}
-                  style={{ width: 20, height: 20 }}
-                />
-                <span style={{ flex: 1, fontWeight: 600 }}>
-                  Include Fries & Cole Slaw
-                </span>
-                <span style={{ color: !includeFries ? '#C41E3A' : '#228B22', fontWeight: 700, fontSize: 14 }}>
-                  {includeFries ? 'INCLUDED' : '-$2.00'}
-                </span>
-              </label>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ 
+                padding: 12, 
+                background: includeFries ? '#f0fdf0' : '#fff8f0', 
+                borderRadius: 8, 
+                border: includeFries ? '2px solid #228B22' : '2px dashed #ccc',
+                marginBottom: includeFries ? 8 : 0
+              }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 15 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={includeFries} 
+                    onChange={() => setIncludeFries(!includeFries)}
+                    style={{ width: 20, height: 20 }}
+                  />
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    Include Fries & Cole Slaw
+                  </span>
+                  <span style={{ color: !includeFries ? '#C41E3A' : '#228B22', fontWeight: 700, fontSize: 14 }}>
+                    {includeFries ? 'INCLUDED' : '-$2.00'}
+                  </span>
+                </label>
+              </div>
+              {includeFries && (
+                <div style={{ paddingLeft: 12 }}>
+                  <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#666' }}>FRIES OPTIONS</div>
+                  {platterFriesOpts.map(opt => (
+                    <label key={opt.id} className="checkbox-row">
+                      <input type="checkbox" checked={platterFriesOptions.includes(opt.id)} onChange={() => togglePlatterFries(opt.id)} />
+                      <span style={{ flex: 1 }}>{opt.name}</span>
+                      <span style={{ color: opt.price > 0 ? '#C41E3A' : '#228B22', fontWeight: 600 }}>
+                        {opt.price > 0 ? `+$${opt.price.toFixed(2)}` : 'FREE'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
