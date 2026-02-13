@@ -1396,7 +1396,12 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
                 {item.desc && <div className="item-desc">{item.desc}</div>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span className="item-price">${item.price?.toFixed(2) || 'TBD'}</span>
+                <span className="item-price">
+                  {item.hasWrapMods 
+                    ? `$${(item.price - 2).toFixed(2)} - $${item.price.toFixed(2)}`
+                    : `$${item.price?.toFixed(2) || 'TBD'}`
+                  }
+                </span>
                 <button type="button"
                   className="add-btn"
                   onClick={(e) => {
@@ -1625,7 +1630,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
       {categoryId === 'gyros' && (
         <>
           {renderSimpleMenu('Greek Specialty Gyros', gyrosWrapsMenu.gyros, 'Served with Lettuce, Tomato, Onion & Tzatziki Sauce')}
-          {renderSimpleMenu('Wraps', gyrosWrapsMenu.wraps, 'Flour Tortilla • Served with Lettuce, Tomato, Onions, French Fries & Cole Slaw')}
+          {renderSimpleMenu('Wraps', gyrosWrapsMenu.wraps, 'Flour Tortilla • Served with Lettuce, Tomato, Onions, French Fries & Cole Slaw | Sandwich Only: -$2')}
           {renderSimpleMenu('Quesadillas', gyrosWrapsMenu.quesadillas, 'All Quesadillas Come with Green Peppers, Fried Onions & Side of Sour Cream')}
         </>
       )}
@@ -1731,7 +1736,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
   const [includeFries, setIncludeFries] = useState(true);
   const platterFriesOpts = [
     { id: 'fries-salt', name: 'Salt', price: 0 },
-    { id: 'fries-pepper', name: 'Pepper', price: 0 },
+    { id: 'fries-pepper', name: 'Black Pepper', price: 0 },
     { id: 'fries-ketchup', name: 'Ketchup', price: 0 },
     { id: 'cheese-whiz', name: 'Cheese Whiz', price: 2 },
   ];
@@ -1754,7 +1759,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           { id: 'pickles', name: 'Pickles', price: 0 },
           { id: 'raw-onions', name: 'Raw Onions', price: 0 },
           { id: 'salt', name: 'Salt', price: 0 },
-          { id: 'pepper', name: 'Pepper', price: 0 },
+          { id: 'pepper', name: 'Black Pepper', price: 0 },
           { id: 'mayo', name: 'Mayo', price: 0 },
           { id: 'ketchup', name: 'Ketchup', price: 0 },
           { id: 'mustard', name: 'Mustard', price: 0 },
@@ -1767,7 +1772,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         required: [],
         optional: [
           { id: 'salt', name: 'Salt', price: 0 },
-          { id: 'pepper', name: 'Pepper', price: 0 },
+          { id: 'pepper', name: 'Black Pepper', price: 0 },
           { id: 'ketchup', name: 'Ketchup', price: 0 },
           { id: 'hot-sauce-side', name: 'Hot Sauce on the Side', price: 0 },
           { id: 'bleu-cheese', name: 'Bleu Cheese', price: 1 },
@@ -1814,7 +1819,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         required: [],
         optional: [
           { id: 'salt', name: 'Salt', price: 0 },
-          { id: 'pepper', name: 'Pepper', price: 0 },
+          { id: 'pepper', name: 'Black Pepper', price: 0 },
           { id: 'olive-oil', name: 'Olive Oil', price: 0 },
           { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
           { id: 'oregano', name: 'Oregano', price: 0 },
@@ -2254,9 +2259,34 @@ function GenericCustomizer({ item, onClose, onAdd }) {
             </div>
           )}
 
-          {/* Wrap Fries & Coleslaw Option */}
+          {/* Wrap Ingredients (shown first - this is the sandwich) */}
+          {options.isWrap && options.wrapIngredients && options.wrapIngredients.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+                SANDWICH INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
+              </div>
+              {options.wrapIngredients.map(ing => (
+                <label key={ing.id} className="checkbox-row">
+                  <input type="checkbox" checked={includedIngredients.includes(ing.id)} onChange={() => toggleIngredient(ing.id)} />
+                  <span style={{ 
+                    flex: 1, 
+                    textDecoration: !includedIngredients.includes(ing.id) ? 'line-through' : 'none',
+                    color: !includedIngredients.includes(ing.id) ? '#999' : 'inherit'
+                  }}>
+                    {ing.name}
+                  </span>
+                  <span style={{ color: '#228B22', fontWeight: 600, fontSize: 11 }}>INCLUDED</span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* Wrap Fries & Coleslaw Option (shown after ingredients) */}
           {options.isWrap && (
             <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+                SIDES
+              </div>
               <div style={{ 
                 padding: 12, 
                 background: includeFries ? '#f0fdf0' : '#fff8f0', 
@@ -2272,16 +2302,16 @@ function GenericCustomizer({ item, onClose, onAdd }) {
                     style={{ width: 20, height: 20 }}
                   />
                   <span style={{ flex: 1, fontWeight: 600 }}>
-                    Include Fries & Cole Slaw
+                    Fries & Cole Slaw
                   </span>
                   <span style={{ color: !includeFries ? '#C41E3A' : '#228B22', fontWeight: 700, fontSize: 14 }}>
-                    {includeFries ? 'INCLUDED' : '-$2.00'}
+                    {includeFries ? 'INCLUDED' : 'Sandwich Only (-$2.00)'}
                   </span>
                 </label>
               </div>
               {includeFries && (
-                <div style={{ paddingLeft: 12 }}>
-                  <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#666' }}>FRIES OPTIONS</div>
+                <div style={{ paddingLeft: 12, marginTop: 4 }}>
+                  <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#888' }}>FRIES TOPPINGS</div>
                   {platterFriesOpts.map(opt => (
                     <label key={opt.id} className="checkbox-row">
                       <input type="checkbox" checked={platterFriesOptions.includes(opt.id)} onChange={() => togglePlatterFries(opt.id)} />
@@ -2293,28 +2323,6 @@ function GenericCustomizer({ item, onClose, onAdd }) {
                   ))}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Wrap Ingredients */}
-          {options.wrapIngredients && options.wrapIngredients.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
-                INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
-              </div>
-              {options.wrapIngredients.map(ing => (
-                <label key={ing.id} className="checkbox-row">
-                  <input type="checkbox" checked={includedIngredients.includes(ing.id)} onChange={() => toggleIngredient(ing.id)} />
-                  <span style={{ 
-                    flex: 1, 
-                    textDecoration: !includedIngredients.includes(ing.id) ? 'line-through' : 'none',
-                    color: !includedIngredients.includes(ing.id) ? '#999' : 'inherit'
-                  }}>
-                    {ing.name}
-                  </span>
-                  <span style={{ color: '#228B22', fontWeight: 600, fontSize: 11 }}>INCLUDED</span>
-                </label>
-              ))}
             </div>
           )}
 
@@ -2808,7 +2816,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   // Wing options for #9 (chicken wings style - not buffalo)
   const lunchWingOpts = [
     { id: 'wing-salt', name: 'Salt', price: 0 },
-    { id: 'wing-pepper', name: 'Pepper', price: 0 },
+    { id: 'wing-pepper', name: 'Black Pepper', price: 0 },
     { id: 'wing-ketchup', name: 'Ketchup', price: 0 },
     { id: 'wing-hot-sauce', name: 'Hot Sauce on the Side', price: 0 },
     { id: 'wing-bleu-cheese', name: 'Bleu Cheese', price: 1 },
@@ -2829,14 +2837,14 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   
   const friesOpts = [
     { id: 'fries-salt', name: 'Salt', price: 0 },
-    { id: 'fries-pepper', name: 'Pepper', price: 0 },
+    { id: 'fries-pepper', name: 'Black Pepper', price: 0 },
     { id: 'fries-ketchup', name: 'Ketchup', price: 0 },
     { id: 'cheese-whiz', name: 'Cheese Whiz', price: 2 },
   ];
   
   const hoagieExtraOpts = [
     { id: 'salt', name: 'Salt', price: 0 },
-    { id: 'pepper', name: 'Pepper', price: 0 },
+    { id: 'pepper', name: 'Black Pepper', price: 0 },
     { id: 'olive-oil', name: 'Olive Oil', price: 0 },
     { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
     { id: 'oregano', name: 'Oregano', price: 0 },
@@ -2851,7 +2859,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { id: 'mustard', name: 'Mustard', price: 0 },
     { id: 'mayo', name: 'Mayo', price: 0 },
     { id: 'salt', name: 'Salt', price: 0 },
-    { id: 'pepper', name: 'Pepper', price: 0 },
+    { id: 'pepper', name: 'Black Pepper', price: 0 },
   ];
 
   // Steak cheese choice (for #2, #4, #6) - American only for lunch specials
@@ -2861,7 +2869,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   // Steak add-ons (for #2, #4, #6)
   const steakAddOns = [
     { id: 'steak-salt', name: 'Salt', price: 0 },
-    { id: 'steak-pepper', name: 'Pepper', price: 0 },
+    { id: 'steak-pepper', name: 'Black Pepper', price: 0 },
     { id: 'steak-ketchup', name: 'Ketchup', price: 0 },
     { id: 'steak-fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'steak-green-peppers', name: 'Green Peppers', price: 2 },
@@ -3831,7 +3839,7 @@ function CaliforniaBurgerCustomizer({ item, onClose, onAdd }) {
     { id: 'bacon', name: 'Bacon', price: 2 },
     { id: 'extra-patty', name: 'Extra Burger Patty', price: 2 },
     { id: 'salt', name: 'Salt', price: 0 },
-    { id: 'pepper', name: 'Pepper', price: 0 },
+    { id: 'pepper', name: 'Black Pepper', price: 0 },
     { id: 'mayo', name: 'Mayo', price: 0 },
     { id: 'ketchup', name: 'Ketchup', price: 0 },
     { id: 'mustard', name: 'Mustard', price: 0 },
