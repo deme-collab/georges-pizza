@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 // George's Pizza - Complete Online Ordering System
 // 201 W. Girard Ave, Philadelphia - Est. 1984
@@ -1313,6 +1313,19 @@ function GeorgesPizza() {
             onRemove={removeFromCart}
             onBack={() => setCurrentView('home')}
             onNavigateToCategory={(cat) => { setSelectedCategory(cat); setCurrentView('home'); }}
+            onOrderSuccess={() => {
+              setCart([]);
+              setCurrentView('home');
+              setSelectedCategory(null);
+              setCouponApplied(null);
+              setCouponCode('');
+              setSpecialInstructions('');
+              setDriverTip(0);
+              setCustomerName('');
+              setCustomerEmail('');
+              setCustomerPhone('');
+              setDeliveryAddress({ street: '', apt: '', city: 'Philadelphia', zip: '' });
+            }}
             orderType={orderType}
             setOrderType={setOrderType}
             subtotal={cartTotal}
@@ -4507,7 +4520,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 }
 
 // ============ CHECKOUT VIEW ============
-function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus }) {
+function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuccess, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus }) {
   const [processing, setProcessing] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [zipError, setZipError] = useState('');
@@ -4516,6 +4529,119 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const estimate = orderType === 'pickup' ? '~15 minutes' : '35-45 minutes';
+
+  // Stripe state
+  const [stripeReady, setStripeReady] = useState(false);
+  const [testMode, setTestMode] = useState(true);
+  const [cardError, setCardError] = useState('');
+  const paymentElementRef = useRef(null);
+  const stripeRef = useRef(null);
+  const elementsRef = useRef(null);
+  const paymentElementMounted = useRef(false);
+
+  // Initialize Stripe
+  useEffect(() => {
+    const initStripe = async () => {
+      try {
+        // Get config from server
+        const configRes = await fetch(`${API_URL}/api/stripe-config`);
+        const configData = await configRes.json();
+        
+        if (configData.testMode || !configData.publishableKey) {
+          setTestMode(true);
+          return;
+        }
+        
+        setTestMode(false);
+        
+        // Load Stripe.js if not already loaded
+        if (!window.Stripe) {
+          const script = document.createElement('script');
+          script.src = 'https://js.stripe.com/v3/';
+          script.async = true;
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+        
+        stripeRef.current = window.Stripe(configData.publishableKey);
+        setStripeReady(true);
+      } catch (err) {
+        console.error('Stripe init error:', err);
+        setTestMode(true);
+      }
+    };
+    
+    initStripe();
+  }, []);
+
+  // Create Payment Intent and mount Payment Element when total changes
+  const [clientSecret, setClientSecret] = useState(null);
+  
+  useEffect(() => {
+    if (!stripeReady || !stripeRef.current || testMode || finalTotal <= 0) return;
+    
+    // Create payment intent for current total
+    const createIntent = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/create-payment-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: Math.round(finalTotal * 100),
+            orderType,
+            customerEmail: email.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          
+          // Create Elements with the client secret
+          const elements = stripeRef.current.elements({
+            clientSecret: data.clientSecret,
+            appearance: {
+              theme: 'stripe',
+              variables: {
+                colorPrimary: '#C41E3A',
+                fontFamily: 'Arial, sans-serif',
+              },
+            },
+          });
+          elementsRef.current = elements;
+          paymentElementMounted.current = false;
+        }
+      } catch (err) {
+        console.error('Payment intent error:', err);
+      }
+    };
+    
+    createIntent();
+  }, [stripeReady, finalTotal, orderType]);
+
+  // Mount Payment Element when container is ready
+  useEffect(() => {
+    if (!elementsRef.current || !paymentElementRef.current || paymentElementMounted.current) return;
+    
+    // Clear any existing content
+    paymentElementRef.current.innerHTML = '';
+    
+    const paymentElement = elementsRef.current.create('payment', {
+      layout: 'tabs',
+    });
+    paymentElement.mount(paymentElementRef.current);
+    paymentElement.on('change', (event) => {
+      setCardError(event.error ? event.error.message : '');
+    });
+    paymentElementMounted.current = true;
+    
+    return () => {
+      paymentElement.destroy();
+      paymentElementMounted.current = false;
+    };
+  }, [clientSecret]);
 
   // Generate available dates (today + next 3 days)
   const getAvailableDates = () => {
@@ -4690,7 +4816,8 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     }
     
     setProcessing(true);
-    let orderSuccess = false; // Track if order was successful
+    setCardError('');
+    let orderSuccess = false;
     
     // Build order data
     const orderData = {
@@ -4723,45 +4850,69 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
     };
     
     try {
+      // STEP 1: Process payment (if not test mode)
+      let paymentIntentId = null;
+      
+      if (!testMode && stripeReady && stripeRef.current && elementsRef.current && clientSecret) {
+        // Confirm payment with Stripe Payment Element
+        const { error, paymentIntent } = await stripeRef.current.confirmPayment({
+          elements: elementsRef.current,
+          confirmParams: {
+            return_url: window.location.href, // Required but won't redirect for card payments
+            payment_method_data: {
+              billing_details: {
+                name: customerName.trim(),
+                email: email.trim(),
+                phone: phone.trim(),
+              },
+            },
+          },
+          redirect: 'if_required', // Only redirect for bank redirects, not cards
+        });
+        
+        if (error) {
+          setCardError(error.message);
+          setProcessing(false);
+          return;
+        }
+        
+        if (paymentIntent.status !== 'succeeded') {
+          setCardError('Payment was not completed. Please try again.');
+          setProcessing(false);
+          return;
+        }
+        
+        paymentIntentId = paymentIntent.id;
+      }
+      
+      // STEP 2: Submit order to server (with payment ID if applicable)
+      orderData.paymentIntentId = paymentIntentId;
+      
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
       });
       
       const result = await response.json();
       
       if (result.success) {
-        orderSuccess = true; // Mark as successful
+        orderSuccess = true;
         
-        // Success! Show confirmation
         const scheduleInfo = scheduleType === 'scheduled'
           ? `\n\nScheduled for: ${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
           : `\nEstimated ${orderType}: ${estimate}`;
         
-        alert(`🎉 Order #${result.orderNumber} Confirmed!\n\nA confirmation email has been sent to ${email}.${scheduleInfo}\n\n${result.testMode ? '(TEST MODE - No payment charged)' : 'Thank you for your payment!'}`);
+        alert(`Order #${result.orderNumber} Confirmed!\n\nA confirmation email has been sent to ${email}.${scheduleInfo}\n\n${testMode ? '(TEST MODE - No payment charged)' : 'Thank you for your payment!'}`);
         
         // Clear cart and go back to menu
-        setCart([]);
-        setCurrentView('home');
-        setSelectedCategory(null);
-        setCouponApplied(null);
-        setCouponCode('');
-        setSpecialInstructions('');
-        setDriverTip(0);
-        setCustomerName('');
-        setCustomerEmail('');
-        setPhone('');
-        setDeliveryAddress({ street: '', apt: '', city: 'Philadelphia', zip: '' });
+        onOrderSuccess();
         
       } else {
         alert('Error placing order: ' + (result.error || 'Unknown error'));
       }
       
     } catch (error) {
-      // Only show error if order wasn't already successful
       if (!orderSuccess) {
         console.error('Checkout error:', error);
         alert('Error connecting to server. Please try again or call us at (215) 236-5288.');
@@ -5397,18 +5548,51 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, orderType,
         </div>
       )}
 
+      {/* Payment Section */}
+      <div style={{ marginTop: 20, padding: 16, background: '#f9f9f9', border: '1px solid #ddd', borderRadius: 8 }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+          PAYMENT
+        </div>
+        {stripeReady && !testMode ? (
+          <>
+            <div style={{ 
+              padding: 12, 
+              background: 'white', 
+              border: '1px solid #ccc', 
+              borderRadius: 6,
+              marginBottom: 8,
+              minHeight: 100
+            }}>
+              <div ref={paymentElementRef}></div>
+            </div>
+            {cardError && (
+              <div style={{ color: '#C41E3A', fontSize: 13, marginTop: 4 }}>{cardError}</div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, color: '#666', fontSize: 12 }}>
+              <span>Secured by Stripe</span>
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: 12, background: '#E8F5E9', border: '1px solid #4CAF50', borderRadius: 6, textAlign: 'center', color: '#2E7D32', fontSize: 14 }}>
+            Test Mode — No payment will be charged
+          </div>
+        )}
+      </div>
+
       <button type="button"
         className="btn-red" 
         onClick={handleCheckout} 
         disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum} 
         style={{ width: '100%', marginTop: 16, padding: 14, fontSize: 16 }}
       >
-        {processing ? 'Processing...' : `🧪 Place Test Order ($${finalTotal.toFixed(2)})`}
+        {processing ? 'Processing Payment...' : (testMode ? `Place Test Order ($${finalTotal.toFixed(2)})` : `Pay $${finalTotal.toFixed(2)}`)}
       </button>
 
-      <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#666' }}>
-        🧪 TEST MODE - No payment will be charged
-      </div>
+      {testMode && (
+        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#666' }}>
+          Test Mode — No payment will be charged
+        </div>
+      )}
 
       {/* Alternative Delivery Partners - Always visible at bottom */}
       <div style={{ marginTop: 20, padding: 16, background: '#F5F5F5', border: '1px solid #ddd', textAlign: 'center' }}>
