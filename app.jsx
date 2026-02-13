@@ -518,7 +518,7 @@ function GeorgesPizza() {
       { name: 'Ham', desc: 'Sliced Ham', prices: { small: 11, large: 14, xlarge: 17 } },
       { name: 'Onion', desc: 'Fresh Onions', prices: { small: 11, large: 14, xlarge: 17 } },
       { name: 'Green Peppers', desc: 'Fresh Green Peppers', prices: { small: 11, large: 14, xlarge: 17 } },
-      { name: 'Ground Beef', desc: 'Seasoned Ground Beef', prices: { small: 11, large: 14, xlarge: 17 } },
+      { name: 'Ground Beef', desc: 'Seasoned Ground Beef', prices: { small: 12, large: 15, xlarge: 19 } },
       { name: 'Imported Anchovies', desc: 'Imported Anchovies', prices: { small: 12, large: 15, xlarge: 19 } },
       { name: 'Black Olives', desc: 'Sliced Black Olives', prices: { small: 12, large: 15, xlarge: 18 } },
       { name: 'Bacon', desc: 'Crispy Bacon', prices: { small: 12, large: 15, xlarge: 19 } },
@@ -540,7 +540,7 @@ function GeorgesPizza() {
       { name: 'Spinach', desc: 'Fresh Spinach on Garlic Base', prices: { small: 12, large: 13, xlarge: 17 } },
       { name: 'Broccoli', desc: 'Fresh Broccoli on Garlic Base', prices: { small: 12, large: 15, xlarge: 19 } },
       { name: 'Vegetarian', desc: 'Broccoli, Green Peppers, Onions, Tomatoes & Mushrooms', prices: { small: 14, large: 18, xlarge: 19 } },
-      { name: 'Ricotta & Mozzarella', desc: 'Creamy Ricotta & Mozzarella Blend', prices: { small: 12, large: 15, xlarge: 17 } },
+      { name: 'Ricotta & Mozzarella', desc: 'Creamy Ricotta & Mozzarella Blend', prices: { small: 11, large: 15, xlarge: 17 } },
       { name: 'Greek', desc: 'Feta, Mozzarella, Spinach, Tomatoes, Olives & Oregano', prices: { small: 14, large: 18, xlarge: 19 } },
       { name: 'Hawaiian', desc: 'Sweet Pineapple & Sliced Ham', prices: { small: 14, large: 18, xlarge: 19 } },
     ],
@@ -610,20 +610,20 @@ function GeorgesPizza() {
       { name: '5 Chicken Wings Platter', desc: 'With fries, coleslaw & garlic bread', price: 15, hasChickenWingsMods: true, hasWingPlatterMods: true },
     ],
     buffalo: [
-      { name: '10 Buffalo Wings', desc: 'Your Choice of 1 Mild, Hot, or BBQ Sauce & 1 Blue Cheese included', price: 12, hasBuffaloMods: true },
-      { name: '10 Buffalo Wings Platter', desc: 'With fries, coleslaw & garlic bread', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
-      { name: '10 Wing Dings (Breaded)', price: 15, hasBuffaloMods: true },
-      { name: '10 Wing Dings Platter', desc: 'With fries, coleslaw & garlic bread', price: 20, hasBuffaloMods: true, hasWingPlatterMods: true },
+      { name: '10 Buffalo Wings', desc: 'Mild, Hot, or BBQ', price: 12, hasBuffaloMods: true },
+      { name: '10 Buffalo Wings Platter', desc: 'With fries', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
+      { name: '10 Wing Dings (Breaded)', price: 12, hasBuffaloMods: true },
+      { name: '10 Wing Dings Platter', desc: 'With fries', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
     ],
     nuggets: [
       { name: '10 Nuggets', desc: 'Honey Mustard, BBQ, or Ranch', price: 8, hasDipChoice: true },
-      { name: '10 Nuggets Platter', desc: 'With fries, coleslaw, & garlic bread', price: 14, hasDipChoice: true, hasWingPlatterMods: true },
+      { name: '10 Nuggets Platter', desc: 'With fries', price: 14, hasDipChoice: true, hasWingPlatterMods: true },
       { name: '20 Nuggets', price: 16, hasDipChoice: true },
-      { name: '20 Nuggets Platter', desc: 'With fries, coleslaw & garlic bread', price: 18, hasDipChoice: true, hasWingPlatterMods: true },
+      { name: '20 Nuggets Platter', desc: 'With fries', price: 18, hasDipChoice: true, hasWingPlatterMods: true },
     ],
     fingers: [
       { name: '5 Chicken Fingers', desc: 'Honey Mustard, BBQ, or Ranch', price: 8, hasDipChoice: true },
-      { name: '5 Fingers Platter', desc: 'With fries, coleslaw & garlic bread', price: 14, hasDipChoice: true, hasWingPlatterMods: true },
+      { name: '5 Fingers Platter', desc: 'With fries', price: 14, hasDipChoice: true, hasWingPlatterMods: true },
     ],
   };
 
@@ -729,10 +729,10 @@ function GeorgesPizza() {
   ];
 
   const pastaMenu = [
-    { name: 'Pasta with Tomato Sauce', desc: 'With Garlic Bread & Salad', price: 12, hasPastaChoice: true },
-    { name: 'Pasta with Meatballs', desc: 'Fresh Handcrafted Meatballs', price: 15, hasPastaChoice: true },
-    { name: 'Pasta with Italian Sausage', price: 15, hasPastaChoice: true },
-    { name: 'Pasta with Chicken Breast', price: 15, hasPastaChoice: true },
+    { name: 'Pasta with Tomato Sauce', desc: 'With Garlic Bread & Salad', price: 11, hasPastaChoice: true },
+    { name: 'Pasta with Meatballs', desc: 'Fresh Handcrafted Meatballs', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Italian Sausage', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Chicken Breast', price: 14, hasPastaChoice: true },
   ];
 
   const seafoodMenu = [
@@ -757,9 +757,10 @@ function GeorgesPizza() {
   const gyrosWrapsMenu = {
     gyros: [
       { name: 'Gyro', price: 10, hasGyroMods: true },
-      { name: 'Gyro with Platter', desc: 'With fries', price: 13, hasGyroMods: true },
-      { name: 'Grilled Chicken Gyro', price: 10, hasGyroMods: true },
-      { name: 'Grilled Chicken Gyro with Platter', desc: 'With fries', price: 13, hasGyroMods: true },
+      { name: 'Gyro with Platter', desc: 'With fries & drink', price: 12, hasGyroMods: true },
+      { name: 'Chicken Gyro', price: 10, hasGyroMods: true },
+      { name: 'Chicken Gyro with Platter', price: 12, hasGyroMods: true },
+      { name: 'Grilled Chicken Gyro', desc: 'Lettuce, Tomato, Onion & Tzatziki', price: 10, hasGyroMods: true },
     ],
     wraps: [
       { name: 'Italian Hoagie Wrap', desc: 'With Fries & Cole Slaw', price: 12, hasWrapMods: true, ingredients: ['provolone', 'ham', 'genoa-salami', 'cappicola', 'lettuce', 'tomato', 'onion', 'oil'] },
@@ -770,7 +771,7 @@ function GeorgesPizza() {
       { name: "George's Special Cheese Steak Wrap", desc: 'Onion, Green Peppers, Pepperoni, Mushrooms, Sauce & Provolone', price: 13, hasWrapMods: true, ingredients: ['steak', 'provolone', 'onion', 'green-peppers', 'pepperoni', 'mushrooms', 'sauce'] },
     ],
     quesadillas: [
-      { name: 'Veggie Quesadilla', desc: 'Tomatoes, Mushrooms, Green Peppers, Fried Onions', price: 13, hasQuesadillaMods: true, ingredients: ['tomatoes', 'mushrooms', 'green-peppers', 'fried-onions', 'sour-cream'] },
+      { name: 'Veggie Quesadilla', desc: 'Tomatoes, Mushrooms, Green Peppers, Fried Onions', price: 11, hasQuesadillaMods: true, ingredients: ['tomatoes', 'mushrooms', 'green-peppers', 'fried-onions', 'sour-cream'] },
       { name: 'Grilled Chicken Quesadilla', desc: 'With Green Peppers, Fried Onions', price: 13, hasQuesadillaMods: true, ingredients: ['grilled-chicken', 'green-peppers', 'fried-onions', 'sour-cream'] },
       { name: 'Ground Beef Quesadilla', desc: 'With Green Peppers, Fried Onions', price: 13, hasQuesadillaMods: true, ingredients: ['ground-beef', 'green-peppers', 'fried-onions', 'sour-cream'] },
     ],
@@ -794,8 +795,8 @@ function GeorgesPizza() {
 
   const drinksMenu = [
     { name: 'Soda (20 oz.)', desc: 'Pepsi, 7up, Canada Dry, Arizona Tea, Mt Dew, Diet Pepsi, Sunkist, Root Beer', price: 2.50, has20ozChoice: true },
-    { name: 'Soda (Can)', desc: "Day's Sodas", price: 1, hasCanChoice: true },
-    { name: 'Soda (2 Liter)', desc: "Pepsi, Day's Ginger Ale, Grape, Orange", price: 4, has2LiterChoice: true },
+    { name: 'Soda (Can)', desc: "Frank's Sodas", price: 1, hasCanChoice: true },
+    { name: 'Soda (2 Liter)', desc: "Pepsi, 7up, Frank's Ginger Ale, Grape, Orange", price: 4, has2LiterChoice: true },
     { name: 'Water (16 oz.)', price: 1 },
     { name: 'Hot Coffee (Small)', price: 2 },
     { name: 'Hot Coffee (Large)', price: 4 },
@@ -1463,7 +1464,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
             <div className="red-banner">🍕 Build a Half & Half Pizza</div>
             <div className="menu-section-content">
               <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
-                Want different toppings on each half? Build your perfect combination! Large & X-Large only.
+                Want different toppings on each half? Build your perfect combination! Large & X-Large only. Priced as the more expensive half.
               </div>
               <div 
                 className="menu-item" 
@@ -1725,6 +1726,9 @@ function GenericCustomizer({ item, onClose, onAdd }) {
 
   // For platter fries options (wings, nuggets, fingers platters)
   const [platterFriesOptions, setPlatterFriesOptions] = useState([]);
+
+  // For wraps - include fries & coleslaw (default: yes)
+  const [includeFries, setIncludeFries] = useState(true);
   const platterFriesOpts = [
     { id: 'fries-salt', name: 'Salt', price: 0 },
     { id: 'fries-pepper', name: 'Pepper', price: 0 },
@@ -1776,12 +1780,13 @@ function GenericCustomizer({ item, onClose, onAdd }) {
       return {
         title: 'Customize Your Buffalo Wings',
         required: [
-          { id: 'sauce', name: 'Sauce', options: ['Mild', 'Hot', 'BBQ', 'Dry - No Sauce'] }
+          { id: 'sauce', name: 'Sauce', options: ['Mild', 'Hot', 'BBQ', 'Plain'] }
         ],
         optional: [
           { id: 'sauce-on-side', name: 'Sauce on the Side', price: 0 },
           { id: 'extra-sauce', name: 'Extra Sauce', price: 0.75 },
-          { id: 'extra-bleu-cheese', name: 'Extra Bleu Cheese', price: 1 },
+          { id: 'celery', name: 'Celery Sticks', price: 0 },
+          { id: 'bleu-cheese', name: 'Bleu Cheese', price: 1 },
           { id: 'ranch', name: 'Ranch', price: 1 },
         ],
         hasPlatterFries: item.hasWingPlatterMods,
@@ -1966,9 +1971,9 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         optional: [],
       };
     }
-    if (item.hasCanChoice) { // Can Sodas (Day's)
+    if (item.hasCanChoice) { // Can Sodas (Frank's)
       return {
-        title: "Choose Your Day's Flavor",
+        title: "Choose Your Frank's Flavor",
         required: [
           { id: 'flavor', name: 'Flavor', options: ['Orange', 'Orange Mango', 'Grape', 'Black Cherry', 'Fruit Punch', 'Cola', 'Ginger Ale'] }
         ],
@@ -1979,7 +1984,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
       return {
         title: 'Choose Your 2 Liter',
         required: [
-          { id: 'flavor', name: 'Flavor', options: ['Pepsi', '7up', "Day's Ginger Ale", "Day's Grape", "Day's Orange"] }
+          { id: 'flavor', name: 'Flavor', options: ['Pepsi', '7up', "Frank's Ginger Ale", "Frank's Grape", "Frank's Orange"] }
         ],
         optional: [],
       };
@@ -2041,7 +2046,14 @@ function GenericCustomizer({ item, onClose, onAdd }) {
     }, 0);
   };
 
-  const getTotalPrice = () => item.price + getExtrasPrice() + getPlatterFriesPrice();
+  const getTotalPrice = () => {
+    let price = item.price + getExtrasPrice() + getPlatterFriesPrice();
+    // Wraps: -$2 for sandwich only (no fries & coleslaw)
+    if (item.hasWrapMods && !includeFries) {
+      price -= 2;
+    }
+    return price;
+  };
 
   const toggleIngredient = (id) => {
     setIncludedIngredients(prev => 
@@ -2058,6 +2070,10 @@ function GenericCustomizer({ item, onClose, onAdd }) {
     
     // For hoagies/sandwiches/wraps, track what was removed from ingredients
     if ((options.isHoagie || options.isSandwich || options.isWrap) && item.ingredients) {
+      // Wrap: note if sandwich only (no fries)
+      if (item.hasWrapMods && !includeFries) {
+        mods.push('** SANDWICH ONLY - NO FRIES **');
+      }
       const removed = item.ingredients.filter(ing => !includedIngredients.includes(ing));
       if (removed.length > 0) {
         const ingredientNames = {
@@ -2225,6 +2241,26 @@ function GenericCustomizer({ item, onClose, onAdd }) {
                   <span style={{ color: '#228B22', fontWeight: 600, fontSize: 11 }}>INCLUDED</span>
                 </label>
               ))}
+            </div>
+          )}
+
+          {/* Wrap Fries & Coleslaw Option */}
+          {options.isWrap && (
+            <div style={{ marginBottom: 16, padding: 12, background: includeFries ? '#f0fdf0' : '#fff8f0', borderRadius: 8, border: includeFries ? '2px solid #228B22' : '2px dashed #ccc' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 15 }}>
+                <input 
+                  type="checkbox" 
+                  checked={includeFries} 
+                  onChange={() => setIncludeFries(!includeFries)}
+                  style={{ width: 20, height: 20 }}
+                />
+                <span style={{ flex: 1, fontWeight: 600 }}>
+                  Include Fries & Cole Slaw
+                </span>
+                <span style={{ color: !includeFries ? '#C41E3A' : '#228B22', fontWeight: 700, fontSize: 14 }}>
+                  {includeFries ? 'INCLUDED' : '-$2.00'}
+                </span>
+              </label>
             </div>
           )}
 
@@ -2971,7 +3007,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
       }
     }
     
-    if (soda) mods.push("Day's " + soda);
+    if (soda) mods.push("Frank's " + soda);
     return mods;
   };
 
@@ -3202,7 +3238,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
 
           {/* Can Soda Selection */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>CHOOSE YOUR DAY'S SODA *</div>
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>CHOOSE YOUR FRANK'S SODA *</div>
             <div style={{ fontSize: 11, color: '#666', fontStyle: 'italic', marginBottom: 8 }}>
               If your selected flavor is unavailable, we will substitute at our discretion.
             </div>
