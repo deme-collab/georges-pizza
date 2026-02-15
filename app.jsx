@@ -374,6 +374,7 @@ function GeorgesPizza() {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [driverTip, setDriverTip] = useState(0);
   const [cartNotification, setCartNotification] = useState(null);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
   const [familyDealCustomizing, setFamilyDealCustomizing] = useState(null);
   const [storeStatus, setStoreStatus] = useState(() => getStoreStatus());
@@ -1313,9 +1314,10 @@ function GeorgesPizza() {
             onRemove={removeFromCart}
             onBack={() => setCurrentView('home')}
             onNavigateToCategory={(cat) => { setSelectedCategory(cat); setCurrentView('home'); }}
-            onOrderSuccess={() => {
+            onOrderSuccess={(orderData) => {
+              setConfirmedOrder(orderData);
+              setCurrentView('confirmation');
               setCart([]);
-              setCurrentView('home');
               setSelectedCategory(null);
               setCouponApplied(null);
               setCouponCode('');
@@ -1352,6 +1354,16 @@ function GeorgesPizza() {
             driverTip={driverTip}
             setDriverTip={setDriverTip}
             storeStatus={storeStatus}
+          />
+        )}
+
+        {currentView === 'confirmation' && confirmedOrder && (
+          <OrderConfirmation
+            order={confirmedOrder}
+            onBackToMenu={() => {
+              setConfirmedOrder(null);
+              setCurrentView('home');
+            }}
           />
         )}
       </main>
@@ -4520,6 +4532,150 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 }
 
 // ============ CHECKOUT VIEW ============
+// =============================================================================
+// ORDER CONFIRMATION VIEW
+// =============================================================================
+
+function OrderConfirmation({ order, onBackToMenu }) {
+  return (
+    <div style={{ maxWidth: 500, margin: '0 auto', padding: '20px 0' }}>
+      
+      {/* Success Header */}
+      <div style={{ 
+        background: '#F0FFF0', 
+        border: '2px solid #228B22', 
+        borderRadius: 12, 
+        padding: '32px 24px', 
+        textAlign: 'center',
+        marginBottom: 24
+      }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>✓</div>
+        <div style={{ 
+          fontFamily: "'Oswald', sans-serif", 
+          fontSize: 24, 
+          fontWeight: 700, 
+          color: '#228B22',
+          marginBottom: 4
+        }}>
+          Order Confirmed!
+        </div>
+        <div style={{ 
+          fontFamily: "'Oswald', sans-serif", 
+          fontSize: 32, 
+          fontWeight: 700, 
+          color: '#1a1a1a' 
+        }}>
+          #{order.orderNumber}
+        </div>
+      </div>
+
+      {/* Order Details */}
+      <div style={{ 
+        background: 'white', 
+        border: '2px solid #ddd', 
+        borderRadius: 8, 
+        overflow: 'hidden',
+        marginBottom: 24
+      }}>
+        {/* Timing Info */}
+        <div style={{ 
+          background: order.orderType === 'delivery' ? '#FFF3E0' : '#FFF8E1',
+          borderBottom: '1px solid #ddd',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12
+        }}>
+          <span style={{ fontSize: 24 }}>{order.orderType === 'delivery' ? '🚗' : '🏃'}</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15, textTransform: 'capitalize' }}>
+              {order.orderType}
+            </div>
+            <div style={{ fontSize: 14, color: '#666' }}>
+              {order.scheduleLabel 
+                ? `Scheduled: ${order.scheduleLabel}` 
+                : `Estimated: ${order.estimate}`
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* Items */}
+        <div style={{ padding: '16px 20px' }}>
+          {order.items.map((item, i) => (
+            <div key={i} style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'flex-start',
+              padding: '6px 0',
+              borderBottom: i < order.items.length - 1 ? '1px solid #f0f0f0' : 'none'
+            }}>
+              <div>
+                <span style={{ fontWeight: 600 }}>{item.name}</span>
+                {item.mods && item.mods.length > 0 && (
+                  <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>
+                    {item.mods.join(', ')}
+                  </div>
+                )}
+              </div>
+              <span style={{ fontWeight: 600, whiteSpace: 'nowrap', marginLeft: 12 }}>
+                ${item.price.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Total */}
+        <div style={{ 
+          borderTop: '2px solid #1a1a1a', 
+          padding: '12px 20px', 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          background: '#FAFAFA'
+        }}>
+          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 18, fontWeight: 700 }}>TOTAL</span>
+          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#C41E3A' }}>
+            ${order.total.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      {/* Email Confirmation */}
+      <div style={{ 
+        background: '#F5F5F5', 
+        border: '1px solid #ddd', 
+        borderRadius: 8, 
+        padding: '14px 20px', 
+        textAlign: 'center',
+        marginBottom: 24,
+        fontSize: 14,
+        color: '#555'
+      }}>
+        A confirmation email has been sent to <strong>{order.email}</strong>
+      </div>
+
+      {/* Back to Menu Button */}
+      <button 
+        type="button"
+        className="btn-red"
+        onClick={onBackToMenu}
+        style={{ width: '100%', padding: 14, fontSize: 16 }}
+      >
+        Back to Menu
+      </button>
+
+      {/* Phone Number */}
+      <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#888' }}>
+        Questions? Call us at <a href="tel:2152365288" style={{ color: '#C41E3A', fontWeight: 600 }}>(215) 236-5288</a>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// CHECKOUT VIEW
+// =============================================================================
+
 function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuccess, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus }) {
   const [processing, setProcessing] = useState(false);
   const [couponError, setCouponError] = useState('');
@@ -4899,14 +5055,20 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       if (result.success) {
         orderSuccess = true;
         
-        const scheduleInfo = scheduleType === 'scheduled'
-          ? `\n\nScheduled for: ${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
-          : `\nEstimated ${orderType}: ${estimate}`;
+        const scheduleLabel = scheduleType === 'scheduled'
+          ? `${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
+          : null;
         
-        alert(`Order #${result.orderNumber} Confirmed!\n\nA confirmation email has been sent to ${email}.${scheduleInfo}\n\n${testMode ? '(TEST MODE - No payment charged)' : 'Thank you for your payment!'}`);
-        
-        // Clear cart and go back to menu
-        onOrderSuccess();
+        onOrderSuccess({
+          orderNumber: result.orderNumber,
+          email: email.trim(),
+          orderType,
+          scheduleLabel,
+          estimate,
+          total: finalTotal,
+          items: cart,
+          testMode,
+        });
         
       } else {
         alert('Error placing order: ' + (result.error || 'Unknown error'));
