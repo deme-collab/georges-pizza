@@ -65,7 +65,7 @@ function MaintenancePage({ message }) {
         
         {/* Phone Numbers */}
         <div style={{ marginBottom: 24 }}>
-          <p style={{ fontSize: 14, color: '#666', margin: '0 0 10px 0' }}>Call us to order:</p>
+          <p style={{ fontSize: 14, color: '#555', margin: '0 0 10px 0' }}>Call us to order:</p>
           <a href="tel:215-236-5288" style={{ 
             display: 'block',
             fontSize: 28, 
@@ -79,7 +79,7 @@ function MaintenancePage({ message }) {
           <a href="tel:215-236-6035" style={{ 
             display: 'block',
             fontSize: 20, 
-            color: '#666', 
+            color: '#555', 
             textDecoration: 'none'
           }}>
             (215) 236-6035
@@ -110,7 +110,7 @@ function MaintenancePage({ message }) {
         
         {/* Alternative Ordering */}
         <div>
-          <p style={{ fontSize: 14, color: '#666', margin: '0 0 12px 0' }}>Or order through:</p>
+          <p style={{ fontSize: 14, color: '#555', margin: '0 0 12px 0' }}>Or order through:</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a 
               href="https://www.doordash.com/store/george's-pizza-philadelphia-24587019/34286951/?event_type=autocomplete&pickup=false"
@@ -166,7 +166,7 @@ function MaintenancePage({ message }) {
         {/* Address */}
         <p style={{ 
           fontSize: 12, 
-          color: '#999', 
+          color: '#767676', 
           marginTop: 24,
           marginBottom: 0 
         }}>
@@ -857,7 +857,7 @@ function GeorgesPizza() {
         .menu-item:last-child { border-bottom: none; }
         
         .item-name { font-weight: 600; color: #1a1a1a; }
-        .item-desc { font-size: 12px; color: #666; font-style: italic; margin-top: 2px; }
+        .item-desc { font-size: 12px; color: #555; font-style: italic; margin-top: 2px; }
         .item-price { font-weight: 700; color: #C41E3A; font-size: 16px; white-space: nowrap; }
         
         .yellow-section {
@@ -1031,10 +1031,49 @@ function GeorgesPizza() {
           background: #1a6b1a;
           transform: scale(1.05);
         }
+
+        /* === ACCESSIBILITY === */
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0,0,0,0);
+          white-space: nowrap;
+          border: 0;
+        }
+        .skip-link {
+          position: absolute;
+          top: -40px;
+          left: 0;
+          background: #C41E3A;
+          color: white;
+          padding: 8px 16px;
+          z-index: 10000;
+          font-family: 'Oswald', sans-serif;
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .skip-link:focus {
+          top: 0;
+        }
+        *:focus-visible {
+          outline: 3px solid #C41E3A;
+          outline-offset: 2px;
+        }
+        input:focus-visible, select:focus-visible, textarea:focus-visible {
+          outline: 3px solid #C41E3A;
+          outline-offset: 0;
+        }
       `}</style>
 
+      {/* ============ SKIP LINK (Accessibility) ============ */}
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
       {/* ============ HEADER ============ */}
-      <header style={{ background: 'white', borderBottom: '2px solid #228B22', position: 'relative', zIndex: 100 }}>
+      <header role="banner" style={{ background: 'white', borderBottom: '2px solid #228B22', position: 'relative', zIndex: 100 }}>
         <div className="checkered-top" />
         <div style={{
           maxWidth: 1000,
@@ -1050,6 +1089,10 @@ function GeorgesPizza() {
           <div 
             style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
             onClick={() => { setCurrentView('home'); setSelectedCategory(null); }}
+            role="button"
+            tabIndex={0}
+            aria-label="George's Pizza - Go to home page"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setCurrentView('home'); setSelectedCategory(null); } }}
           >
             <img 
               src="logo-header.png" 
@@ -1106,6 +1149,7 @@ function GeorgesPizza() {
           <button type="button"
             className="btn-red"
             onClick={() => setCurrentView('checkout')}
+            aria-label={`View cart. ${cart.length} items, $${cartTotal.toFixed(2)} total`}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
             🛒 Cart ({cart.length}) ${cartTotal.toFixed(2)}
@@ -1118,6 +1162,8 @@ function GeorgesPizza() {
       {cartNotification && (
         <div 
           className="cart-toast"
+          role="status"
+          aria-live="polite"
           style={{
             position: 'fixed',
             top: 80,
@@ -1160,7 +1206,7 @@ function GeorgesPizza() {
       )}
 
       {/* ============ MAIN ============ */}
-      <main style={{ maxWidth: 1000, margin: '0 auto', padding: '16px' }}>
+      <main id="main-content" role="main" style={{ maxWidth: 1000, margin: '0 auto', padding: '16px' }}>
         
         {/* HOME VIEW */}
         {currentView === 'home' && !selectedCategory && (
@@ -1175,7 +1221,7 @@ function GeorgesPizza() {
               }}>
                 What are you hungry for?
               </h1>
-              <p style={{ color: '#666', fontSize: 14 }}>
+              <p style={{ color: '#555', fontSize: 14 }}>
                 <span style={{ 
                   color: storeStatus.isOpen ? '#228B22' : '#C41E3A',
                   fontWeight: 600 
@@ -1199,6 +1245,10 @@ function GeorgesPizza() {
                   key={cat.id}
                   className="category-card"
                   onClick={() => setSelectedCategory(cat.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${cat.name} - ${cat.desc}`}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCategory(cat.id); } }}
                 >
                   <div style={{
                     fontFamily: "'Oswald', sans-serif",
@@ -1209,7 +1259,7 @@ function GeorgesPizza() {
                   }}>
                     {cat.name}
                   </div>
-                  <div style={{ fontSize: 11, color: '#666' }}>{cat.desc}</div>
+                  <div style={{ fontSize: 11, color: '#555' }}>{cat.desc}</div>
                 </div>
               ))}
             </div>
@@ -1221,7 +1271,7 @@ function GeorgesPizza() {
                   <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#8B4513' }}>
                     $10 LUNCH SPECIALS
                   </div>
-                  <div style={{ fontSize: 12, color: '#666' }}>Mon-Fri 11am-2pm • No Substitutions</div>
+                  <div style={{ fontSize: 12, color: '#555' }}>Mon-Fri 11am-2pm • No Substitutions</div>
                 </div>
                 {lunchAvailable ? (
                   <span className="pulse" style={{ background: '#228B22', color: 'white', padding: '4px 10px', fontFamily: "'Oswald', sans-serif", fontSize: 11 }}>
@@ -1265,7 +1315,7 @@ function GeorgesPizza() {
                   </div>
                   <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#C41E3A', textAlign: 'center' }}>${deal.price}</div>
                   <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 600, color: '#1a1a1a', marginBottom: 4, textAlign: 'center' }}>{deal.name}</div>
-                  <div style={{ fontSize: 12, color: '#666', textAlign: 'center' }}>{deal.desc}</div>
+                  <div style={{ fontSize: 12, color: '#555', textAlign: 'center' }}>{deal.desc}</div>
                   {deal.hasTwoLargePizzaMods && <div style={{ fontSize: 11, color: '#228B22', marginTop: 4, textAlign: 'center' }}>+ Add toppings</div>}
                 </div>
               ))}
@@ -1405,7 +1455,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
       <div className="green-stripe" />
       <div className="red-banner">{title}</div>
       <div className="menu-section-content">
-        {note && <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>{note}</div>}
+        {note && <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>{note}</div>}
         {items.map((item, i) => {
           const hasAnyModifier = item.hasBurgerMods || item.isCaliforniaPlatter || item.hasChickenWingsMods || item.hasBuffaloMods || item.hasDipChoice || 
             item.hasHoagieMods || item.hasBreadChoice || item.hasPastaChoice || 
@@ -1455,7 +1505,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
       <div className="green-stripe" />
       <div className="red-banner">{title}</div>
       <div className="menu-section-content">
-        <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
           Small 10" • Large 14" • X-Large 16" | Additional Topping $3
         </div>
         {items.map((item, i) => (
@@ -1493,7 +1543,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
             <div className="green-stripe" />
             <div className="red-banner">🍕 Build a Half & Half Pizza</div>
             <div className="menu-section-content">
-              <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, color: '#555', marginBottom: 12 }}>
                 Want different toppings on each half? Build your perfect combination! Large & X-Large only. Priced as the more expensive half.
               </div>
               <div 
@@ -1530,10 +1580,10 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
             <div className="green-stripe" />
             <div className="red-banner">Beef & Chicken Steaks</div>
             <div className="menu-section-content">
-              <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
                 We Use Freshly Sliced Meat (Not Frozen) on a Fresh Roll
               </div>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#666', marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>BEEF STEAKS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#555', marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>BEEF STEAKS</div>
               {steaksMenu.beef.map((item, i) => (
                 <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
@@ -1558,7 +1608,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
                   </div>
                 </div>
               ))}
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#666', marginTop: 16, marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>CHICKEN STEAKS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#555', marginTop: 16, marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>CHICKEN STEAKS</div>
               {steaksMenu.chicken.map((item, i) => (
                 <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
@@ -1583,7 +1633,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
                   </div>
                 </div>
               ))}
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#666', marginTop: 16, marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>PLATTERS (with Fries)</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#555', marginTop: 16, marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>PLATTERS (with Fries)</div>
               {steaksMenu.platters.map((item, i) => (
                 <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
@@ -2203,7 +2253,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           {/* Hoagie Ingredients - show FIRST for hoagies */}
           {options.hoagieIngredients && options.hoagieIngredients.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
               </div>
               {options.hoagieIngredients.map(ing => (
@@ -2225,7 +2275,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           {/* Optional extras */}
           {options.optional.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 {options.isQuesadilla ? 'INGREDIENTS' : 'EXTRAS'} {options.isQuesadilla && <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>}
               </div>
               {options.optional.map(opt => (
@@ -2249,7 +2299,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           {/* Platter Fries Options */}
           {options.hasPlatterFries && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>FRIES OPTIONS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>FRIES OPTIONS</div>
               {platterFriesOpts.map(opt => (
                 <label key={opt.id} className="checkbox-row">
                   <input type="checkbox" checked={platterFriesOptions.includes(opt.id)} onChange={() => togglePlatterFries(opt.id)} />
@@ -2265,7 +2315,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           {/* Sandwich Ingredients */}
           {options.sandwichIngredients && options.sandwichIngredients.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
               </div>
               {options.sandwichIngredients.map(ing => (
@@ -2287,7 +2337,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           {/* Wrap Ingredients (shown first - this is the sandwich) */}
           {options.isWrap && options.wrapIngredients && options.wrapIngredients.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 SANDWICH INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
               </div>
               {options.wrapIngredients.map(ing => (
@@ -2309,7 +2359,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
           {/* Wrap Fries & Coleslaw Option (shown after ingredients) */}
           {options.isWrap && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 SIDES
               </div>
               <div style={{ 
@@ -2353,7 +2403,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getTotalPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -2491,7 +2541,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
           {/* Size Selection */}
           {item.hasSize && (
             <>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>SELECT SIZE</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>SELECT SIZE</div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <button type="button"
                   className={`size-btn ${size === 'small' ? 'selected' : ''}`}
@@ -2516,7 +2566,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
           {/* Free Condiments */}
           {item.hasCondiments && (
             <>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>CONDIMENTS (FREE)</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CONDIMENTS (FREE)</div>
               <div style={{ marginBottom: 16 }}>
                 {condimentOptions.map(c => (
                   <label key={c} className="checkbox-row">
@@ -2528,7 +2578,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
               </div>
               
               {/* Paid Extras */}
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>EXTRAS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
               <div style={{ marginBottom: 16 }}>
                 {paidCondimentOptions.map(extra => (
                   <label key={extra.id} className="checkbox-row">
@@ -2544,7 +2594,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
           {/* Dipping Sauce */}
           {item.hasDippingSauce && (
             <>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>DIPPING SAUCE (FREE)</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>DIPPING SAUCE (FREE)</div>
               <div style={{ marginBottom: 16 }}>
                 <label className="radio-row">
                   <input type="radio" name="sauce" checked={dippingSauce === ''} onChange={() => setDippingSauce('')} />
@@ -2563,7 +2613,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getTotalPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -2586,7 +2636,7 @@ function SeafoodMenu({ items, onAddToCart }) {
       <div className="green-stripe" />
       <div className="red-banner">Seafood Platters</div>
       <div className="menu-section-content">
-        <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
           All Platters Served with French Fries, Cole Slaw, Tartar Sauce, Roll & Butter
         </div>
         {items.map((item, i) => (
@@ -2639,7 +2689,7 @@ function ClubsMenu({ items, onAddToCart }) {
       <div className="green-stripe" />
       <div className="red-banner">Double Clubs</div>
       <div className="menu-section-content">
-        <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
           All Clubs Served with French Fries
         </div>
         {items.map((item, i) => (
@@ -2741,7 +2791,7 @@ function ClubCustomizer({ item, onClose, onAdd }) {
           </div>
 
           {/* Ingredients */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             SANDWICH INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
           </div>
           <div style={{ marginBottom: 16, border: '1px solid #ddd', padding: 8, background: 'white' }}>
@@ -2761,7 +2811,7 @@ function ClubCustomizer({ item, onClose, onAdd }) {
           </div>
 
           {/* Fries Options */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>FRIES OPTIONS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>FRIES OPTIONS</div>
           <div style={{ marginBottom: 16 }}>
             {friesOpts.map(f => (
               <label key={f.id} className="checkbox-row">
@@ -2774,7 +2824,7 @@ function ClubCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -3103,7 +3153,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {/* Wings Options for #9 (chicken wing style - checkboxes) */}
           {isLunchWings && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>WING OPTIONS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>WING OPTIONS</div>
               {lunchWingOpts.map(opt => (
                 <label key={opt.id} className="checkbox-row">
                   <input type="checkbox" checked={lunchWingOptions.includes(opt.id)} onChange={() => toggleLunchWingOption(opt.id)} />
@@ -3131,7 +3181,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {isTurkeyHoagie && (
             <>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                   TURKEY HOAGIE INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
                 </div>
                 {turkeyHoagieIngredients.map(ing => (
@@ -3145,7 +3195,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
                 ))}
               </div>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>EXTRAS</div>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
                 {hoagieExtraOpts.map(opt => (
                   <label key={opt.id} className="checkbox-row">
                     <input type="checkbox" checked={hoagieExtras.includes(opt.id)} onChange={() => toggleHoagieExtra(opt.id)} />
@@ -3161,7 +3211,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {isChefSalad && (
             <>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                   CHEF SALAD INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
                 </div>
                 {chefSaladIngredients.map(ing => (
@@ -3189,7 +3239,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {/* Grilled Chicken Caesar (#14) */}
           {isCaesarSalad && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 CAESAR SALAD INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
               </div>
               {caesarIngredients.map(ing => (
@@ -3207,7 +3257,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {/* Cheeseburger Options (#10) */}
           {isBurger && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>BURGER OPTIONS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>BURGER OPTIONS</div>
               {burgerOpts.map(opt => (
                 <label key={opt.id} className="checkbox-row">
                   <input type="checkbox" checked={burgerExtras.includes(opt.id)} onChange={() => toggleBurgerExtra(opt.id)} />
@@ -3223,8 +3273,8 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
             <>
               {/* Cheese Choice */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>CHEESE</div>
-                <div style={{ fontSize: 11, color: '#666', fontStyle: 'italic', marginBottom: 8 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHEESE</div>
+                <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic', marginBottom: 8 }}>
                   Lunch specials come with American cheese only
                 </div>
                 <label className="radio-row">
@@ -3236,7 +3286,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
               
               {/* Add-Ons */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>ADD-ONS</div>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>ADD-ONS</div>
                 {steakAddOns.map(opt => (
                   <label key={opt.id} className="checkbox-row">
                     <input type="checkbox" checked={steakOptions.includes(opt.id)} onChange={() => toggleSteakOption(opt.id)} />
@@ -3248,7 +3298,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
               
               {/* Extras */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>EXTRAS</div>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
                 {steakExtras.map(opt => (
                   <label key={opt.id} className="checkbox-row">
                     <input type="checkbox" checked={steakExtraOptions.includes(opt.id)} onChange={() => toggleSteakExtra(opt.id)} />
@@ -3272,7 +3322,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {/* Grilled Chicken Wrap (#15) */}
           {isWrap && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
                 WRAP INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
               </div>
               {wrapIngredients.map(ing => (
@@ -3290,7 +3340,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {/* Fries Options */}
           {hasFries && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>FRIES OPTIONS</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>FRIES OPTIONS</div>
               {friesOpts.map(f => (
                 <label key={f.id} className="checkbox-row">
                   <input type="checkbox" checked={friesOptions.includes(f.id)} onChange={() => toggleFries(f.id)} />
@@ -3304,7 +3354,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
           {/* Can Soda Selection */}
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>CHOOSE YOUR FRANK'S SODA *</div>
-            <div style={{ fontSize: 11, color: '#666', fontStyle: 'italic', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic', marginBottom: 8 }}>
               If your selected flavor is unavailable, we will substitute at our discretion.
             </div>
             {sodaOptions.map(s => (
@@ -3317,7 +3367,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${(item.price + extraPrice + getBurgerExtraPrice()).toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -3380,7 +3430,7 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
 
           {/* Pizza 1 Toppings */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
               PIZZA 1 TOPPINGS <span style={{ fontWeight: 400, fontSize: 12 }}>(+${toppingPrice} each)</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 }}>
@@ -3398,7 +3448,7 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
 
           {/* Pizza 2 Toppings */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
               PIZZA 2 TOPPINGS <span style={{ fontWeight: 400, fontSize: 12 }}>(+${toppingPrice} each)</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 }}>
@@ -3416,7 +3466,7 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total ({pizza1Toppings.length + pizza2Toppings.length} toppings)</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total ({pizza1Toppings.length + pizza2Toppings.length} toppings)</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${(item.price + getExtraCost()).toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -3441,7 +3491,7 @@ function StromboliMenu({ stromboliMenu, onAddToCart }) {
       <div className="green-stripe" />
       <div className="red-banner">Strombolis</div>
       <div className="menu-section-content">
-        <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
           Small or Large • Green Peppers, Mushrooms, Grilled Onions available FREE • Extra Topping: Sm +$3 / Lg +$4
         </div>
         {stromboliMenu.items.map((item, i) => (
@@ -3526,7 +3576,7 @@ function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
           )}
 
           {/* Size Selection */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>SELECT SIZE</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>SELECT SIZE</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button type="button" className={`size-btn ${size === 'small' ? 'selected' : ''}`} onClick={() => setSize('small')} style={{ flex: 1 }}>
                   <div style={{ fontSize: 13 }}>Small</div>
@@ -3539,7 +3589,7 @@ function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
               </div>
 
           {/* Free Add-ons */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             FREE ADD-ONS
           </div>
           <div style={{ marginBottom: 16 }}>
@@ -3553,7 +3603,7 @@ function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
           </div>
 
           {/* Extra Cheese */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             EXTRAS
           </div>
           <div style={{ marginBottom: 16 }}>
@@ -3566,7 +3616,7 @@ function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -3593,7 +3643,7 @@ function SaladsMenu({ items, onAddToCart }) {
       <div className="green-stripe" />
       <div className="red-banner">Salads</div>
       <div className="menu-section-content">
-        <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
           All salads available in Small or Large • Extra Meat or Cheese +$3
         </div>
         {items.map((item, i) => (
@@ -3746,7 +3796,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
           )}
 
           {/* Size Selection */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>SELECT SIZE</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>SELECT SIZE</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <button type="button" className={`size-btn ${size === 'small' ? 'selected' : ''}`} onClick={() => setSize('small')} style={{ flex: 1 }}>
               <div style={{ fontSize: 13 }}>Small</div>
@@ -3759,7 +3809,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
           </div>
 
           {/* Ingredients - Pre-checked based on salad type */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             INGREDIENTS <span style={{ fontWeight: 400, fontSize: 12 }}>(uncheck to remove)</span>
           </div>
           <div style={{ marginBottom: 16, maxHeight: 150, overflowY: 'auto', border: '1px solid #ddd', padding: 8, background: 'white' }}>
@@ -3779,7 +3829,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
           </div>
 
           {/* Dressing Selection */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             DRESSING {item.isCaesar && <span style={{ fontWeight: 400, fontSize: 11, color: '#C41E3A' }}>(Caesar included)</span>}
           </div>
           <div style={{ marginBottom: 8 }}>
@@ -3813,7 +3863,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
           )}
 
           {/* Extras */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>EXTRAS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
           <div style={{ marginBottom: 16 }}>
             {extraOptions.map(opt => (
               <label key={opt.id} className="checkbox-row">
@@ -3826,7 +3876,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -3904,7 +3954,7 @@ function CaliforniaBurgerCustomizer({ item, onClose, onAdd }) {
             <strong>Includes:</strong> Burger + French Fries
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>BURGER TOPPINGS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>BURGER TOPPINGS</div>
           <div style={{ marginBottom: 16, maxHeight: 180, overflowY: 'auto', border: '1px solid #ddd', padding: 8, background: 'white' }}>
             {burgerOpts.map(a => (
               <label key={a.id} className="checkbox-row">
@@ -3915,7 +3965,7 @@ function CaliforniaBurgerCustomizer({ item, onClose, onAdd }) {
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>FRIES OPTIONS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>FRIES OPTIONS</div>
           <div style={{ marginBottom: 16 }}>
             {friesOpts.map(f => (
               <label key={f.id} className="checkbox-row">
@@ -3928,7 +3978,7 @@ function CaliforniaBurgerCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -3980,7 +4030,7 @@ function SeafoodPlatterCustomizer({ item, onClose, onAdd }) {
             <strong>Includes:</strong> French Fries, Cole Slaw, Tartar Sauce, Roll & Butter
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             FRIES OPTIONS
           </div>
           
@@ -4002,7 +4052,7 @@ function SeafoodPlatterCustomizer({ item, onClose, onAdd }) {
             <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>
           </label>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, marginTop: 16, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, marginTop: 16, color: '#555' }}>
             PLATTER OPTIONS
           </div>
           
@@ -4020,7 +4070,7 @@ function SeafoodPlatterCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${item.price.toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -4084,7 +4134,7 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
           {/* Pepperoni Choice */}
           {item.hasPepperoniChoice && (
             <>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>PEPPERONI TYPE</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>PEPPERONI TYPE</div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <button type="button"
                   className={`size-btn ${pepperoniType === 'pork' ? 'selected' : ''}`}
@@ -4106,14 +4156,14 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
             </>
           )}
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>SELECT SIZE</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>SELECT SIZE</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             {[
               { key: 'small', label: 'Small 10"', price: item.prices.small },
               { key: 'large', label: 'Large 14"', price: item.prices.large },
               { key: 'xlarge', label: 'X-Large 16"', price: item.prices.xlarge },
             ].map(s => (
-              <button key={s.key} className={`size-btn ${size === s.key ? 'selected' : ''}`} onClick={() => setSize(s.key)}>
+              <button type="button" key={s.key} className={`size-btn ${size === s.key ? 'selected' : ''}`} onClick={() => setSize(s.key)}>
                 <div style={{ fontSize: 13 }}>{s.label}</div>
                 <div style={{ fontSize: 16, fontWeight: 700 }}>${s.price}</div>
               </button>
@@ -4121,21 +4171,21 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
           </div>
 
           {/* Cooking Preference */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>COOKING PREFERENCE</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>COOKING PREFERENCE</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             {[
               { key: 'light', label: 'Light', desc: 'Less cooked' },
               { key: 'regular', label: 'Regular', desc: 'Standard' },
               { key: 'well', label: 'Well Done', desc: 'Extra crispy' },
             ].map(c => (
-              <button key={c.key} className={`size-btn ${cookingPref === c.key ? 'selected' : ''}`} onClick={() => setCookingPref(c.key)} style={{ flex: 1 }}>
+              <button type="button" key={c.key} className={`size-btn ${cookingPref === c.key ? 'selected' : ''}`} onClick={() => setCookingPref(c.key)} style={{ flex: 1 }}>
                 <div style={{ fontSize: 13 }}>{c.label}</div>
                 <div style={{ fontSize: 10, opacity: 0.8 }}>{c.desc}</div>
               </button>
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>ADD EXTRA TOPPINGS (+$3 each)</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>ADD EXTRA TOPPINGS (+$3 each)</div>
           <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid #ddd', padding: 8, background: 'white' }}>
             {toppings.map(t => (
               <label key={t} className="checkbox-row">
@@ -4148,7 +4198,7 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', marginTop: 16, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -4224,7 +4274,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
           </div>
 
           {/* Size Selection - Large and X-Large only */}
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>SELECT SIZE</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>SELECT SIZE</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             {[
               { key: 'large', label: 'Large 14"' },
@@ -4275,7 +4325,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
           {/* Pepperoni Type if needed */}
           {needsPepperoniChoice() && (
             <>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>PEPPERONI TYPE</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>PEPPERONI TYPE</div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <button type="button"
                   className={`size-btn ${pepperoniType === 'pork' ? 'selected' : ''}`}
@@ -4299,7 +4349,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
 
           {/* Preview */}
           <div style={{ background: '#f5f5f5', padding: 12, marginBottom: 16, borderRadius: 4 }}>
-            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Your Pizza:</div>
+            <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Your Pizza:</div>
             <div style={{ fontWeight: 600, fontSize: 15 }}>
               Half {half1} / Half {half2}
             </div>
@@ -4310,7 +4360,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -4379,7 +4429,7 @@ function SteakCustomizer({ item, onClose, onAdd }) {
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="red-banner">Customize {item.name}</div>
         <div style={{ padding: 16 }}>
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>CHOOSE CHEESE</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHOOSE CHEESE</div>
           <div style={{ marginBottom: 16 }}>
             {cheeseOpts.map(c => (
               <label key={c.id} className="radio-row">
@@ -4389,7 +4439,7 @@ function SteakCustomizer({ item, onClose, onAdd }) {
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>ADD-ONS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>ADD-ONS</div>
           <div style={{ marginBottom: 16 }}>
             {addonOpts.map(a => (
               <label key={a.id} className="checkbox-row">
@@ -4400,7 +4450,7 @@ function SteakCustomizer({ item, onClose, onAdd }) {
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>EXTRAS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
           <div style={{ marginBottom: 16 }}>
             {extraOpts.map(e => (
               <label key={e.id} className="checkbox-row">
@@ -4413,7 +4463,7 @@ function SteakCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -4483,7 +4533,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
             <strong>Includes:</strong> Cheese Steak + French Fries
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>CHEESE ON STEAK</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHEESE ON STEAK</div>
           <div style={{ marginBottom: 16 }}>
             {cheeseOpts.map(c => (
               <label key={c.id} className="radio-row">
@@ -4493,7 +4543,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>STEAK ADD-ONS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>STEAK ADD-ONS</div>
           <div style={{ marginBottom: 16 }}>
             {addonOpts.map(a => (
               <label key={a.id} className="checkbox-row">
@@ -4504,7 +4554,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>FRIES OPTIONS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>FRIES OPTIONS</div>
           <div style={{ marginBottom: 16 }}>
             {friesOpts.map(f => (
               <label key={f.id} className="checkbox-row">
@@ -4517,7 +4567,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 
           <div style={{ borderTop: '2px solid #C41E3A', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 12, color: '#666' }}>Total</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>${getPrice().toFixed(2)}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -4591,7 +4641,7 @@ function OrderConfirmation({ order, onBackToMenu }) {
             <div style={{ fontWeight: 700, fontSize: 15, textTransform: 'capitalize' }}>
               {order.orderType}
             </div>
-            <div style={{ fontSize: 14, color: '#666' }}>
+            <div style={{ fontSize: 14, color: '#555' }}>
               {order.scheduleLabel 
                 ? `Scheduled: ${order.scheduleLabel}` 
                 : `Estimated: ${order.estimate}`
@@ -5092,14 +5142,14 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       <div className="red-banner">Your Items</div>
       <div style={{ background: 'white', border: '2px solid #ddd' }}>
         {cart.length === 0 ? (
-          <div style={{ padding: 32, textAlign: 'center', color: '#666' }}>Your cart is empty</div>
+          <div style={{ padding: 32, textAlign: 'center', color: '#555' }}>Your cart is empty</div>
         ) : (
           <div style={{ padding: 16 }}>
             {cart.map(item => (
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px dotted #ccc' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600 }}>{item.name}</div>
-                  {item.mods?.length > 0 && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{item.mods.join(', ')}</div>}
+                  {item.mods?.length > 0 && <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>{item.mods.join(', ')}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontWeight: 700, color: '#C41E3A' }}>${item.price.toFixed(2)}</span>
@@ -5117,7 +5167,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
       {/* 2. FORGOT SOMETHING? - Upsells */}
       <div style={{ background: '#FFF8E1', border: '2px solid #FFB300', padding: 16, marginTop: 16 }}>
-        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 10, color: '#666' }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 10, color: '#555' }}>
           🍟 FORGOT SOMETHING?
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -5185,12 +5235,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
       {/* 4. COUPON CODE */}
       <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>COUPON CODE</div>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>COUPON CODE</div>
         {couponApplied ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, background: '#E8F5E9', border: '1px solid #228B22' }}>
             <div>
               <span style={{ fontWeight: 700, color: '#228B22' }}>✔ {couponApplied.code}</span>
-              <span style={{ marginLeft: 8, color: '#666', fontSize: 13 }}>({couponApplied.desc})</span>
+              <span style={{ marginLeft: 8, color: '#555', fontSize: 13 }}>({couponApplied.desc})</span>
             </div>
             <button type="button" onClick={removeCoupon} style={{ background: 'none', border: 'none', color: '#C41E3A', cursor: 'pointer', fontWeight: 600 }}>Remove</button>
           </div>
@@ -5212,7 +5262,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       {/* 5. DRIVER TIP - Only for Delivery */}
       {orderType === 'delivery' && (
         <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#666' }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#555' }}>
             TIP YOUR DRIVER
           </div>
           <div style={{ fontSize: 12, color: '#228B22', marginBottom: 12 }}>
@@ -5261,7 +5311,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
               No Tip
             </button>
             <div style={{ flex: 1, position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#666' }}>$</span>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#555' }}>$</span>
               <input
                 type="number"
                 value={customTip}
@@ -5278,7 +5328,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
       {/* 6. ORDER TIMING */}
       <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#666' }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#555' }}>
           WHEN DO YOU WANT YOUR ORDER?
         </div>
         
@@ -5340,8 +5390,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         {scheduleType === 'scheduled' && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>SELECT DATE</div>
+              <label htmlFor="schedule-date" style={{ fontSize: 12, color: '#555', marginBottom: 4, display: 'block' }}>SELECT DATE</label>
               <select
+                id="schedule-date"
                 value={scheduledDate}
                 onChange={(e) => { setScheduledDate(e.target.value); setScheduledTime(''); }}
                 style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', background: 'white' }}
@@ -5353,8 +5404,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
               </select>
             </div>
             <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>SELECT TIME</div>
+              <label htmlFor="schedule-time" style={{ fontSize: 12, color: '#555', marginBottom: 4, display: 'block' }}>SELECT TIME</label>
               <select
+                id="schedule-time"
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
                 disabled={!scheduledDate}
@@ -5379,28 +5431,32 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       {/* Delivery Details - Only show for delivery orders */}
       {orderType === 'delivery' && (
         <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#666' }}>DELIVERY DETAILS</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#555' }}>DELIVERY DETAILS</div>
           
           {/* Customer Name for Delivery */}
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Name *</label>
+            <label htmlFor="delivery-name" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Name *</label>
             <input
+              id="delivery-name"
               type="text"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
               placeholder="Your name"
+              autoComplete="name"
               style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
             />
           </div>
 
           {/* Phone for Delivery */}
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Phone Number *</label>
+            <label htmlFor="delivery-phone" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Phone Number *</label>
             <input
+              id="delivery-phone"
               type="tel"
               value={phone}
               onChange={e => setPhone(formatPhoneNumber(e.target.value))}
               placeholder="(215) 555-1234"
+              autoComplete="tel"
               style={{ 
                 width: '100%', 
                 padding: 10, 
@@ -5415,19 +5471,22 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           </div>
           
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Street Address *</label>
+            <label htmlFor="delivery-street" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Street Address *</label>
             <input
+              id="delivery-street"
               type="text"
               value={deliveryAddress.street}
               onChange={e => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
               placeholder="123 Main Street"
+              autoComplete="street-address"
               style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
             />
           </div>
 
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Apt/Suite/Unit</label>
+            <label htmlFor="delivery-apt" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Apt/Suite/Unit</label>
             <input
+              id="delivery-apt"
               type="text"
               value={deliveryAddress.apt}
               onChange={e => setDeliveryAddress({ ...deliveryAddress, apt: e.target.value })}
@@ -5438,17 +5497,20 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 2 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>City</label>
+              <label htmlFor="delivery-city" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>City</label>
               <input
+                id="delivery-city"
                 type="text"
                 value={deliveryAddress.city}
                 onChange={e => setDeliveryAddress({ ...deliveryAddress, city: e.target.value })}
+                autoComplete="address-level2"
                 style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>ZIP *</label>
+              <label htmlFor="delivery-zip" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>ZIP *</label>
               <input
+                id="delivery-zip"
                 type="text"
                 value={deliveryAddress.zip}
                 onChange={e => {
@@ -5456,6 +5518,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
                   validateZip(e.target.value);
                 }}
                 placeholder="19123"
+                autoComplete="postal-code"
                 style={{ 
                   width: '100%', 
                   padding: 10, 
@@ -5473,7 +5536,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
               <div style={{ fontWeight: 700, color: '#C41E3A', marginBottom: 8 }}>
                 😔 Sorry, this ZIP code is outside our delivery zone
               </div>
-              <div style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, color: '#555', marginBottom: 12 }}>
                 We deliver to: {deliveryZones.join(', ')}
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Order through our delivery partners:</div>
@@ -5530,19 +5593,21 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
       {/* Contact Info - Pickup or additional for delivery */}
       <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#666' }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#555' }}>
           {orderType === 'pickup' ? 'YOUR DETAILS' : 'ADDITIONAL CONTACT'}
         </div>
 
         {/* Customer Name - Only show here for pickup (delivery has it above) */}
         {orderType === 'pickup' && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Name *</label>
+            <label htmlFor="pickup-name" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Name *</label>
             <input
+              id="pickup-name"
               type="text"
               value={customerName}
               onChange={e => setCustomerName(e.target.value)}
               placeholder="Your name"
+              autoComplete="name"
               style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
             />
           </div>
@@ -5551,12 +5616,14 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         {/* Phone - Only show here for pickup */}
         {orderType === 'pickup' && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Phone Number *</label>
+            <label htmlFor="pickup-phone" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Phone Number *</label>
             <input
+              id="pickup-phone"
               type="tel"
               value={phone}
               onChange={e => setPhone(formatPhoneNumber(e.target.value))}
               placeholder="(215) 555-1234"
+              autoComplete="tel"
               style={{ 
                 width: '100%', 
                 padding: 10, 
@@ -5572,12 +5639,14 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         )}
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#666' }}>Email for Receipt *</label>
+          <label htmlFor="customer-email" style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Email for Receipt *</label>
           <input
+            id="customer-email"
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="your@email.com"
+            autoComplete="email"
             style={{ width: '100%', padding: 10, fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
           />
         </div>
@@ -5585,10 +5654,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
       {/* Special Instructions */}
       <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#666' }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
           SPECIAL INSTRUCTIONS / NOTES
         </div>
+        <label htmlFor="special-instructions" className="sr-only">Special instructions or notes for the kitchen</label>
         <textarea
+          id="special-instructions"
           value={specialInstructions}
           onChange={e => setSpecialInstructions(e.target.value)}
           placeholder="Any special requests or notes for the kitchen? (e.g., allergies, extra napkins, ring doorbell, etc.)"
@@ -5604,7 +5675,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             fontFamily: 'inherit'
           }}
         />
-        <div style={{ fontSize: 11, color: '#999', marginTop: 4, textAlign: 'right' }}>
+        <div style={{ fontSize: 11, color: '#767676', marginTop: 4, textAlign: 'right' }}>
           {specialInstructions.length}/500 characters
         </div>
       </div>
@@ -5618,7 +5689,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             onChange={e => setEmailConsent(e.target.checked)}
             style={{ marginTop: 3, width: 18, height: 18, accentColor: '#C41E3A' }}
           />
-          <span style={{ fontSize: 13, color: '#666', lineHeight: 1.4 }}>
+          <span style={{ fontSize: 13, color: '#555', lineHeight: 1.4 }}>
             Yes, I'd like to receive promotional emails from George's Pizza about special offers, new menu items, and exclusive deals. You can unsubscribe at any time.
           </span>
         </label>
@@ -5658,7 +5729,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid #eee' }}>
-            <span style={{ color: '#666' }}>Subtotal ({cart.length} item{cart.length !== 1 ? 's' : ''})</span>
+            <span style={{ color: '#555' }}>Subtotal ({cart.length} item{cart.length !== 1 ? 's' : ''})</span>
             <span style={{ fontWeight: 600 }}>${subtotal.toFixed(2)}</span>
           </div>
           
@@ -5671,7 +5742,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           
           {orderType === 'delivery' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8 }}>
-              <span style={{ color: '#666' }}>Delivery Fee</span>
+              <span style={{ color: '#555' }}>Delivery Fee</span>
               <span style={{ fontWeight: 600 }}>
                 {deliveryFeeAfterDiscount === 0 ? <span style={{ color: '#228B22' }}>FREE</span> : `$${deliveryFee.toFixed(2)}`}
               </span>
@@ -5679,13 +5750,13 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           )}
           
           <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8 }}>
-            <span style={{ color: '#666' }}>Tax (8%)</span>
+            <span style={{ color: '#555' }}>Tax (8%)</span>
             <span style={{ fontWeight: 600 }}>${tax.toFixed(2)}</span>
           </div>
           
           {orderType === 'delivery' && driverTip > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8 }}>
-              <span style={{ color: '#666' }}>Driver Tip</span>
+              <span style={{ color: '#555' }}>Driver Tip</span>
               <span style={{ fontWeight: 600, color: '#228B22' }}>${driverTip.toFixed(2)}</span>
             </div>
           )}
@@ -5698,7 +5769,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           )}
           
           {subtotal > 0 && subtotal < 45 && (
-            <div style={{ fontSize: 12, color: '#666', paddingTop: 8, fontStyle: 'italic' }}>
+            <div style={{ fontSize: 12, color: '#555', paddingTop: 8, fontStyle: 'italic' }}>
               💡 Add ${(45 - subtotal).toFixed(2)} more for a FREE 2 Liter Soda!
             </div>
           )}
@@ -5730,7 +5801,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             {cardError && (
               <div style={{ color: '#C41E3A', fontSize: 13, marginTop: 4 }}>{cardError}</div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, color: '#666', fontSize: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, color: '#555', fontSize: 12 }}>
               <span>Secured by Stripe</span>
             </div>
           </>
@@ -5751,19 +5822,20 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       </button>
 
       {testMode && (
-        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#666' }}>
+        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#555' }}>
           Test Mode — No payment will be charged
         </div>
       )}
 
       {/* Alternative Delivery Partners - Always visible at bottom */}
-      <div style={{ marginTop: 20, padding: 16, background: '#F5F5F5', border: '1px solid #ddd', textAlign: 'center' }}>
-        <div style={{ fontSize: 13, color: '#666', marginBottom: 10 }}>Also available on:</div>
+      <nav aria-label="Delivery partners" style={{ marginTop: 20, padding: 16, background: '#F5F5F5', border: '1px solid #ddd', textAlign: 'center' }}>
+        <div style={{ fontSize: 13, color: '#555', marginBottom: 10 }}>Also available on:</div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a 
             href="https://www.doordash.com/store/george's-pizza-philadelphia-24498442/" 
             target="_blank" 
             rel="noopener noreferrer"
+            aria-label="Order on DoorDash (opens in new tab)"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -5784,6 +5856,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             href="https://www.ubereats.com/store/georges-pizza/example" 
             target="_blank" 
             rel="noopener noreferrer"
+            aria-label="Order on UberEats (opens in new tab)"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -5801,7 +5874,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             UberEats
           </a>
         </div>
-      </div>
+      </nav>
     </div>
   );
 }
