@@ -805,7 +805,6 @@ function GeorgesPizza() {
 
   const chipsMenu = [
     { name: "Herr's Chips (Small)", desc: 'BBQ, Classic, Sour Cream & Onion', price: 1, hasChipsChoice: true, isSmall: true },
-    { name: "Herr's Chips (Large)", desc: 'BBQ, Classic, Sour Cream & Onion', price: 2.69, hasChipsChoice: true },
   ];
 
   const dessertsMenu = [
@@ -1538,6 +1537,19 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
 
       {categoryId === 'pizza' && (
         <>
+          {/* Fresh Pizza Message */}
+          <div style={{ 
+            background: '#FFF8E1', 
+            border: '2px solid #DAA520', 
+            padding: '12px 16px', 
+            marginBottom: 20, 
+            textAlign: 'center',
+            fontFamily: "'Crimson Text', Georgia, serif",
+          }}>
+            <span style={{ fontSize: 15, color: '#5D4037', fontStyle: 'italic' }}>
+              Fresh dough made by hand daily on premises for over 40 years
+            </span>
+          </div>
           {/* Half & Half Pizza Builder */}
           <div className="menu-section" style={{ marginBottom: 20 }}>
             <div className="green-stripe" />
@@ -5827,54 +5839,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         </div>
       )}
 
-      {/* Alternative Delivery Partners - Always visible at bottom */}
-      <nav aria-label="Delivery partners" style={{ marginTop: 20, padding: 16, background: '#F5F5F5', border: '1px solid #ddd', textAlign: 'center' }}>
-        <div style={{ fontSize: 13, color: '#555', marginBottom: 10 }}>Also available on:</div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a 
-            href="https://www.doordash.com/store/george's-pizza-philadelphia-24498442/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            aria-label="Order on DoorDash (opens in new tab)"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '8px 12px',
-              background: 'white',
-              border: '1px solid #ddd',
-              color: '#FF3008',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: 13,
-              borderRadius: 4,
-            }}
-          >
-            DoorDash
-          </a>
-          <a 
-            href="https://www.ubereats.com/store/georges-pizza/example" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            aria-label="Order on UberEats (opens in new tab)"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '8px 12px',
-              background: 'white',
-              border: '1px solid #ddd',
-              color: '#06C167',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: 13,
-              borderRadius: 4,
-            }}
-          >
-            UberEats
-          </a>
-        </div>
-      </nav>
     </div>
   );
 }
