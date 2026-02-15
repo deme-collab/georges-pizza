@@ -1307,25 +1307,41 @@ function GeorgesPizza() {
             {/* Family Deals */}
             <div className="red-banner">Everyday Special</div>
             <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
-              {familyDeals.map(deal => (
+              {familyDeals.map(deal => {
+                const dealInCart = cart.some(item => item.name === deal.name);
+                return (
                 <div
                   key={deal.id}
-                  style={{ background: 'white', border: '3px solid #C41E3A', padding: 16, position: 'relative', cursor: 'pointer', maxWidth: 320, width: '100%' }}
-                  onClick={() => deal.hasTwoLargePizzaMods ? setFamilyDealCustomizing(deal) : addToCart({ name: deal.name, price: deal.price, mods: [] })}
+                  style={{ 
+                    background: dealInCart ? '#f5f5f5' : 'white', 
+                    border: `3px solid ${dealInCart ? '#999' : '#C41E3A'}`, 
+                    padding: 16, 
+                    position: 'relative', 
+                    cursor: dealInCart ? 'default' : 'pointer', 
+                    maxWidth: 320, 
+                    width: '100%',
+                    opacity: dealInCart ? 0.6 : 1,
+                  }}
+                  onClick={() => {
+                    if (dealInCart) return;
+                    deal.hasTwoLargePizzaMods ? setFamilyDealCustomizing(deal) : addToCart({ name: deal.name, price: deal.price, mods: [] });
+                  }}
                   role="button"
-                  tabIndex={0}
-                  aria-label={`${deal.name} - $${deal.price}. ${deal.desc}`}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); deal.hasTwoLargePizzaMods ? setFamilyDealCustomizing(deal) : addToCart({ name: deal.name, price: deal.price, mods: [] }); } }}
+                  tabIndex={dealInCart ? -1 : 0}
+                  aria-label={dealInCart ? `${deal.name} - already in cart` : `${deal.name} - $${deal.price}. ${deal.desc}`}
+                  onKeyDown={(e) => { if (!dealInCart && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); deal.hasTwoLargePizzaMods ? setFamilyDealCustomizing(deal) : addToCart({ name: deal.name, price: deal.price, mods: [] }); } }}
                 >
-                  <div style={{ position: 'absolute', top: -1, right: -1, background: '#228B22', color: 'white', padding: '3px 8px', fontSize: 10, fontFamily: "'Oswald', sans-serif", fontWeight: 600 }}>
-                    {deal.badge}
+                  <div style={{ position: 'absolute', top: -1, right: -1, background: dealInCart ? '#999' : '#228B22', color: 'white', padding: '3px 8px', fontSize: 10, fontFamily: "'Oswald', sans-serif", fontWeight: 600 }}>
+                    {dealInCart ? 'In Cart' : deal.badge}
                   </div>
-                  <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: '#C41E3A', textAlign: 'center' }}>${deal.price}</div>
+                  <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 28, fontWeight: 700, color: dealInCart ? '#999' : '#C41E3A', textAlign: 'center' }}>${deal.price}</div>
                   <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 600, color: '#1a1a1a', marginBottom: 4, textAlign: 'center' }}>{deal.name}</div>
                   <div style={{ fontSize: 12, color: '#555', textAlign: 'center' }}>{deal.desc}</div>
-                  {deal.hasTwoLargePizzaMods && <div style={{ fontSize: 11, color: '#228B22', marginTop: 4, textAlign: 'center' }}>+ Add toppings</div>}
+                  {deal.hasTwoLargePizzaMods && !dealInCart && <div style={{ fontSize: 11, color: '#228B22', marginTop: 4, textAlign: 'center' }}>+ Add toppings</div>}
+                  {dealInCart && <div style={{ fontSize: 11, color: '#999', marginTop: 4, textAlign: 'center' }}>Limit 1 per order</div>}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Info Bar */}
