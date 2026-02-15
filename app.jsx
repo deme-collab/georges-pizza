@@ -1288,6 +1288,10 @@ function GeorgesPizza() {
                     key={s.num}
                     className="menu-item"
                     onClick={() => lunchAvailable && setLunchCustomizing(s)}
+                    role="button"
+                    tabIndex={lunchAvailable ? 0 : -1}
+                    aria-label={`Lunch special number ${s.num}: ${s.name}, $${s.price}`}
+                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && lunchAvailable) { e.preventDefault(); setLunchCustomizing(s); } }}
                     style={{ background: 'white', padding: '8px 10px', border: '1px solid #ddd', cursor: 'pointer' }}
                   >
                     <div>
@@ -1308,6 +1312,10 @@ function GeorgesPizza() {
                   key={deal.id}
                   style={{ background: 'white', border: '3px solid #C41E3A', padding: 16, position: 'relative', cursor: 'pointer', maxWidth: 320, width: '100%' }}
                   onClick={() => deal.hasTwoLargePizzaMods ? setFamilyDealCustomizing(deal) : addToCart({ name: deal.name, price: deal.price, mods: [] })}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${deal.name} - $${deal.price}. ${deal.desc}`}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); deal.hasTwoLargePizzaMods ? setFamilyDealCustomizing(deal) : addToCart({ name: deal.name, price: deal.price, mods: [] }); } }}
                 >
                   <div style={{ position: 'absolute', top: -1, right: -1, background: '#228B22', color: 'white', padding: '3px 8px', fontSize: 10, fontFamily: "'Oswald', sans-serif", fontWeight: 600 }}>
                     {deal.badge}
