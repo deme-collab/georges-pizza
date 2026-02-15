@@ -808,7 +808,7 @@ function GeorgesPizza() {
   ];
 
   const dessertsMenu = [
-    { name: 'Cheesecake', desc: 'Pineapple, Cherry, or Strawberry', price: 5, hasCheesecakeChoice: true },
+    { name: 'Cheesecake', desc: 'Plain, Pineapple, Cherry, or Strawberry', price: 5, hasCheesecakeChoice: true },
     { name: 'Strawberry Shortcake', price: 5 },
     { name: 'Carrot Cake', price: 5 },
     { name: 'Ice Cream Pint', desc: 'Chocolate, Vanilla, or Strawberry', price: 5.5, hasIceCreamChoice: true },
