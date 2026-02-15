@@ -5078,6 +5078,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       scheduledTime: scheduleType === 'scheduled' 
         ? `${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
         : null,
+      emailConsent,
     };
     
     try {
