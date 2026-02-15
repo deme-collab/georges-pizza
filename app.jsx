@@ -1436,9 +1436,14 @@ function GeorgesPizza() {
       )}
 
       {/* FOOTER */}
-      <footer style={{ background: '#C41E3A', color: 'white', padding: 16, textAlign: 'center', marginTop: 30 }}>
+      <footer role="contentinfo" style={{ background: '#C41E3A', color: 'white', padding: '16px 16px 20px', textAlign: 'center', marginTop: 30 }}>
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 700 }}>George's Pizza</div>
-        <div style={{ fontSize: 12, opacity: 0.9 }}>Serving Philadelphia since 1984</div>
+        <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 10 }}>Serving Philadelphia since 1984</div>
+        <div style={{ fontSize: 11, opacity: 0.75, maxWidth: 400, margin: '0 auto', lineHeight: 1.4 }}>
+          We are committed to accessibility. If you have difficulty using this site, please call us at{' '}
+          <a href="tel:2152365288" style={{ color: 'white', textDecoration: 'underline' }}>(215) 236-5288</a>{' '}
+          to place your order.
+        </div>
       </footer>
     </div>
   );
