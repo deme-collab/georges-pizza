@@ -2099,7 +2099,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
       return {
         title: 'Choose Your Topping',
         required: [
-          { id: 'topping', name: 'Topping', options: ['Pineapple', 'Cherry', 'Strawberry'] }
+          { id: 'topping', name: 'Topping', options: ['Plain', 'Pineapple', 'Cherry', 'Strawberry'] }
         ],
         optional: [],
       };
