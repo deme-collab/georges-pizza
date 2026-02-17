@@ -526,7 +526,7 @@ function GeorgesPizza() {
       { name: 'Steak', desc: 'Sliced Steak', prices: { small: 12, large: 18, xlarge: 19 } },
     ],
     specialty: [
-      { name: "George's Special", desc: 'Pepperoni, Sausage, Green Peppers, Onions & Mushrooms', prices: { small: 14, large: 15, xlarge: 18 }, hasPepperoniChoice: true },
+      { name: "George's Special", desc: 'Pepperoni, Sausage, Green Peppers, Onions & Mushrooms', prices: { small: 14, large: 18, xlarge: 20 }, hasPepperoniChoice: true },
       { name: 'Grilled Chicken', desc: 'Grilled Marinated Chicken Breast', prices: { small: 14, large: 15, xlarge: 18 } },
       { name: 'BBQ Chicken', desc: 'Grilled Chicken with BBQ Sauce', prices: { small: 14, large: 15, xlarge: 18 } },
       { name: 'Buffalo Chicken', desc: 'Spicy Buffalo Chicken with Bleu Cheese Drizzle', prices: { small: 14, large: 18, xlarge: 19 } },
@@ -791,7 +791,7 @@ function GeorgesPizza() {
     { name: 'Fried Mini Tacos (12)', desc: 'Crispy beef tacos', price: 8 },
     { name: 'Garlic Knots (3)', price: 3, badge: 'NEW!', hasDippingSauce: true },
     { name: 'Plain Slice of Pizza', price: 3 },
-    { name: 'Cole Slaw', price: 2 },
+    { name: 'Cole Slaw', price: 1 },
   ];
 
   const drinksMenu = [
@@ -2984,15 +2984,17 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   
   // Steak add-ons (for #2, #4, #6)
   const steakAddOns = [
+    // Free options first
     { id: 'steak-salt', name: 'Salt', price: 0 },
     { id: 'steak-pepper', name: 'Black Pepper', price: 0 },
     { id: 'steak-ketchup', name: 'Ketchup', price: 0 },
     { id: 'steak-fried-onions', name: 'Fried Onions', price: 0 },
+    { id: 'steak-hot-peppers', name: 'Hot Peppers', price: 0 },
+    // Paid options, smallest to largest
+    { id: 'steak-sweet-peppers', name: 'Sweet Peppers', price: 1 },
     { id: 'steak-green-peppers', name: 'Green Peppers', price: 2 },
     { id: 'steak-mushrooms', name: 'Mushrooms', price: 2 },
     { id: 'steak-bacon', name: 'Bacon', price: 2 },
-    { id: 'steak-hot-peppers', name: 'Hot Peppers', price: 0 },
-    { id: 'steak-sweet-peppers', name: 'Sweet Peppers', price: 1 },
     { id: 'steak-pepperoni', name: 'Pepperoni', price: 2 },
     { id: 'steak-pizza-sauce', name: 'Pizza Sauce', price: 2 },
   ];
@@ -4433,12 +4435,17 @@ function SteakCustomizer({ item, onClose, onAdd }) {
   ];
 
   const addonOpts = [
+    // Free options first
+    { id: 'salt', name: 'Salt', price: 0 },
+    { id: 'pepper', name: 'Black Pepper', price: 0 },
+    { id: 'ketchup', name: 'Ketchup', price: 0 },
     { id: 'fried-onions', name: 'Fried Onions', price: 0 },
+    { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
+    // Paid options, smallest to largest
+    { id: 'sweet-peppers', name: 'Sweet Peppers', price: 1 },
     { id: 'green-peppers', name: 'Green Peppers', price: 2 },
     { id: 'mushrooms', name: 'Mushrooms', price: 2 },
     { id: 'bacon', name: 'Bacon', price: 2 },
-    { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
-    { id: 'sweet-peppers', name: 'Sweet Peppers', price: 0 },
     { id: 'pepperoni', name: 'Pepperoni', price: 2 },
     { id: 'pizza-sauce', name: 'Pizza Sauce', price: 2 },
   ];
@@ -4532,12 +4539,17 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
   ];
 
   const addonOpts = [
+    // Free options first
+    { id: 'salt', name: 'Salt', price: 0 },
+    { id: 'pepper', name: 'Black Pepper', price: 0 },
+    { id: 'ketchup', name: 'Ketchup', price: 0 },
     { id: 'fried-onions', name: 'Fried Onions', price: 0 },
+    { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
+    // Paid options, smallest to largest
+    { id: 'sweet-peppers', name: 'Sweet Peppers', price: 1 },
     { id: 'green-peppers', name: 'Green Peppers', price: 2 },
     { id: 'mushrooms', name: 'Mushrooms', price: 2 },
     { id: 'bacon', name: 'Bacon', price: 2 },
-    { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
-    { id: 'sweet-peppers', name: 'Sweet Peppers', price: 0 },
   ];
 
   const friesOpts = [
