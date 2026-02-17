@@ -637,7 +637,7 @@ function GeorgesPizza() {
       { name: 'Italian Cappicola Genoa', prices: { small: 14, large: 16 }, hasStromboliMods: true },
       { name: 'Pepperoni Cheese & Sauce', prices: { small: 14, large: 16 }, hasStromboliMods: true },
       { name: 'Ham & Cheese', prices: { small: 14, large: 16 }, hasStromboliMods: true },
-      { name: 'Special Steak', desc: 'Cheese, Mushrooms, Sauce, Fried Onions, Green Peppers & Pepperoni', prices: { small: 15, large: 17 }, hasStromboliMods: true },
+      { name: 'Special Steak', desc: 'Cheese, Mushrooms, Sauce, Fried Onions, Green Peppers & Pepperoni', prices: { small: 16, large: 19 }, hasStromboliMods: true },
       { name: 'Vegetarian', desc: 'Onions, Green Peppers, Cheese, Sauce & Mushrooms', prices: { small: 14, large: 16 }, hasStromboliMods: true },
       { name: 'Grilled Chicken Cheese & Sauce', prices: { small: 14, large: 16 }, hasStromboliMods: true },
       { name: 'Buffalo Chicken', prices: { small: 14, large: 16 }, hasStromboliMods: true },
