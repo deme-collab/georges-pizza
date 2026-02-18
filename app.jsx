@@ -4728,6 +4728,36 @@ function OrderConfirmation({ order, onBackToMenu }) {
           ))}
         </div>
 
+        {/* Total Breakdown */}
+        <div style={{ padding: '12px 20px', borderTop: '1px solid #eee' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 14, color: '#555' }}>
+            <span>Subtotal</span>
+            <span>${order.subtotal.toFixed(2)}</span>
+          </div>
+          {order.discount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 14, color: '#228B22' }}>
+              <span>Discount</span>
+              <span>-${order.discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 14, color: '#555' }}>
+            <span>Tax</span>
+            <span>${order.tax.toFixed(2)}</span>
+          </div>
+          {order.deliveryFee > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 14, color: '#555' }}>
+              <span>Delivery Fee</span>
+              <span>${order.deliveryFee.toFixed(2)}</span>
+            </div>
+          )}
+          {order.tip > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 14, color: '#555' }}>
+              <span>Driver Tip</span>
+              <span>${order.tip.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+
         {/* Total */}
         <div style={{ 
           borderTop: '2px solid #1a1a1a', 
@@ -5172,6 +5202,11 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           total: finalTotal,
           items: cart,
           testMode,
+          subtotal: subtotalAfterDiscount,
+          tax,
+          deliveryFee: orderType === 'delivery' ? deliveryFeeAfterDiscount : 0,
+          tip: orderType === 'delivery' ? driverTip : 0,
+          discount: couponApplied ? discount : 0,
         });
         
       } else {
