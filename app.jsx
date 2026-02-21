@@ -649,7 +649,7 @@ function GeorgesPizza() {
     { 
       name: 'Garden Salad', 
       desc: 'Iceberg lettuce, tomatoes, onions, green peppers, egg, olives, cucumbers',
-      prices: { small: 10, large: 12 },
+      prices: { small: 6, large: 8 },
       hasSaladMods: true,
       ingredients: ['iceberg-lettuce', 'tomatoes', 'onions', 'green-peppers', 'egg', 'olives', 'cucumbers'],
       defaultDressing: null
@@ -730,10 +730,10 @@ function GeorgesPizza() {
   ];
 
   const pastaMenu = [
-    { name: 'Pasta with Tomato Sauce', desc: 'With Garlic Bread & Salad', price: 11, hasPastaChoice: true },
-    { name: 'Pasta with Meatballs', desc: 'Fresh Handcrafted Meatballs', price: 14, hasPastaChoice: true },
-    { name: 'Pasta with Italian Sausage', price: 14, hasPastaChoice: true },
-    { name: 'Pasta with Chicken Breast', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Tomato Sauce', desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 11, hasPastaChoice: true },
+    { name: 'Pasta with Meatballs', desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Italian Sausage', desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Chicken Breast',desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 14, hasPastaChoice: true },
   ];
 
   const seafoodMenu = [
@@ -1274,7 +1274,7 @@ function GeorgesPizza() {
                 </div>
                 {lunchAvailable ? (
                   <span className="pulse" style={{ background: '#228B22', color: 'white', padding: '4px 10px', fontFamily: "'Oswald', sans-serif", fontSize: 11 }}>
-                    â— AVAILABLE NOW
+                   AVAILABLE NOW
                   </span>
                 ) : (
                   <span style={{ background: '#666', color: 'white', padding: '4px 10px', fontFamily: "'Oswald', sans-serif", fontSize: 11 }}>
@@ -3771,6 +3771,7 @@ function SaladCustomizer({ item, onClose, onAdd }) {
   const extraOptions = [
     { id: 'extra-meat', name: 'Extra Meat', price: 3 },
     { id: 'extra-cheese', name: 'Extra Cheese', price: 3 },
+    ...(item.ingredients && item.ingredients.includes('egg') ? [{ id: 'extra-egg', name: 'Extra Egg', price: 2 }] : []),
   ];
 
   const toggleIngredient = (id) => {
@@ -5472,7 +5473,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         
         {scheduleType === 'asap' && !storeStatus.isOpen && (
           <div style={{ background: '#FFF3E0', padding: 12, fontSize: 14, color: '#E65100' }}>
-            â° We're currently closed. Please schedule your order for when we're open.
+            We're currently closed. Please schedule your order for when we're open.
           </div>
         )}
 
