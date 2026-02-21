@@ -370,7 +370,7 @@ function GeorgesPizza() {
   const [deliveryAddress, setDeliveryAddress] = useState({ street: '', apt: '', city: 'Philadelphia', zip: '' });
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(null);
-  const [emailConsent, setEmailConsent] = useState(false);
+  const [emailConsent, setEmailConsent] = useState(true);
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [driverTip, setDriverTip] = useState(0);
   const [cartNotification, setCartNotification] = useState(null);
@@ -5772,16 +5772,22 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       </div>
 
       {/* Email Consent Checkbox */}
-      <div style={{ marginTop: 16 }}>
+      <div style={{ 
+        marginTop: 16, 
+        background: '#FFF8E1', 
+        border: '1px solid #FFE082', 
+        borderRadius: 8, 
+        padding: '12px 14px' 
+      }}>
         <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer', gap: 10 }}>
           <input
             type="checkbox"
             checked={emailConsent}
             onChange={e => setEmailConsent(e.target.checked)}
-            style={{ marginTop: 3, width: 18, height: 18, accentColor: '#C41E3A' }}
+            style={{ marginTop: 3, width: 20, height: 20, accentColor: '#C41E3A', flexShrink: 0 }}
           />
-          <span style={{ fontSize: 13, color: '#555', lineHeight: 1.4 }}>
-            Yes, I'd like to receive promotional emails from George's Pizza about special offers, new menu items, and exclusive deals. You can unsubscribe at any time.
+          <span style={{ fontSize: 13, color: '#333', lineHeight: 1.4 }}>
+            <strong>Get exclusive deals!</strong> Sign up for emails from George's Pizza about special offers, new menu items, and more. Unsubscribe at any time.
           </span>
         </label>
       </div>
