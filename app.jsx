@@ -730,10 +730,10 @@ function GeorgesPizza() {
   ];
 
   const pastaMenu = [
-    { name: 'Pasta with Tomato Sauce', desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 11, hasPastaChoice: true },
-    { name: 'Pasta with Meatballs', desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 14, hasPastaChoice: true },
-    { name: 'Pasta with Italian Sausage', desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 14, hasPastaChoice: true },
-    { name: 'Pasta with Chicken Breast',desc: 'Choice of Spaghetti or Raviolli With Garlic Bread & Small Salad', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Tomato Sauce', desc: 'With Garlic Bread & Salad', price: 11, hasPastaChoice: true },
+    { name: 'Pasta with Meatballs', desc: 'Fresh Handcrafted Meatballs', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Italian Sausage', price: 14, hasPastaChoice: true },
+    { name: 'Pasta with Chicken Breast', price: 14, hasPastaChoice: true },
   ];
 
   const seafoodMenu = [
@@ -2007,11 +2007,12 @@ function GenericCustomizer({ item, onClose, onAdd }) {
       return {
         title: 'Choose Your Pasta',
         required: [
-          { id: 'pasta', name: 'Pasta Type', options: ['Spaghetti', 'Ravioli (6)'] }
+          { id: 'pasta', name: 'Pasta Type', options: ['Spaghetti', 'Ravioli (6)'] },
+          { id: 'dressing', name: 'Salad Dressing', options: ['Ranch', 'Thousand Island', 'Creamy Italian', 'Lite Ranch', 'Honey Mustard', 'Bleu Cheese', 'Oil & Vinegar', 'No Dressing'] }
         ],
         optional: [
           { id: 'extra-sauce', name: 'Extra Sauce', price: 1 },
-          { id: 'parmesan', name: 'Extra Parmesan', price: 0.5 },
+          { id: 'extra-parmesan', name: 'Extra Parmesan', price: 0.5 },
         ],
       };
     }
