@@ -532,7 +532,7 @@ function GeorgesPizza() {
       { name: 'Buffalo Chicken', desc: 'Spicy Buffalo Chicken with Bleu Cheese Drizzle', prices: { small: 14, large: 18, xlarge: 19 } },
       { name: 'Meat Lover', desc: 'Pepperoni, Sausage, Ham, Bacon & Ground Beef', prices: { small: 14, large: 18, xlarge: 19 }, hasPepperoniChoice: true },
     ],
-    toppingPrice: 3,
+    toppingPrice: { small: 2, large: 3, xlarge: 3 },
   };
 
   const whitePizzaMenu = {
@@ -4140,7 +4140,8 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
 
   const toggleTopping = (t) => setExtraToppings(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
 
-  const getPrice = () => item.prices[size] + (extraToppings.length * 3);
+  const toppingPrice = size === 'small' ? 2 : 3;
+  const getPrice = () => item.prices[size] + (extraToppings.length * toppingPrice);
 
   const getMods = () => {
     const mods = [];
@@ -4230,13 +4231,13 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
             ))}
           </div>
 
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>ADD EXTRA TOPPINGS (+$3 each)</div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>ADD EXTRA TOPPINGS (+${toppingPrice} each)</div>
           <div style={{ maxHeight: 180, overflowY: 'auto', border: '1px solid #ddd', padding: 8, background: 'white' }}>
             {toppings.map(t => (
               <label key={t} className="checkbox-row">
                 <input type="checkbox" checked={extraToppings.includes(t)} onChange={() => toggleTopping(t)} />
                 <span style={{ flex: 1 }}>{t}</span>
-                <span style={{ color: '#C41E3A', fontWeight: 600 }}>+$3</span>
+                <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${toppingPrice}</span>
               </label>
             ))}
           </div>
