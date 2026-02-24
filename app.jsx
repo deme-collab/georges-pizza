@@ -1427,6 +1427,7 @@ function GeorgesPizza() {
             driverTip={driverTip}
             setDriverTip={setDriverTip}
             storeStatus={storeStatus}
+            lunchAvailable={lunchAvailable}
           />
         )}
 
@@ -4812,7 +4813,7 @@ function OrderConfirmation({ order, onBackToMenu }) {
 // CHECKOUT VIEW
 // =============================================================================
 
-function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuccess, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus }) {
+function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuccess, orderType, setOrderType, subtotal, customerName, setCustomerName, email, setEmail, phone, setPhone, deliveryAddress, setDeliveryAddress, couponCode, setCouponCode, couponApplied, setCouponApplied, emailConsent, setEmailConsent, deliveryZones, deliveryMinimum, deliveryFee, taxRate, specialInstructions, setSpecialInstructions, driverTip, setDriverTip, storeStatus, lunchAvailable }) {
   const [processing, setProcessing] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [zipError, setZipError] = useState('');
@@ -4994,8 +4995,8 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     return times;
   };
 
-  // Check if delivery minimum is met (based on subtotal before fees/tax)
-  const isBelowDeliveryMinimum = orderType === 'delivery' && subtotal < deliveryMinimum;
+  // Check if delivery minimum is met (waived during lunch hours Mon-Fri 11am-2pm)
+  const isBelowDeliveryMinimum = orderType === 'delivery' && !lunchAvailable && subtotal < deliveryMinimum;
   const amountNeededForMinimum = deliveryMinimum - subtotal;
 
   // Calculate delivery fee (only for delivery orders)
