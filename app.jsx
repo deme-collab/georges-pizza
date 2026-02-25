@@ -491,17 +491,17 @@ function GeorgesPizza() {
   ];
 
   const lunchSpecials = [
-    { num: 1, name: 'Chicken Parm, Fries & Soda', price: 10, hasLunchFriesSodaMods: true },
+    { num: 1, name: 'Chicken Parm, Chips & Soda', price: 10, hasLunchChipsSodaMods: true },
     { num: 2, name: 'Cheese Steak, Fries & Soda', price: 10, hasLunchSteakFriesSodaMods: true },
-    { num: 3, name: 'Turkey Hoagie, Fries & Soda', price: 10, hasLunchHoagieFriesSodaMods: true },
+    { num: 3, name: 'Turkey Hoagie, Chips & Soda', price: 10, hasLunchHoagieChipsSodaMods: true },
     { num: 4, name: 'Chicken Cheese Steak, Fries & Soda', price: 10, hasLunchSteakFriesSodaMods: true },
     { num: 5, name: '4 Fingers, Fries & Soda', price: 10, hasLunchFingersFriesSodaMods: true },
-    { num: 6, name: 'Pizza Steak, Fries & Soda', price: 10, hasLunchSteakFriesSodaMods: true },
+    { num: 6, name: 'Pizza Steak, Chips & Soda', price: 10, hasLunchSteakChipsSodaMods: true },
     { num: 7, name: 'Chef Salad & Can Soda', price: 10, hasLunchSaladSodaMods: true, saladType: 'chef' },
     { num: 8, name: 'Small Plain Pizza, Fries & Soda', price: 10, hasLunchPizzaFriesSodaMods: true },
     { num: 9, name: '4 Wings, Fries & Soda', price: 10, hasLunchWingsFriesSodaMods: true },
     { num: 10, name: 'Cheeseburger, Fries & Soda', price: 10, hasLunchBurgerFriesSodaMods: true },
-    { num: 14, name: 'Grilled Chicken Caesar & Soda', price: 10, hasLunchSaladSodaMods: true, saladType: 'caesar' },
+    { num: 14, name: 'Grilled Chicken Caesar Salad & Soda', price: 10, hasLunchSaladSodaMods: true, saladType: 'caesar' },
     { num: 15, name: 'Grilled Chicken Wrap, Fries & Soda', price: 10, hasLunchFriesSodaMods: true },
   ];
 
@@ -1282,26 +1282,33 @@ function GeorgesPizza() {
                   </span>
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 6 }}>
-                {lunchSpecials.map(s => (
-                  <div
-                    key={s.num}
-                    className="menu-item"
-                    onClick={() => lunchAvailable && setLunchCustomizing(s)}
-                    role="button"
-                    tabIndex={lunchAvailable ? 0 : -1}
-                    aria-label={`Lunch special number ${s.num}: ${s.name}, $${s.price}`}
-                    onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && lunchAvailable) { e.preventDefault(); setLunchCustomizing(s); } }}
-                    style={{ background: 'white', padding: '8px 10px', border: '1px solid #ddd', cursor: 'pointer' }}
-                  >
-                    <div>
-                      <span style={{ background: '#C41E3A', color: 'white', padding: '1px 5px', fontSize: 10, marginRight: 6, fontWeight: 700 }}>#{s.num}</span>
-                      <span className="item-name" style={{ fontSize: 13 }}>{s.name}</span>
+              {lunchAvailable ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 6 }}>
+                  {lunchSpecials.map(s => (
+                    <div
+                      key={s.num}
+                      className="menu-item"
+                      onClick={() => setLunchCustomizing(s)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Lunch special number ${s.num}: ${s.name}, $${s.price}`}
+                      onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setLunchCustomizing(s); } }}
+                      style={{ background: 'white', padding: '8px 10px', border: '1px solid #ddd', cursor: 'pointer' }}
+                    >
+                      <div>
+                        <span style={{ background: '#C41E3A', color: 'white', padding: '1px 5px', fontSize: 10, marginRight: 6, fontWeight: 700 }}>#{s.num}</span>
+                        <span className="item-name" style={{ fontSize: 13 }}>{s.name}</span>
+                      </div>
+                      <span className="item-price">${s.price}</span>
                     </div>
-                    <span className="item-price">${s.price}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '16px 12px', background: '#FFF8DC', border: '1px dashed #DAA520', color: '#8B4513', fontSize: 14, lineHeight: 1.6 }}>
+                  Lunch specials are available <strong>Monday - Friday, 11am - 2pm</strong>.<br />
+                  Check back during lunch hours for our $10 deals!
+                </div>
+              )}
             </div>
 
             {/* Family Deals */}
@@ -2885,6 +2892,8 @@ function ClubCustomizer({ item, onClose, onAdd }) {
 function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   // Fries options (for items with fries)
   const [friesOptions, setFriesOptions] = useState([]);
+  // Chips flavor (for items with chips)
+  const [chipsFlavor, setChipsFlavor] = useState('');
   // Soda selection
   const [soda, setSoda] = useState('');
   // Wings sauce
@@ -2917,14 +2926,19 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   const [wrapIngs, setWrapIngs] = useState([...wrapIngredients]);
 
   const hasFries = item.name.includes('Fries');
+  const hasChips = item.name.includes('Chips');
   const hasWings = item.name.includes('Wings');
   const hasFingers = item.name.includes('Fingers');
   const isChefSalad = item.num === 7;
   const isCaesarSalad = item.num === 14;
   const isTurkeyHoagie = item.num === 3;
+  const isChickenParm = item.num === 1;
+  const isPizzaSteak = item.num === 6;
   const isBurger = item.num === 10;
   const isWrap = item.num === 15;
   const isLunchWings = item.num === 9; // #9 4 Wings special
+
+  const chipsFlavors = ["Herr's BBQ", "Herr's Classic", "Herr's Sour Cream & Onion"];
 
   const sodaOptions = ['Orange', 'Orange Mango', 'Grape', 'Black Cherry', 'Fruit Punch', 'Cola', 'Ginger Ale'];
   const wingSauces = ['Mild', 'Hot', 'BBQ', 'Plain'];
@@ -3167,6 +3181,11 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
       }
     }
     
+    // Chips flavor
+    if (hasChips && chipsFlavor) {
+      mods.push(chipsFlavor);
+    }
+    
     if (soda) mods.push("Frank's " + soda);
     return mods;
   };
@@ -3179,6 +3198,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
 
   const canAdd = () => {
     if (!soda) return false;
+    if (hasChips && !chipsFlavor) return false;
     // Wings #9 uses checkboxes, no required selection
     if (hasFingers && !fingersDip) return false;
     if (isChefSalad && !saladDressing) return false;
@@ -3391,6 +3411,19 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
                   <input type="checkbox" checked={friesOptions.includes(f.id)} onChange={() => toggleFries(f.id)} />
                   <span style={{ flex: 1 }}>{f.name}</span>
                   <span style={{ color: f.price > 0 ? '#C41E3A' : '#228B22', fontWeight: 600 }}>{f.price > 0 ? `+$${f.price}` : 'FREE'}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* Chips Flavor Selection */}
+          {hasChips && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>CHOOSE YOUR CHIPS *</div>
+              {chipsFlavors.map(f => (
+                <label key={f} className="radio-row">
+                  <input type="radio" name="chips" checked={chipsFlavor === f} onChange={() => setChipsFlavor(f)} />
+                  <span style={{ flex: 1 }}>{f}</span>
                 </label>
               ))}
             </div>
