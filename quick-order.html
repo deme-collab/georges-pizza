@@ -507,7 +507,7 @@ cash"
             
             <div class="action-buttons">
                 <button class="edit-btn" onclick="editOrder()">✏️ EDIT</button>
-                <button class="print-btn" id="printBtn" onclick="printOrder()">🖨️ PRINT</button>
+                <button class="print-btn" id="printBtn" onclick="printOrder()">🖨️ PRINT</button>
             </div>
         </div>
         
@@ -663,7 +663,8 @@ cash"
                         modsHTML += `<div class="item-mods"><strong>Main:</strong> ${item.mods.join(', ')}</div>`;
                     }
                     if (item.specialMods.fries && item.specialMods.fries.length > 0) {
-                        modsHTML += `<div class="item-mods"><strong>Fries:</strong> ${item.specialMods.fries.join(', ')}</div>`;
+                        const sideLabel = item.specialMods.fries.some(f => f.toLowerCase().includes('chip')) ? 'Chips' : 'Fries';
+                        modsHTML += `<div class="item-mods"><strong>${sideLabel}:</strong> ${item.specialMods.fries.join(', ')}</div>`;
                     }
                     if (item.specialMods.drink && item.specialMods.drink.length > 0) {
                         modsHTML += `<div class="item-mods"><strong>Drink:</strong> ${item.specialMods.drink.join(', ')}</div>`;
@@ -848,7 +849,7 @@ cash"
             
             printBtn.disabled = false;
             document.querySelector('.edit-btn').disabled = false;
-            printBtn.innerHTML = '🖨️ PRINT';
+            printBtn.innerHTML = '🖨️ PRINT';
         }
         
         function newOrder() {
