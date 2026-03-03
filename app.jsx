@@ -428,6 +428,68 @@ function GeorgesPizza() {
     const interval = setInterval(checkLunch, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // REDIRECT RECOVERY: Handle CashApp/Venmo/bank redirect returns
+  // When payment methods require a redirect, the page reloads and all React state is lost.
+  // Stripe appends ?payment_intent=xxx&redirect_status=succeeded to the URL on return.
+  // We detect this, recover the saved order data, and complete the order submission.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentIntentId = params.get('payment_intent');
+    const redirectStatus = params.get('redirect_status');
+    
+    if (!paymentIntentId || redirectStatus !== 'succeeded') return;
+    
+    // Clean the URL immediately so refresh doesn't re-trigger
+    window.history.replaceState({}, '', window.location.pathname);
+    
+    const completeRedirectOrder = async () => {
+      try {
+        const saved = sessionStorage.getItem('gp2_pending_order');
+        if (!saved) {
+          console.error('[REDIRECT] No saved order data found');
+          alert('Your payment was received! However we could not automatically submit your order. Please call us at (215) 236-5288 to confirm. Payment ID: ' + paymentIntentId);
+          return;
+        }
+        
+        const orderData = JSON.parse(saved);
+        orderData.paymentIntentId = paymentIntentId;
+        
+        const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
+        const response = await fetch(`${API_URL}/api/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          sessionStorage.removeItem('gp2_pending_order');
+          setConfirmedOrder({
+            orderNumber: result.orderNumber,
+            email: orderData.customerEmail,
+            orderType: orderData.orderType,
+            total: orderData.total,
+            items: orderData.items,
+            subtotal: orderData.subtotal,
+            tax: orderData.tax,
+            deliveryFee: orderData.deliveryFee || 0,
+            tip: orderData.tip || 0,
+            discount: orderData.discount || 0,
+          });
+          setCurrentView('confirmation');
+        } else {
+          alert('Your payment was received! However there was an issue submitting your order. Please call us at (215) 236-5288. Payment ID: ' + paymentIntentId);
+        }
+      } catch (error) {
+        console.error('[REDIRECT] Error completing order:', error);
+        alert('Your payment was received! Please call us at (215) 236-5288 to confirm your order. Payment ID: ' + paymentIntentId);
+      }
+    };
+    
+    completeRedirectOrder();
+  }, []);
   
   // Show loading while checking site status
   if (!siteStatusLoaded) {
@@ -5181,6 +5243,10 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       let paymentIntentId = null;
       
       if (!testMode && stripeReady && stripeRef.current && elementsRef.current && clientSecret) {
+        // Save order data before payment in case of redirect (CashApp, Venmo, etc.)
+        // If payment method requires redirect, page reloads and React state is lost.
+        // The GeorgesPizza component will detect the return and complete the order.
+        try { sessionStorage.setItem('gp2_pending_order', JSON.stringify(orderData)); } catch (e) {}
         // Confirm payment with Stripe Payment Element
         const { error, paymentIntent } = await stripeRef.current.confirmPayment({
           elements: elementsRef.current,
@@ -5226,6 +5292,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       if (result.success) {
         orderSuccess = true;
         
+        try { sessionStorage.removeItem('gp2_pending_order'); } catch (e) {}
         const scheduleLabel = scheduleType === 'scheduled'
           ? `${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
           : null;
