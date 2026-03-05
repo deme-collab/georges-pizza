@@ -5012,7 +5012,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     };
     
     createIntent();
-  }, [stripeReady, testMode]);
+  }, [stripeReady, testMode, finalTotal]);
   
   // Update payment intent amount when total changes (tip, coupon, delivery toggle)
   useEffect(() => {
