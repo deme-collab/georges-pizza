@@ -4918,6 +4918,32 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   const [scheduledTime, setScheduledTime] = useState('');
   const estimate = orderType === 'pickup' ? '~15 minutes' : '35-45 minutes';
 
+  // Backend API URL
+  const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
+
+  // Calculate delivery fee (only for delivery orders) - MUST be before Stripe useEffects
+  const actualDeliveryFee = orderType === 'delivery' ? deliveryFee : 0;
+
+  // Discount calculation - MUST be before finalTotal
+  const getDiscount = () => {
+    if (!couponApplied) return 0;
+    if (couponApplied.type === 'percent') return subtotal * (couponApplied.value / 100);
+    if (couponApplied.type === 'delivery') return actualDeliveryFee;
+    return couponApplied.value;
+  };
+
+  // Calculate totals - MUST be before Stripe useEffects so finalTotal is defined
+  const discount = getDiscount();
+  const subtotalAfterDiscount = Math.max(0, subtotal - (couponApplied?.type !== 'delivery' ? discount : 0));
+  const deliveryFeeAfterDiscount = couponApplied?.type === 'delivery' ? 0 : actualDeliveryFee;
+  const taxableAmount = subtotalAfterDiscount; // Tax on food only, not delivery fee or tip
+  const tax = taxableAmount * taxRate;
+  const finalTotal = subtotalAfterDiscount + deliveryFeeAfterDiscount + tax + (orderType === 'delivery' ? driverTip : 0);
+
+  // Check if delivery minimum is met (waived during lunch hours Mon-Fri 11am-2pm)
+  const isBelowDeliveryMinimum = orderType === 'delivery' && !lunchAvailable && subtotal < deliveryMinimum;
+  const amountNeededForMinimum = deliveryMinimum - subtotal;
+
   // Stripe state
   const [stripeReady, setStripeReady] = useState(false);
   const [testMode, setTestMode] = useState(true);
@@ -5152,12 +5178,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     return times;
   };
 
-  // Check if delivery minimum is met (waived during lunch hours Mon-Fri 11am-2pm)
-  const isBelowDeliveryMinimum = orderType === 'delivery' && !lunchAvailable && subtotal < deliveryMinimum;
-  const amountNeededForMinimum = deliveryMinimum - subtotal;
-
-  // Calculate delivery fee (only for delivery orders)
-  const actualDeliveryFee = orderType === 'delivery' ? deliveryFee : 0;
+  // Calculate delivery fee is now above Stripe useEffects
 
   // Example coupon codes
   const validCoupons = {
@@ -5189,12 +5210,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     setCouponError('');
   };
 
-  const getDiscount = () => {
-    if (!couponApplied) return 0;
-    if (couponApplied.type === 'percent') return subtotal * (couponApplied.value / 100);
-    if (couponApplied.type === 'delivery') return actualDeliveryFee; // Only discount the delivery fee
-    return couponApplied.value;
-  };
+  // Totals and getDiscount are now calculated above Stripe useEffects
 
   // Tip presets based on subtotal
   const tipPresets = [
@@ -5214,14 +5230,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     setCustomTip(value);
   };
 
-  // Calculate totals
-  const discount = getDiscount();
-  const subtotalAfterDiscount = Math.max(0, subtotal - (couponApplied?.type !== 'delivery' ? discount : 0));
-  const deliveryFeeAfterDiscount = couponApplied?.type === 'delivery' ? 0 : actualDeliveryFee;
-  const taxableAmount = subtotalAfterDiscount; // Tax on food only, not delivery fee or tip
-  const tax = taxableAmount * taxRate;
-  const finalTotal = subtotalAfterDiscount + deliveryFeeAfterDiscount + tax + (orderType === 'delivery' ? driverTip : 0);
-
   const isZipInDeliveryZone = (zip) => {
     return deliveryZones.includes(zip.trim());
   };
@@ -5238,9 +5246,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     }
   };
 
-  // Backend API URL - Change this to your Railway URL after deployment
-  const API_URL = 'https://georges-pizza-backend-production.up.railway.app'; // TODO: Update with your Railway URL
-  
   const handleCheckout = async () => {
     if (!customerName.trim()) return alert('Please enter your name');
     if (!phone) return alert('Please enter your phone number');
