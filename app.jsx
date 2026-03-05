@@ -4965,13 +4965,16 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     initStripe();
   }, []);
 
-  // Create Payment Intent and mount Payment Element when total changes
+  // Create Payment Intent once, update amount when total changes
   const [clientSecret, setClientSecret] = useState(null);
+  const [paymentIntentTotal, setPaymentIntentTotal] = useState(0);
+  const paymentIntentIdRef = useRef(null);
   
+  // Create payment intent once when Stripe is ready
   useEffect(() => {
     if (!stripeReady || !stripeRef.current || testMode || finalTotal <= 0) return;
+    if (paymentIntentIdRef.current) return; // Already created
     
-    // Create payment intent for current total
     const createIntent = async () => {
       try {
         const res = await fetch(`${API_URL}/api/create-payment-intent`, {
@@ -4986,6 +4989,8 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         const data = await res.json();
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
+          setPaymentIntentTotal(finalTotal);
+          paymentIntentIdRef.current = data.paymentIntentId;
           
           // Create Elements with the client secret
           const elements = stripeRef.current.elements({
@@ -5007,7 +5012,36 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     };
     
     createIntent();
-  }, [stripeReady, finalTotal, orderType]);
+  }, [stripeReady, testMode]);
+  
+  // Update payment intent amount when total changes (tip, coupon, delivery toggle)
+  useEffect(() => {
+    if (!paymentIntentIdRef.current || testMode || finalTotal <= 0) return;
+    if (Math.round(paymentIntentTotal * 100) === Math.round(finalTotal * 100)) return; // Already matches
+    
+    setPaymentIntentTotal(0); // Mark stale
+    
+    const updateIntent = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/update-payment-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentIntentId: paymentIntentIdRef.current,
+            amount: Math.round(finalTotal * 100),
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setPaymentIntentTotal(finalTotal);
+        }
+      } catch (err) {
+        console.error('Payment intent update error:', err);
+      }
+    };
+    
+    updateIntent();
+  }, [finalTotal]);
 
   // Mount Payment Element when container is ready
   useEffect(() => {
@@ -6014,10 +6048,10 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       <button type="button"
         className="btn-red" 
         onClick={handleCheckout} 
-        disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum} 
+        disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum || (!testMode && stripeReady && Math.round(paymentIntentTotal * 100) !== Math.round(finalTotal * 100))} 
         style={{ width: '100%', marginTop: 16, padding: 14, fontSize: 16 }}
       >
-        {processing ? 'Processing Payment...' : (testMode ? `Place Test Order ($${finalTotal.toFixed(2)})` : `Pay $${finalTotal.toFixed(2)}`)}
+        {processing ? 'Processing Payment...' : (!testMode && stripeReady && Math.round(paymentIntentTotal * 100) !== Math.round(finalTotal * 100)) ? 'Updating total...' : (testMode ? `Place Test Order ($${finalTotal.toFixed(2)})` : `Pay $${finalTotal.toFixed(2)}`)}
       </button>
 
       {testMode && (
