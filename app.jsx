@@ -4979,6 +4979,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     
     const createIntent = async () => {
       try {
+        console.log('[TIP-FIX] Creating PaymentIntent for $' + finalTotal.toFixed(2));
         const res = await fetch(`${API_URL}/api/create-payment-intent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4992,6 +4993,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         if (data.clientSecret) {
           // Extract the PaymentIntent ID from the client secret (format: pi_xxx_secret_yyy)
           const piId = data.clientSecret.split('_secret_')[0];
+          console.log('[TIP-FIX] PaymentIntent created:', piId, 'Amount: $' + finalTotal.toFixed(2));
           paymentIntentIdRef.current = piId;
           lastChargedAmountRef.current = Math.round(finalTotal * 100);
           setClientSecret(data.clientSecret);
@@ -5020,12 +5022,26 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
   // UPDATE the Payment Intent amount whenever finalTotal changes (e.g. tip added)
   useEffect(() => {
-    if (!paymentIntentIdRef.current || testMode) return;
+    console.log('[TIP-FIX] Update useEffect fired:', { 
+      piId: paymentIntentIdRef.current, 
+      testMode, 
+      finalTotal, 
+      lastCharged: lastChargedAmountRef.current,
+      newAmount: Math.round(finalTotal * 100) 
+    });
+    if (!paymentIntentIdRef.current || testMode) {
+      console.log('[TIP-FIX] Skipping update - no PI ID or test mode');
+      return;
+    }
     const newAmount = Math.round(finalTotal * 100);
     // Skip if the amount hasn't actually changed
-    if (newAmount === lastChargedAmountRef.current) return;
+    if (newAmount === lastChargedAmountRef.current) {
+      console.log('[TIP-FIX] Skipping update - amount unchanged');
+      return;
+    }
     if (newAmount < 100) return;
     
+    console.log('[TIP-FIX] Sending update to Stripe:', paymentIntentIdRef.current, '$' + (newAmount / 100).toFixed(2));
     updatingPaymentRef.current = true;
     
     const updateIntent = async () => {
@@ -5039,13 +5055,14 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           }),
         });
         const data = await res.json();
+        console.log('[TIP-FIX] Update response:', data);
         if (data.success) {
           lastChargedAmountRef.current = newAmount;
         } else {
           console.error('Failed to update payment intent:', data.error);
         }
       } catch (err) {
-        console.error('Update payment intent error:', err);
+        console.error('[TIP-FIX] Update payment intent error:', err);
       } finally {
         updatingPaymentRef.current = false;
       }
