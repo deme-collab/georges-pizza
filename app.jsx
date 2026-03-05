@@ -4965,15 +4965,17 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     initStripe();
   }, []);
 
-  // Create Payment Intent once, update amount when total changes
+  // Create Payment Intent and mount Payment Element when total changes
   const [clientSecret, setClientSecret] = useState(null);
-  const [paymentIntentTotal, setPaymentIntentTotal] = useState(0);
   const paymentIntentIdRef = useRef(null);
+  const lastChargedAmountRef = useRef(null);
+  const updatingPaymentRef = useRef(false);
   
-  // Create payment intent once when Stripe is ready
+  // Create the Payment Intent ONCE when Stripe is ready and we have a valid total
   useEffect(() => {
     if (!stripeReady || !stripeRef.current || testMode || finalTotal <= 0) return;
-    if (paymentIntentIdRef.current) return; // Already created
+    // Only create if we haven't created one yet
+    if (paymentIntentIdRef.current) return;
     
     const createIntent = async () => {
       try {
@@ -4988,9 +4990,11 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         });
         const data = await res.json();
         if (data.clientSecret) {
+          // Extract the PaymentIntent ID from the client secret (format: pi_xxx_secret_yyy)
+          const piId = data.clientSecret.split('_secret_')[0];
+          paymentIntentIdRef.current = piId;
+          lastChargedAmountRef.current = Math.round(finalTotal * 100);
           setClientSecret(data.clientSecret);
-          setPaymentIntentTotal(finalTotal);
-          paymentIntentIdRef.current = data.paymentIntentId;
           
           // Create Elements with the client secret
           const elements = stripeRef.current.elements({
@@ -5012,14 +5016,17 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     };
     
     createIntent();
-  }, [stripeReady, testMode, finalTotal]);
-  
-  // Update payment intent amount when total changes (tip, coupon, delivery toggle)
+  }, [stripeReady, testMode]);
+
+  // UPDATE the Payment Intent amount whenever finalTotal changes (e.g. tip added)
   useEffect(() => {
-    if (!paymentIntentIdRef.current || testMode || finalTotal <= 0) return;
-    if (Math.round(paymentIntentTotal * 100) === Math.round(finalTotal * 100)) return; // Already matches
+    if (!paymentIntentIdRef.current || testMode) return;
+    const newAmount = Math.round(finalTotal * 100);
+    // Skip if the amount hasn't actually changed
+    if (newAmount === lastChargedAmountRef.current) return;
+    if (newAmount < 100) return;
     
-    setPaymentIntentTotal(0); // Mark stale
+    updatingPaymentRef.current = true;
     
     const updateIntent = async () => {
       try {
@@ -5028,20 +5035,24 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             paymentIntentId: paymentIntentIdRef.current,
-            amount: Math.round(finalTotal * 100),
+            amount: newAmount,
           }),
         });
         const data = await res.json();
         if (data.success) {
-          setPaymentIntentTotal(finalTotal);
+          lastChargedAmountRef.current = newAmount;
+        } else {
+          console.error('Failed to update payment intent:', data.error);
         }
       } catch (err) {
-        console.error('Payment intent update error:', err);
+        console.error('Update payment intent error:', err);
+      } finally {
+        updatingPaymentRef.current = false;
       }
     };
     
     updateIntent();
-  }, [finalTotal]);
+  }, [finalTotal, testMode]);
 
   // Mount Payment Element when container is ready
   useEffect(() => {
@@ -5239,6 +5250,20 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     
     setProcessing(true);
     setCardError('');
+    
+    // Wait for any in-flight payment intent update to finish (e.g. tip just changed)
+    if (updatingPaymentRef.current) {
+      await new Promise(resolve => {
+        const poll = setInterval(() => {
+          if (!updatingPaymentRef.current) {
+            clearInterval(poll);
+            resolve();
+          }
+        }, 50);
+        // Safety timeout — don't block forever
+        setTimeout(() => { clearInterval(poll); resolve(); }, 3000);
+      });
+    }
     let orderSuccess = false;
     
     // Build order data
@@ -6048,10 +6073,10 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       <button type="button"
         className="btn-red" 
         onClick={handleCheckout} 
-        disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum || (!testMode && stripeReady && Math.round(paymentIntentTotal * 100) !== Math.round(finalTotal * 100))} 
+        disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum} 
         style={{ width: '100%', marginTop: 16, padding: 14, fontSize: 16 }}
       >
-        {processing ? 'Processing Payment...' : (!testMode && stripeReady && Math.round(paymentIntentTotal * 100) !== Math.round(finalTotal * 100)) ? 'Updating total...' : (testMode ? `Place Test Order ($${finalTotal.toFixed(2)})` : `Pay $${finalTotal.toFixed(2)}`)}
+        {processing ? 'Processing Payment...' : (testMode ? `Place Test Order ($${finalTotal.toFixed(2)})` : `Pay $${finalTotal.toFixed(2)}`)}
       </button>
 
       {testMode && (
