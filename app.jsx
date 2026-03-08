@@ -4,6 +4,33 @@ const { useState, useEffect, useRef } = React;
 // 201 W. Girard Ave, Philadelphia - Est. 1984
 
 // =============================================================================
+// GOOGLE ANALYTICS 4 TRACKING
+// =============================================================================
+
+// Load GA4 script
+(function() {
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-BDMY95K81M';
+  document.head.appendChild(script);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function() { window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', 'G-BDMY95K81M');
+})();
+
+// Helper to send custom events safely
+function trackEvent(eventName, params = {}) {
+  try {
+    if (window.gtag) {
+      window.gtag('event', eventName, params);
+    }
+  } catch (e) {
+    // Analytics should never break the site
+  }
+}
+
+// =============================================================================
 // SITE STATUS URL (for maintenance mode toggle via GitHub)
 // =============================================================================
 
@@ -530,6 +557,8 @@ function GeorgesPizza() {
     // Show cart notification
     setCartNotification(item.name);
     setTimeout(() => setCartNotification(null), 2500);
+    // GA4: track add to cart
+    trackEvent('add_to_cart', { item_name: item.name, price: item.price });
   };
 
   const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
@@ -1305,7 +1334,7 @@ function GeorgesPizza() {
                 <div
                   key={cat.id}
                   className="category-card"
-                  onClick={() => setSelectedCategory(cat.id)}
+                  onClick={() => { setSelectedCategory(cat.id); trackEvent('view_item_list', { item_list_name: cat.name }); }}
                   role="button"
                   tabIndex={0}
                   aria-label={`${cat.name} - ${cat.desc}`}
@@ -1459,6 +1488,13 @@ function GeorgesPizza() {
             onOrderSuccess={(orderData) => {
               setConfirmedOrder(orderData);
               setCurrentView('confirmation');
+              // GA4: track completed purchase
+              trackEvent('purchase', {
+                transaction_id: orderData.orderNumber,
+                value: orderData.total,
+                currency: 'USD',
+                items: orderData.items?.map(i => ({ item_name: i.name, price: i.price })) || [],
+              });
               setCart([]);
               setSelectedCategory(null);
               setCouponApplied(null);
@@ -5272,6 +5308,8 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     
     setProcessing(true);
     setCardError('');
+    // GA4: track checkout started
+    trackEvent('begin_checkout', { value: finalTotal, currency: 'USD', items_count: cart.length });
     
     // Wait for any in-flight payment intent update to finish (e.g. tip just changed)
     if (updatingPaymentRef.current) {
