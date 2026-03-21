@@ -459,7 +459,8 @@ function GeorgesPizza() {
   // REDIRECT RECOVERY: Handle CashApp/Venmo/bank redirect returns
   // When payment methods require a redirect, the page reloads and all React state is lost.
   // Stripe appends ?payment_intent=xxx&redirect_status=succeeded to the URL on return.
-  // We detect this, recover the saved order data, and complete the order submission.
+  // The server-side webhook should have already processed the order. We check for that first.
+  // If webhook hasn't fired yet, we fall back to submitting via sessionStorage or polling.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paymentIntentId = params.get('payment_intent');
@@ -471,44 +472,82 @@ function GeorgesPizza() {
     window.history.replaceState({}, '', window.location.pathname);
     
     const completeRedirectOrder = async () => {
+      const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
+      
       try {
-        const saved = sessionStorage.getItem('gp2_pending_order');
-        if (!saved) {
-          console.error('[REDIRECT] No saved order data found');
-          alert('Your payment was received! However we could not automatically submit your order. Please call us at (215) 236-5288 to confirm. Payment ID: ' + paymentIntentId);
+        // STEP 1: Check if the webhook already processed this order
+        // Give webhook a moment to fire (it's usually faster than the redirect)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const statusRes = await fetch(`${API_URL}/api/order-status/${paymentIntentId}`);
+        const statusData = await statusRes.json();
+        
+        if (statusData.completed) {
+          // Webhook already handled it - show simplified confirmation
+          console.log('[REDIRECT] Order already completed by webhook');
+          try { sessionStorage.removeItem('gp2_pending_order'); } catch (e) {}
+          setConfirmedOrder({
+            orderNumber: 'CONFIRMED',
+            webhookCompleted: true,
+          });
+          setCurrentView('confirmation');
           return;
         }
         
-        const orderData = JSON.parse(saved);
-        orderData.paymentIntentId = paymentIntentId;
-        
-        const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
-        const response = await fetch(`${API_URL}/api/orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData),
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          sessionStorage.removeItem('gp2_pending_order');
-          setConfirmedOrder({
-            orderNumber: result.orderNumber,
-            email: orderData.customerEmail,
-            orderType: orderData.orderType,
-            total: orderData.total,
-            items: orderData.items,
-            subtotal: orderData.subtotal,
-            tax: orderData.tax,
-            deliveryFee: orderData.deliveryFee || 0,
-            tip: orderData.tip || 0,
-            discount: orderData.discount || 0,
+        // STEP 2: Webhook hasn't processed yet. Try submitting via sessionStorage
+        const saved = sessionStorage.getItem('gp2_pending_order');
+        if (saved) {
+          const orderData = JSON.parse(saved);
+          orderData.paymentIntentId = paymentIntentId;
+          
+          const response = await fetch(`${API_URL}/api/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData),
           });
-          setCurrentView('confirmation');
-        } else {
-          alert('Your payment was received! However there was an issue submitting your order. Please call us at (215) 236-5288. Payment ID: ' + paymentIntentId);
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            sessionStorage.removeItem('gp2_pending_order');
+            setConfirmedOrder({
+              orderNumber: result.orderNumber,
+              email: orderData.customerEmail,
+              orderType: orderData.orderType,
+              total: orderData.total,
+              items: orderData.items,
+              subtotal: orderData.subtotal,
+              tax: orderData.tax,
+              deliveryFee: orderData.deliveryFee || 0,
+              tip: orderData.tip || 0,
+              discount: orderData.discount || 0,
+            });
+            setCurrentView('confirmation');
+            return;
+          }
         }
+        
+        // STEP 3: No sessionStorage AND webhook hasn't fired yet.
+        // Poll the server a few more times (webhook might be slow)
+        for (let i = 0; i < 5; i++) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          const pollRes = await fetch(`${API_URL}/api/order-status/${paymentIntentId}`);
+          const pollData = await pollRes.json();
+          if (pollData.completed) {
+            console.log('[REDIRECT] Order completed by webhook (after polling)');
+            setConfirmedOrder({
+              orderNumber: 'CONFIRMED',
+              webhookCompleted: true,
+            });
+            setCurrentView('confirmation');
+            return;
+          }
+        }
+        
+        // STEP 4: All attempts failed — this should be extremely rare now
+        console.error('[REDIRECT] Could not confirm order after all attempts');
+        alert('Your payment was received! However we could not automatically submit your order. Please call us at (215) 236-5288 to confirm. Payment ID: ' + paymentIntentId);
+        
       } catch (error) {
         console.error('[REDIRECT] Error completing order:', error);
         alert('Your payment was received! Please call us at (215) 236-5288 to confirm your order. Payment ID: ' + paymentIntentId);
@@ -4775,6 +4814,49 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 // =============================================================================
 
 function OrderConfirmation({ order, onBackToMenu }) {
+  // Simplified confirmation when webhook handled the order (no order details available client-side)
+  if (order.webhookCompleted) {
+    return (
+      <div style={{ maxWidth: 500, margin: '0 auto', padding: '20px 0' }}>
+        <div style={{ 
+          background: '#F0FFF0', 
+          border: '2px solid #228B22', 
+          borderRadius: 12, 
+          padding: '32px 24px', 
+          textAlign: 'center',
+          marginBottom: 24
+        }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>✓</div>
+          <div style={{ 
+            fontFamily: "'Oswald', sans-serif", 
+            fontSize: 24, 
+            fontWeight: 700, 
+            color: '#228B22',
+            marginBottom: 8
+          }}>
+            Order Confirmed!
+          </div>
+          <div style={{ fontSize: 15, color: '#555', lineHeight: 1.5 }}>
+            Your payment was received and your order is being prepared. Check your email for a confirmation with your order details.
+          </div>
+        </div>
+
+        <button 
+          type="button"
+          className="btn-red"
+          onClick={onBackToMenu}
+          style={{ width: '100%', padding: 14, fontSize: 16 }}
+        >
+          Back to Menu
+        </button>
+
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#888' }}>
+          Questions? Call us at <a href="tel:2152365288" style={{ color: '#C41E3A', fontWeight: 600 }}>(215) 236-5288</a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 500, margin: '0 auto', padding: '20px 0' }}>
       
@@ -5362,9 +5444,24 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       let paymentIntentId = null;
       
       if (!testMode && stripeReady && stripeRef.current && elementsRef.current && clientSecret) {
-        // Save order data before payment in case of redirect (CashApp, Venmo, etc.)
-        // If payment method requires redirect, page reloads and React state is lost.
-        // The GeorgesPizza component will detect the return and complete the order.
+        // Save order data to SERVER before payment in case of redirect (CashApp, Venmo, etc.)
+        // If payment method requires redirect, page reloads and all React state is lost.
+        // The server holds the order data and the webhook completes it when payment succeeds.
+        if (paymentIntentIdRef.current) {
+          try {
+            await fetch(`${API_URL}/api/pending-orders`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentIntentId: paymentIntentIdRef.current,
+                orderData,
+              }),
+            });
+          } catch (e) {
+            console.error('[PENDING] Failed to save pending order to server:', e);
+          }
+        }
+        // Also keep sessionStorage as a fallback
         try { sessionStorage.setItem('gp2_pending_order', JSON.stringify(orderData)); } catch (e) {}
         // Confirm payment with Stripe Payment Element
         const { error, paymentIntent } = await stripeRef.current.confirmPayment({
