@@ -743,8 +743,8 @@ function GeorgesPizza() {
     buffalo: [
       { name: '10 Buffalo Wings', desc: 'Mild, Hot, or BBQ', price: 12, hasBuffaloMods: true },
       { name: '10 Buffalo Wings Platter', desc: 'With fries', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
-      { name: '10 Wing Dings (Breaded)', price: 12, hasBuffaloMods: true },
-      { name: '10 Wing Dings Platter', desc: 'With fries', price: 15, hasBuffaloMods: true, hasWingPlatterMods: true },
+      { name: '10 Wing Dings (Breaded)', price: 15, hasBuffaloMods: true },
+      { name: '10 Wing Dings Platter', desc: 'With fries', price: 18, hasBuffaloMods: true, hasWingPlatterMods: true },
     ],
     nuggets: [
       { name: '10 Nuggets', desc: 'Honey Mustard, BBQ, or Ranch', price: 8, hasDipChoice: true },
@@ -753,8 +753,8 @@ function GeorgesPizza() {
       { name: '20 Nuggets Platter', desc: 'With fries', price: 18, hasDipChoice: true, hasWingPlatterMods: true },
     ],
     fingers: [
-      { name: '5 Chicken Fingers', desc: 'Honey Mustard, BBQ, or Ranch', price: 8, hasDipChoice: true },
-      { name: '5 Fingers Platter', desc: 'With fries', price: 14, hasDipChoice: true, hasWingPlatterMods: true },
+      { name: '5 Chicken Fingers', desc: 'Honey Mustard, BBQ, or Ranch', price: 10, hasDipChoice: true },
+      { name: '5 Chicken Fingers Platter', desc: 'With fries', price: 15, hasDipChoice: true, hasWingPlatterMods: true },
     ],
   };
 
