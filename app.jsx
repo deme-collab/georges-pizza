@@ -643,7 +643,7 @@ function GeorgesPizza() {
   const pizzaMenu = {
     classic: [
       { name: 'Plain', desc: 'Tomato Sauce & Mozzarella Cheese', prices: { small: 9, large: 12, xlarge: 15 } },
-      { name: 'Pepperoni', desc: 'Choose Beef or Pork Pepperoni', prices: { small: 11, large: 14, xlarge: 17 }, hasPepperoniChoice: true },
+      { name: 'Pepperoni', desc: 'Choose Beef or Pork Pepperoni', prices: { small: 12, large: 15, xlarge: 19 }, hasPepperoniChoice: true },
       { name: 'Mushroom', desc: 'Fresh Sliced Mushrooms', prices: { small: 11, large: 14, xlarge: 17 } },
       { name: 'Sausage', desc: 'Italian Sausage', prices: { small: 12, large: 15, xlarge: 19 } },
       { name: 'Ham', desc: 'Sliced Ham', prices: { small: 12, large: 15, xlarge: 19 } },
