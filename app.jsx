@@ -34,7 +34,7 @@ function trackEvent(eventName, params = {}) {
 // SITE STATUS URL (for maintenance mode toggle via GitHub)
 // =============================================================================
 
-const STATUS_URL = 'https://deme-collab.github.io/georges-pizza/status.json';
+const STATUS_URL = '/status.json';
 
 // =============================================================================
 // MAINTENANCE PAGE COMPONENT
