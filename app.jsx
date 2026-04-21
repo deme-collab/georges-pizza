@@ -408,6 +408,7 @@ function GeorgesPizza() {
   const [siteEnabled, setSiteEnabled] = useState(true);
   const [siteMessage, setSiteMessage] = useState('');
   const [siteStatusLoaded, setSiteStatusLoaded] = useState(false);
+  const [deliveryConfig, setDeliveryConfig] = useState({ fee: 0, minimum: 15 });
   const [lunchAvailable, setLunchAvailable] = useState(() => {
     const now = new Date();
     const day = now.getDay();
@@ -419,11 +420,20 @@ function GeorgesPizza() {
   useEffect(() => {
     const checkSiteStatus = async () => {
       try {
-        const response = await fetch(`${STATUS_URL}?t=${Date.now()}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(`${STATUS_URL}?t=${Date.now()}`, { signal: controller.signal, cache: 'no-store' });
+        clearTimeout(timeoutId);
         if (response.ok) {
           const data = await response.json();
           setSiteEnabled(data.siteEnabled !== false);
           setSiteMessage(data.message || '');
+          const rawFee = Number(data?.delivery?.fee);
+          const rawMin = Number(data?.delivery?.minimum);
+          setDeliveryConfig({
+            fee: Math.max(0, Math.min(10, Number.isFinite(rawFee) ? rawFee : 0)),
+            minimum: Math.max(10, Number.isFinite(rawMin) ? rawMin : 15),
+          });
         }
       } catch (error) {
         console.log('Could not fetch site status, defaulting to enabled');
@@ -587,8 +597,8 @@ function GeorgesPizza() {
 
   // Delivery zone ZIP codes, minimum, fee, and tax
   const DELIVERY_ZONES = ['19122', '19123', '19125', '19106'];
-  const DELIVERY_MINIMUM = 15;
-  const DELIVERY_FEE = 3;
+  const DELIVERY_MINIMUM = deliveryConfig.minimum;
+  const DELIVERY_FEE = deliveryConfig.fee;
   const TAX_RATE = 0.08; // 8% Philadelphia sales tax
 
   const addToCart = (item) => {
@@ -1485,7 +1495,7 @@ function GeorgesPizza() {
             <div style={{ background: '#1a1a1a', color: 'white', padding: 20, marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, textAlign: 'center', fontSize: 13 }}>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>LOCATION</div>201 W. Girard Ave<br/>Philadelphia, PA</div>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>HOURS</div>Mon-Thu: 11am-10pm<br/>Fri-Sat: 11am-11pm<br/>Sun: 2pm-10pm</div>
-              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>$15 min • $3 fee<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span></div>
+              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>${DELIVERY_MINIMUM} min • {DELIVERY_FEE === 0 ? <span style={{ color: '#90EE90', fontWeight: 700 }}>FREE</span> : `$${DELIVERY_FEE} fee`}<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span></div>
             </div>
           </>
         )}
@@ -4961,10 +4971,10 @@ function OrderConfirmation({ order, onBackToMenu }) {
             <span>Tax</span>
             <span>${order.tax.toFixed(2)}</span>
           </div>
-          {order.deliveryFee > 0 && (
+          {order.orderType === 'delivery' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 14, color: '#555' }}>
               <span>Delivery Fee</span>
-              <span>${order.deliveryFee.toFixed(2)}</span>
+              <span>{order.deliveryFee > 0 ? `$${order.deliveryFee.toFixed(2)}` : <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>}</span>
             </div>
           )}
           {order.tip > 0 && (
@@ -5632,7 +5642,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             }}
           >
             🚗 DELIVERY
-            <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, fontFamily: 'inherit' }}>35-45 minutes • $3 fee</div>
+            <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, fontFamily: 'inherit' }}>35-45 minutes • {deliveryFee === 0 ? <span style={{ fontWeight: 700 }}>FREE</span> : `$${deliveryFee} fee`}</div>
           </button>
         </div>
         {orderType === 'delivery' && isBelowDeliveryMinimum && (
