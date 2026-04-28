@@ -909,7 +909,8 @@ function GeorgesPizza() {
       { name: 'Chicken Caesar Wrap', desc: 'Parmesan & Caesar Dressing', price: 12, hasWrapMods: true, ingredients: ['grilled-chicken', 'romaine', 'parmesan', 'caesar-dressing'] },
       { name: 'Tuna Wrap', desc: 'With Provolone', price: 12, hasWrapMods: true, ingredients: ['tuna', 'provolone', 'lettuce', 'tomato', 'onion'] },
       { name: 'Veggie Wrap', desc: 'With Provolone', price: 12, hasWrapMods: true, ingredients: ['provolone', 'lettuce', 'tomato', 'onion', 'green-peppers', 'sweet-peppers'] },
-      { name: "George's Special Cheese Steak Wrap", desc: 'Onion, Green Peppers, Pepperoni, Mushrooms, Sauce & Provolone', price: 13, hasWrapMods: true, ingredients: ['steak', 'provolone', 'onion', 'green-peppers', 'pepperoni', 'mushrooms', 'sauce'] },
+      { name: 'Cheese Steak Wrap', desc: 'With American Cheese', price: 13, hasWrapMods: true, ingredients: ['steak', 'american-cheese', 'lettuce', 'tomato', 'onion'] },
+      { name: "George's Special Cheese Steak Wrap", desc: 'Onion, Green Peppers, Pepperoni, Mushrooms, Sauce & Provolone', price: 14, hasWrapMods: true, ingredients: ['steak', 'provolone', 'onion', 'green-peppers', 'pepperoni', 'mushrooms', 'sauce'] },
     ],
     quesadillas: [
       { name: 'Veggie Quesadilla', desc: 'Tomatoes, Mushrooms, Green Peppers, Fried Onions', price: 11, hasQuesadillaMods: true, ingredients: ['tomatoes', 'mushrooms', 'green-peppers', 'fried-onions', 'sour-cream'] },
