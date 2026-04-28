@@ -2227,7 +2227,8 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         'turkey': 'Turkey', 'spinach': 'Spinach', 'grilled-chicken': 'Grilled Chicken',
         'romaine': 'Romaine Lettuce', 'parmesan': 'Parmesan', 'caesar-dressing': 'Caesar Dressing',
         'tuna': 'Tuna', 'green-peppers': 'Green Peppers', 'sweet-peppers': 'Sweet Peppers',
-        'steak': 'Steak', 'pepperoni': 'Pepperoni', 'mushrooms': 'Mushrooms', 'sauce': 'Sauce'
+        'steak': 'Steak', 'pepperoni': 'Pepperoni', 'mushrooms': 'Mushrooms', 'sauce': 'Sauce',
+        'american-cheese': 'American Cheese'
       };
       return {
         title: 'Customize Your Wrap',
