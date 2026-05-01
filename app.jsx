@@ -5351,7 +5351,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   ];
 
   const handleCustomTip = (value) => {
-    tipTouchedRef.current = true;
     const tipValue = parseFloat(value);
     if (!isNaN(tipValue) && tipValue >= 0) {
       setDriverTip(tipValue);
@@ -5681,7 +5680,74 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         {couponError && <div style={{ color: '#C41E3A', fontSize: 12, marginTop: 6 }}>{couponError}</div>}
       </div>
 
-      {/* ORDER TIMING */}
+      {/* 5. DRIVER TIP - Only for Delivery */}
+      {orderType === 'delivery' && (
+        <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#555' }}>
+            TIP YOUR DRIVER
+          </div>
+          <div style={{ fontSize: 12, color: '#228B22', marginBottom: 12 }}>
+            💚 100% of your tip goes directly to the driver.
+          </div>
+          
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            {tipPresets.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => { setDriverTip(preset.value); setCustomTip(''); }}
+                style={{
+                  flex: 1,
+                  minWidth: 70,
+                  padding: '10px 8px',
+                  background: driverTip === preset.value ? '#C41E3A' : 'white',
+                  color: driverTip === preset.value ? 'white' : '#333',
+                  border: `2px solid ${driverTip === preset.value ? '#C41E3A' : '#ddd'}`,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textAlign: 'center'
+                }}
+              >
+                <div>{preset.label}</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>${preset.value.toFixed(2)}</div>
+              </button>
+            ))}
+          </div>
+          
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => { setDriverTip(0); setCustomTip(''); }}
+              style={{
+                padding: '10px 16px',
+                background: driverTip === 0 && customTip === '' ? '#C41E3A' : 'white',
+                color: driverTip === 0 && customTip === '' ? 'white' : '#333',
+                border: `2px solid ${driverTip === 0 && customTip === '' ? '#C41E3A' : '#ddd'}`,
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 13
+              }}
+            >
+              No Tip
+            </button>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#555' }}>$</span>
+              <input
+                type="number"
+                value={customTip}
+                onChange={(e) => handleCustomTip(e.target.value)}
+                placeholder="Custom"
+                min="0"
+                step="0.50"
+                style={{ width: '100%', padding: '10px 10px 10px 28px', fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. ORDER TIMING */}
       <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#555' }}>
           WHEN DO YOU WANT YOUR ORDER?
@@ -6079,73 +6145,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           >
             ← Add More Items
           </button>
-        </div>
-      )}
-
-      {/* DRIVER TIP - Only for Delivery (placed just before Order Summary so tip flows into total) */}
-      {orderType === 'delivery' && (
-        <div style={{ background: 'white', border: '2px solid #ddd', padding: 16, marginTop: 16 }}>
-          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#555' }}>
-            TIP YOUR DRIVER
-          </div>
-          <div style={{ fontSize: 12, color: '#228B22', marginBottom: 12 }}>
-            💚 100% of your tip goes directly to the driver.
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-            {tipPresets.map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={() => { tipTouchedRef.current = true; setDriverTip(preset.value); setCustomTip(''); }}
-                style={{
-                  flex: 1,
-                  minWidth: 70,
-                  padding: '10px 8px',
-                  background: driverTip === preset.value ? '#C41E3A' : 'white',
-                  color: driverTip === preset.value ? 'white' : '#333',
-                  border: `2px solid ${driverTip === preset.value ? '#C41E3A' : '#ddd'}`,
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  textAlign: 'center'
-                }}
-              >
-                <div>{preset.label}</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>${preset.value.toFixed(2)}</div>
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={() => { tipTouchedRef.current = true; setDriverTip(0); setCustomTip(''); }}
-              style={{
-                padding: '10px 16px',
-                background: driverTip === 0 && customTip === '' ? '#C41E3A' : 'white',
-                color: driverTip === 0 && customTip === '' ? 'white' : '#333',
-                border: `2px solid ${driverTip === 0 && customTip === '' ? '#C41E3A' : '#ddd'}`,
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 13
-              }}
-            >
-              No Tip
-            </button>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#555' }}>$</span>
-              <input
-                type="number"
-                value={customTip}
-                onChange={(e) => handleCustomTip(e.target.value)}
-                placeholder="Custom"
-                min="0"
-                step="0.50"
-                style={{ width: '100%', padding: '10px 10px 10px 28px', fontSize: 14, border: '2px solid #ddd', fontFamily: 'inherit' }}
-              />
-            </div>
-          </div>
         </div>
       )}
 
