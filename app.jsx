@@ -5043,6 +5043,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   const [couponError, setCouponError] = useState('');
   const [zipError, setZipError] = useState('');
   const [customTip, setCustomTip] = useState('');
+  const [tipTouched, setTipTouched] = useState(false);
   const [scheduleType, setScheduleType] = useState('asap'); // 'asap' or 'scheduled'
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -5350,7 +5351,18 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     { label: '25%', value: Math.round(subtotal * 0.25 * 100) / 100 },
   ];
 
+  // Default to 15% tip when the customer enters delivery flow.
+  // Only fires when no explicit tip choice has been made yet (tipTouched=false)
+  // and the current tip is 0. Once any tip button or custom field is touched,
+  // tipTouched flips to true and this never overrides the customer's choice.
+  useEffect(() => {
+    if (orderType === 'delivery' && !tipTouched && driverTip === 0 && customTip === '' && subtotal > 0) {
+      setDriverTip(Math.round(subtotal * 0.15 * 100) / 100);
+    }
+  }, [orderType, subtotal, tipTouched, driverTip, customTip, setDriverTip]);
+
   const handleCustomTip = (value) => {
+    setTipTouched(true);
     const tipValue = parseFloat(value);
     if (!isNaN(tipValue) && tipValue >= 0) {
       setDriverTip(tipValue);
@@ -5695,7 +5707,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
               <button
                 key={preset.label}
                 type="button"
-                onClick={() => { setDriverTip(preset.value); setCustomTip(''); }}
+                onClick={() => { setTipTouched(true); setDriverTip(preset.value); setCustomTip(''); }}
                 style={{
                   flex: 1,
                   minWidth: 70,
@@ -5718,7 +5730,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
               type="button"
-              onClick={() => { setDriverTip(0); setCustomTip(''); }}
+              onClick={() => { setTipTouched(true); setDriverTip(0); setCustomTip(''); }}
               style={{
                 padding: '10px 16px',
                 background: driverTip === 0 && customTip === '' ? '#C41E3A' : 'white',
