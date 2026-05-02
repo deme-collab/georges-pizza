@@ -387,7 +387,7 @@ const isValidPhone = (phone) => {
 };
 
 function GeorgesPizza() {
-  const [orderType, setOrderType] = useState('pickup');
+  const [orderType, setOrderType] = useState(''); // No default — customer must explicitly choose pickup or delivery
   const [cart, setCart] = useState([]);
   const [currentView, setCurrentView] = useState('home');
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -5047,7 +5047,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   const [scheduleType, setScheduleType] = useState('asap'); // 'asap' or 'scheduled'
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const estimate = orderType === 'pickup' ? '~15 minutes' : '35-45 minutes';
+  const estimate = orderType === 'pickup' ? '~15 minutes' : (orderType === 'delivery' ? '35-45 minutes' : '');
 
   // Backend API URL
   const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
@@ -5389,6 +5389,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   };
 
   const handleCheckout = async () => {
+    if (orderType !== 'pickup' && orderType !== 'delivery') {
+      return alert('Please choose Pickup or Delivery before continuing.');
+    }
     if (!customerName.trim()) return alert('Please enter your name');
     if (!phone) return alert('Please enter your phone number');
     if (!isValidPhone(phone)) return alert('Please enter a valid 10-digit phone number');
