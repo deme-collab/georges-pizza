@@ -4485,11 +4485,13 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
     return mods;
   };
 
-  // Get the more expensive pizza name for display
-  const getMoreExpensivePizza = () => {
-    const price1 = getPizzaPrice(half1, size);
-    const price2 = getPizzaPrice(half2, size);
-    return price1 >= price2 ? half1 : half2;
+  // Annotate a half name with "(White)" if it's a white pizza, so the kitchen
+  // ticket signals to skip red sauce on that side. Skip the suffix if the name
+  // already contains "White" (e.g., "Plain White") to avoid "Plain White (White)".
+  const annotateHalf = (name) => {
+    const isWhite = whitePizzaMenu.items.some(p => p.name === name);
+    if (!isWhite || name.toLowerCase().includes('white')) return name;
+    return name + ' (White)';
   };
 
   return (
@@ -4580,10 +4582,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
           <div style={{ background: '#f5f5f5', padding: 12, marginBottom: 16, borderRadius: 4 }}>
             <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Your Pizza:</div>
             <div style={{ fontWeight: 600, fontSize: 15 }}>
-              Half {half1} / Half {half2}
-            </div>
-            <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
-              Priced as {size === 'xlarge' ? 'X-Large' : 'Large'} {getMoreExpensivePizza()}
+              Half {annotateHalf(half1)} / Half {annotateHalf(half2)}
             </div>
           </div>
 
@@ -4597,7 +4596,7 @@ function HalfHalfPizzaCustomizer({ pizzaMenu, whitePizzaMenu, onClose, onAdd }) 
               <button type="button" className="btn-red" onClick={() => onAdd({
                 name: `Half & Half Pizza (${size === 'xlarge' ? 'X-Large' : 'Large'})`,
                 price: getPrice(),
-                mods: [`Half ${half1} / Half ${half2}`, ...getMods()]
+                mods: [`Half ${annotateHalf(half1)} / Half ${annotateHalf(half2)}`, ...getMods()]
               })}>Add to Cart</button>
             </div>
           </div>
