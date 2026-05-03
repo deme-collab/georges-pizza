@@ -3721,7 +3721,7 @@ function StromboliMenu({ stromboliMenu, onAddToCart }) {
       <div className="red-banner">Strombolis</div>
       <div className="menu-section-content">
         <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
-          Small or Large • Green Peppers, Mushrooms, Grilled Onions available FREE • Extra Topping: Sm +$3 / Lg +$4
+          Small or Large • Green Peppers, Mushrooms, Grilled Onions available FREE • Extra Cheese: Sm +$2 / Lg +$3
         </div>
         {stromboliMenu.items.map((item, i) => (
           <div key={i} className="menu-item" style={{ alignItems: 'center' }}>
