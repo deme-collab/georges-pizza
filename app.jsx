@@ -780,7 +780,7 @@ function GeorgesPizza() {
       { name: 'Special Steak', desc: 'Cheese, Mushrooms, Sauce, Fried Onions, Green Peppers & Pepperoni', prices: { small: 16, large: 19 }, hasStromboliMods: true },
       { name: 'Vegetarian', desc: 'Onions, Green Peppers, Cheese, Sauce & Mushrooms', prices: { small: 14, large: 16 }, hasStromboliMods: true },
       { name: 'Grilled Chicken Cheese & Sauce', prices: { small: 14, large: 16 }, hasStromboliMods: true },
-      { name: 'Chicken Cheese Steak', prices: { small: 14, large: 16 }, hasStromboliMods: true },
+      { name: 'Chicken Steak Cheese & Sauce', prices: { small: 14, large: 16 }, hasStromboliMods: true },
       { name: 'Buffalo Chicken', prices: { small: 14, large: 16 }, hasStromboliMods: true },
     ],
     extraTopping: { small: 3, large: 4 },
