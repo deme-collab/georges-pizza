@@ -784,6 +784,7 @@ function GeorgesPizza() {
       { name: 'Buffalo Chicken', prices: { small: 14, large: 16 }, hasStromboliMods: true },
     ],
     extraTopping: { small: 3, large: 4 },
+    extraCheese: { small: 2, large: 3 },
   };
 
   const saladsMenu = [
@@ -3749,6 +3750,7 @@ function StromboliMenu({ stromboliMenu, onAddToCart }) {
         <StromboliCustomizer
           item={customizing}
           extraToppingPrices={stromboliMenu.extraTopping}
+          extraCheesePrices={stromboliMenu.extraCheese}
           onClose={() => setCustomizing(null)}
           onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
         />
@@ -3758,7 +3760,7 @@ function StromboliMenu({ stromboliMenu, onAddToCart }) {
 }
 
 // ============ STROMBOLI CUSTOMIZER ============
-function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
+function StromboliCustomizer({ item, extraToppingPrices, extraCheesePrices, onClose, onAdd }) {
   const [size, setSize] = useState('small');
   const [freeAddons, setFreeAddons] = useState([]);
   const [extraCheese, setExtraCheese] = useState(false);
@@ -3776,7 +3778,7 @@ function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
   const getPrice = () => {
     let total = item.prices[size];
     if (extraCheese) {
-      total += extraToppingPrices[size] || 3;
+      total += (extraCheesePrices && extraCheesePrices[size]) || 2;
     }
     return total;
   };
@@ -3838,7 +3840,7 @@ function StromboliCustomizer({ item, extraToppingPrices, onClose, onAdd }) {
             <label className="checkbox-row">
               <input type="checkbox" checked={extraCheese} onChange={() => setExtraCheese(!extraCheese)} />
               <span style={{ flex: 1 }}>Extra Cheese</span>
-              <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${extraToppingPrices[size] || 3}</span>
+              <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${(extraCheesePrices && extraCheesePrices[size]) || 2}</span>
             </label>
           </div>
 
