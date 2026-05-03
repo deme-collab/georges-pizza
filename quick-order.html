@@ -503,20 +503,52 @@ cash"
                 <div class="summary-notes" id="summaryNotes" style="display: none;">
                     <!-- AI notes if any -->
                 </div>
+
+                <!-- Customer phone (only used when paymentType === 'card_stripe') -->
+                <div id="stripePhoneRow" style="display: none; margin-top: 12px; padding: 10px; background: #FFF3E0; border-radius: 8px;">
+                    <label for="stripePhoneInput" style="display: block; font-size: 13px; color: #E65100; margin-bottom: 6px; font-weight: 600;">
+                        📱 Customer phone (for the payment link text):
+                    </label>
+                    <input type="tel" id="stripePhoneInput" placeholder="(215) 555-1234"
+                           style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #FF9800; border-radius: 6px;" />
+                    <input type="text" id="stripeNameInput" placeholder="Customer name (optional)"
+                           style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #FF9800; border-radius: 6px; margin-top: 6px;" />
+                </div>
             </div>
-            
+
             <div class="action-buttons">
                 <button class="edit-btn" onclick="editOrder()">✏️ EDIT</button>
                 <button class="print-btn" id="printBtn" onclick="printOrder()">🖨️ PRINT</button>
+                <button class="print-btn" id="sendLinkBtn" onclick="sendPaymentLink()" style="display: none; background: #635BFF;">💳 SEND PAYMENT LINK</button>
             </div>
         </div>
-        
+
         <!-- Success Screen -->
         <div class="success-screen" id="successScreen">
             <div class="success-icon">✅</div>
             <h2>Order Sent to Kitchen!</h2>
             <div class="order-num" id="successOrderNum">#5001</div>
             <button class="new-order-btn" onclick="newOrder()">NEW ORDER</button>
+        </div>
+
+        <!-- Payment Link Sent Screen (Stripe Phase 0) -->
+        <div class="success-screen" id="linkSentScreen">
+            <div class="success-icon" style="color: #635BFF;">💳</div>
+            <h2>Payment Link Ready</h2>
+            <div class="order-num" id="linkOrderNum">#5001</div>
+            <div style="background: #FFF3E0; padding: 14px; border-radius: 8px; margin: 16px auto; max-width: 90%; font-size: 13px; color: #E65100; line-height: 1.5;">
+                ⏳ Awaiting customer payment. Ticket will print automatically when paid.
+            </div>
+            <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; margin: 12px auto; max-width: 90%; font-size: 12px; word-break: break-all; font-family: monospace;" id="linkUrl">
+                <!-- URL goes here -->
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; max-width: 90%; margin: 16px auto;">
+                <a id="smsLink" href="#" class="print-btn" style="text-decoration: none; display: block; text-align: center; background: #635BFF;">
+                    📱 TEXT LINK TO CUSTOMER
+                </a>
+                <button class="edit-btn" onclick="copyLink()" style="width: 100%;">📋 COPY LINK</button>
+                <button class="new-order-btn" onclick="newOrder()" style="margin-top: 8px;">NEW ORDER</button>
+            </div>
         </div>
     </div>
 
@@ -779,9 +811,30 @@ cash"
                 badgeContainer.insertBefore(vendorDiv, badgeContainer.firstChild);
             }
             
-            // Payment badge
+            // Payment badge + button gating
             const paymentBadge = document.getElementById('paymentBadge');
-            if (order.paymentType === 'prepaid_card') {
+            const phoneRow = document.getElementById('stripePhoneRow');
+            const sendLinkBtn = document.getElementById('sendLinkBtn');
+            const printBtnEl = document.getElementById('printBtn');
+            // Reset visibility — defaults: print visible, send-link hidden, phone row hidden.
+            phoneRow.style.display = 'none';
+            sendLinkBtn.style.display = 'none';
+            printBtnEl.style.display = '';
+
+            if (order.paymentType === 'card_stripe') {
+                paymentBadge.className = 'payment-badge';
+                paymentBadge.style.background = '#635BFF';
+                paymentBadge.innerHTML = '💳 STRIPE LINK (awaiting payment)';
+                // Hide Print, show Send Payment Link + phone input.
+                printBtnEl.style.display = 'none';
+                sendLinkBtn.style.display = '';
+                phoneRow.style.display = 'block';
+                // Pre-fill phone if we have it from delivery info.
+                const phoneInput = document.getElementById('stripePhoneInput');
+                if (order.delivery && order.delivery.phone && !phoneInput.value) {
+                    phoneInput.value = order.delivery.phone;
+                }
+            } else if (order.paymentType === 'prepaid_card') {
                 paymentBadge.className = 'payment-badge';
                 paymentBadge.style.background = '#9C27B0';
                 paymentBadge.innerHTML = '💳 PREPAID - CREDIT CARD';
@@ -820,6 +873,64 @@ cash"
             orderText.focus();
         }
         
+        // Stripe Payment Link flow (Phase 0 — manual SMS via tap-to-text)
+        let lastPaymentUrl = '';
+        async function sendPaymentLink() {
+            if (!currentOrder) return;
+            const phoneInput = document.getElementById('stripePhoneInput');
+            const nameInput = document.getElementById('stripeNameInput');
+            const phone = (phoneInput.value || '').trim();
+            if (!phone || phone.replace(/\D/g, '').length < 10) {
+                alert('Please enter a valid customer phone number for the link.');
+                phoneInput.focus();
+                return;
+            }
+            const sendLinkBtn = document.getElementById('sendLinkBtn');
+            sendLinkBtn.disabled = true;
+            document.querySelector('.edit-btn').disabled = true;
+            sendLinkBtn.innerHTML = '<span class="spinner"></span> Creating link...';
+            try {
+                const response = await fetch(`${API_URL}/api/internal/quick-order/send-payment-link`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pin: currentPin,
+                        order: currentOrder,
+                        customerPhone: phone,
+                        customerName: (nameInput.value || '').trim() || null,
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    lastPaymentUrl = data.paymentUrl;
+                    document.getElementById('linkOrderNum').textContent = '#' + data.orderNumber;
+                    document.getElementById('linkUrl').textContent = data.paymentUrl;
+                    // Pre-fill the SMS link with the URL + a friendly message.
+                    const smsBody = encodeURIComponent(`George's Pizza order ready! Pay $${data.total.toFixed(2)} here: ${data.paymentUrl}`);
+                    const phoneDigits = phone.replace(/\D/g, '');
+                    document.getElementById('smsLink').href = `sms:${phoneDigits}?&body=${smsBody}`;
+                    summaryScreen.classList.remove('active');
+                    document.getElementById('linkSentScreen').classList.add('active');
+                } else {
+                    alert('Could not create payment link: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Connection error. Try again.');
+            }
+            sendLinkBtn.disabled = false;
+            document.querySelector('.edit-btn').disabled = false;
+            sendLinkBtn.innerHTML = '💳 SEND PAYMENT LINK';
+        }
+
+        function copyLink() {
+            if (!lastPaymentUrl) return;
+            navigator.clipboard.writeText(lastPaymentUrl).then(() => {
+                alert('Link copied to clipboard.');
+            }).catch(() => {
+                alert('Could not copy. Long-press the URL to copy manually.');
+            });
+        }
+
         async function printOrder() {
             if (!currentOrder) return;
             
@@ -857,8 +968,15 @@ cash"
             originalText = '';
             orderText.value = '';
             orderError.style.display = 'none';
-            
+            // Reset Stripe-flow state
+            lastPaymentUrl = '';
+            const phoneInput = document.getElementById('stripePhoneInput');
+            const nameInput = document.getElementById('stripeNameInput');
+            if (phoneInput) phoneInput.value = '';
+            if (nameInput) nameInput.value = '';
+
             successScreen.classList.remove('active');
+            document.getElementById('linkSentScreen').classList.remove('active');
             orderScreen.classList.add('active');
             orderText.focus();
         }
