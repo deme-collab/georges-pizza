@@ -4435,11 +4435,19 @@ function PizzaCustomizer({ item, onClose, onAdd }) {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" className="btn-outline" onClick={onClose}>Cancel</button>
-              <button type="button" className="btn-red" onClick={() => onAdd({
-                name: `${item.name} Pizza (${size === 'xlarge' ? 'X-Large' : size.charAt(0).toUpperCase() + size.slice(1)})`,
-                price: getPrice(),
-                mods: getMods()
-              })}>Add to Cart</button>
+              <button type="button" className="btn-red" onClick={() => {
+                // Annotate white pizzas so the kitchen knows to skip red sauce.
+                // Skip the suffix if the name already contains "White" (e.g., "Plain White")
+                // to avoid "Plain White Pizza (White)".
+                const sizeLabel = size === 'xlarge' ? 'X-Large' : size.charAt(0).toUpperCase() + size.slice(1);
+                const isWhite = item.type === 'white' && !item.name.toLowerCase().includes('white');
+                const fullName = `${item.name} Pizza (${sizeLabel})${isWhite ? ' (White)' : ''}`;
+                onAdd({
+                  name: fullName,
+                  price: getPrice(),
+                  mods: getMods()
+                });
+              }}>Add to Cart</button>
             </div>
           </div>
         </div>
