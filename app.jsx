@@ -31,6 +31,54 @@ function trackEvent(eventName, params = {}) {
 }
 
 // =============================================================================
+// MARKETING ATTRIBUTION CAPTURE
+// =============================================================================
+// First-touch UTM tracking: read ?utm_* params on page load, persist in
+// localStorage, and never overwrite once set. Gets attached to checkout
+// requests so we can attribute orders to their original acquisition channel.
+// All localStorage calls are wrapped — Safari private mode throws on access
+// and we never want this to block checkout.
+
+const ATTRIBUTION_KEY = 'gp_attribution';
+
+(function captureAttribution() {
+  if (typeof window === 'undefined') return;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get('utm_source');
+    if (!utmSource) return; // No UTM → nothing to capture this visit
+
+    // First-touch: don't overwrite if we already have an attribution record
+    const existing = localStorage.getItem(ATTRIBUTION_KEY);
+    if (existing) return;
+
+    const attribution = {
+      utm_source: utmSource,
+      utm_medium: params.get('utm_medium') || '',
+      utm_campaign: params.get('utm_campaign') || '',
+      utm_content: params.get('utm_content') || '',
+      utm_term: params.get('utm_term') || '',
+      landing_url: window.location.href.slice(0, 500),
+      first_seen_at: new Date().toISOString(),
+      referrer: (document.referrer || '').slice(0, 255),
+    };
+    localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(attribution));
+  } catch (e) {
+    // Safari private mode, storage quota, etc. — fail silently
+  }
+})();
+
+function getAttribution() {
+  try {
+    const raw = localStorage.getItem(ATTRIBUTION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+// =============================================================================
 // SITE STATUS URL (for maintenance mode toggle via GitHub)
 // =============================================================================
 
@@ -5154,6 +5202,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             amount: Math.round(finalTotal * 100),
             orderType,
             customerEmail: email.trim() || undefined,
+            attribution: getAttribution(),
           }),
         });
         const data = await res.json();
@@ -5474,8 +5523,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         ? `${getAvailableDates().find(d => d.value === scheduledDate)?.label} at ${getAvailableTimes().find(t => t.value === scheduledTime)?.label}`
         : null,
       emailConsent,
+      attribution: getAttribution(),
     };
-    
+
     try {
       // STEP 1: Process payment (if not test mode)
       let paymentIntentId = null;
@@ -5533,7 +5583,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       
       // STEP 2: Submit order to server (with payment ID if applicable)
       orderData.paymentIntentId = paymentIntentId;
-      
+
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
