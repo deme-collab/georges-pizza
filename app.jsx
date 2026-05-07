@@ -4045,8 +4045,8 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
           </div>
 
           {/* Hint above the cards */}
-          <div style={{ fontSize: 12, color: '#555', marginBottom: 8, textAlign: 'center' }}>
-            Tap any item to customize • Defaults work great
+          <div style={{ background: '#FFF8DC', border: '1px dashed #DAA520', padding: '8px 12px', marginBottom: 10, textAlign: 'center', fontSize: 13, color: '#8B4513', fontWeight: 600 }}>
+            👇 Tap any item below to change it
           </div>
 
           {/* Item cards — collapsed by default with summary; tap to expand */}
@@ -4058,7 +4058,7 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
             const showChevron = !isFixed;
 
             return (
-              <div key={idx} style={{ border: '1px solid #ddd', marginBottom: 8, background: 'white' }}>
+              <div key={idx} style={{ border: showChevron ? '2px solid #C41E3A' : '1px solid #ddd', marginBottom: 8, background: 'white' }}>
                 {/* Card header — always visible */}
                 <div
                   onClick={() => showChevron && toggleExpand(idx)}
@@ -4068,7 +4068,7 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '10px 12px',
+                    padding: '12px',
                     cursor: showChevron ? 'pointer' : 'default',
                     background: isExpanded ? '#FFF8DC' : 'white',
                     borderBottom: isExpanded ? '1px solid #DAA520' : 'none',
@@ -4085,9 +4085,18 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                     )}
                   </div>
                   {showChevron && (
-                    <span style={{ fontSize: 14, color: '#C41E3A', marginLeft: 8 }}>
-                      {isExpanded ? '▾' : '▸'}
-                    </span>
+                    <div style={{
+                      background: isExpanded ? '#999' : '#C41E3A',
+                      color: 'white',
+                      padding: '6px 12px',
+                      fontFamily: "'Oswald', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      marginLeft: 10,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {isExpanded ? 'CLOSE ▾' : 'TAP TO CHANGE ▸'}
+                    </div>
                   )}
                 </div>
 
