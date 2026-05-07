@@ -1483,13 +1483,9 @@ function GeorgesPizza() {
 
             {/* Set-Price Meals — bundles, tax included, free delivery */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ marginBottom: 10 }}>
-                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>
-                  Set Price Meals
-                </span>
-                <span style={{ fontSize: 13, color: '#228B22', fontWeight: 600, marginLeft: 8 }}>
-                  (tax & delivery included)
-                </span>
+              <div className="red-banner">Set Price Meals</div>
+              <div style={{ fontSize: 13, color: '#228B22', fontWeight: 600, textAlign: 'center', margin: '6px 0 12px' }}>
+                Tax & delivery included
               </div>
               <div style={{
                 display: 'grid',
