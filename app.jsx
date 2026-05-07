@@ -736,7 +736,7 @@ function GeorgesPizza() {
       items: [
         { name: 'Cheese Steak #1', kind: 'cheesesteak' },
         { name: 'Cheese Steak #2', kind: 'cheesesteak', mirrorPrev: true },
-        { name: 'Large French Fries', kind: 'fixed' },
+        { name: 'Large French Fries', kind: 'fries' },
         { name: '2-Liter Soda', kind: 'soda' },
       ],
     },
@@ -3931,6 +3931,8 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
   // SteakCustomizer; bundle deals stay clean — no upsells inside the bundle).
   const cheesesteakAddons = ['Salt', 'Black Pepper', 'Ketchup', 'Mayo', 'Pickles', 'Fried Onions', 'Hot Peppers'];
   const wingFlavors = ['Mild', 'Hot', 'BBQ', 'Dry'];
+  const wingDressings = ['Blue Cheese', 'Ranch'];
+  const friesOptions = ['Salt', 'Black Pepper', 'Ketchup'];
   const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
 
   // Initialize per-item state with sensible defaults
@@ -3940,7 +3942,8 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
       if (item.kind === 'soda') initial[idx] = { flavor: 'Pepsi' };
       else if (item.kind === 'pepperoni') initial[idx] = { style: 'Pork' };
       else if (item.kind === 'cheesesteak') initial[idx] = { cheese: 'American', addons: [], toast: 'not-toasted' };
-      else if (item.kind === 'wings') initial[idx] = { sauce: 'Mild' };
+      else if (item.kind === 'wings') initial[idx] = { sauce: 'Mild', dressing: 'Blue Cheese' };
+      else if (item.kind === 'fries') initial[idx] = { toppings: [] };
     });
     return initial;
   });
@@ -3950,6 +3953,14 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
       const current = prev[idx]?.addons || [];
       const next = current.includes(addon) ? current.filter(a => a !== addon) : [...current, addon];
       return { ...prev, [idx]: { ...prev[idx], addons: next } };
+    });
+  };
+
+  const toggleFriesTopping = (idx, topping) => {
+    setConfig(prev => {
+      const current = prev[idx]?.toppings || [];
+      const next = current.includes(topping) ? current.filter(t => t !== topping) : [...current, topping];
+      return { ...prev, [idx]: { ...prev[idx], toppings: next } };
     });
   };
 
@@ -3964,7 +3975,11 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
     const cfg = config[idx] || {};
     if (item.kind === 'soda') return cfg.flavor || 'Pepsi';
     if (item.kind === 'pepperoni') return `${cfg.style || 'Pork'} Pepperoni`;
-    if (item.kind === 'wings') return `${cfg.sauce || 'Mild'} Sauce`;
+    if (item.kind === 'wings') return `${cfg.sauce || 'Mild'} Sauce, ${cfg.dressing || 'Blue Cheese'} on side`;
+    if (item.kind === 'fries') {
+      const tops = cfg.toppings || [];
+      return tops.length ? tops.join(', ') : 'plain';
+    }
     if (item.kind === 'cheesesteak') {
       if (item.mirrorPrev && mirrors[idx]) return 'Same as #1';
       const cheese = cfg.cheese || 'American';
@@ -4015,7 +4030,10 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
         const parts = [toastLabel, `${cheese} Cheese`, ...addons];
         mods.push(`${item.name}: ${parts.join(', ')}`);
       } else if (item.kind === 'wings') {
-        mods.push(`${item.name}: ${effective.sauce || 'Mild'} Sauce`);
+        mods.push(`${item.name}: ${effective.sauce || 'Mild'} Sauce, ${effective.dressing || 'Blue Cheese'} on side`);
+      } else if (item.kind === 'fries') {
+        const tops = effective.toppings || [];
+        mods.push(tops.length ? `${item.name}: ${tops.join(', ')}` : item.name);
       } else {
         mods.push(item.name);
       }
@@ -4183,9 +4201,10 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                       </div>
                     )}
 
-                    {/* Wings sauce */}
+                    {/* Wings sauce + dressing */}
                     {item.kind === 'wings' && (
                       <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Sauce</div>
                         {wingFlavors.map(s => (
                           <label key={s} className="radio-row">
                             <input
@@ -4195,6 +4214,35 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                               onChange={() => updateConfig(idx, 'sauce', s)}
                             />
                             <span style={{ flex: 1 }}>{s}</span>
+                          </label>
+                        ))}
+                        <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>Dressing on the Side</div>
+                        {wingDressings.map(d => (
+                          <label key={d} className="radio-row">
+                            <input
+                              type="radio"
+                              name={`dressing-${idx}`}
+                              checked={(config[idx]?.dressing || 'Blue Cheese') === d}
+                              onChange={() => updateConfig(idx, 'dressing', d)}
+                            />
+                            <span style={{ flex: 1 }}>{d}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Fries toppings (free) */}
+                    {item.kind === 'fries' && (
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Toppings (free)</div>
+                        {friesOptions.map(t => (
+                          <label key={t} className="checkbox-row">
+                            <input
+                              type="checkbox"
+                              checked={(config[idx]?.toppings || []).includes(t)}
+                              onChange={() => toggleFriesTopping(idx, t)}
+                            />
+                            <span style={{ flex: 1 }}>{t}</span>
                           </label>
                         ))}
                       </div>
