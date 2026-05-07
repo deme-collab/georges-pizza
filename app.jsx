@@ -6820,14 +6820,17 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             </div>
           )}
 
-          {subtotal >= 45 && (
+          {/* Free-2L promo suppressed when any meal-deal bundle is in the cart —
+              every bundle already includes a 2-Liter, so the nudge would just
+              confuse the customer. */}
+          {!cart.some(i => i.isMealDeal) && subtotal >= 45 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, color: '#228B22' }}>
               <span>🎉 FREE 2 Liter Soda!</span>
               <span style={{ fontWeight: 600 }}>$0.00</span>
             </div>
           )}
-          
-          {subtotal > 0 && subtotal < 45 && (
+
+          {!cart.some(i => i.isMealDeal) && subtotal > 0 && subtotal < 45 && (
             <div style={{ fontSize: 12, color: '#555', paddingTop: 8, fontStyle: 'italic' }}>
               💡 Add ${(45 - subtotal).toFixed(2)} more for a FREE 2 Liter Soda!
             </div>
