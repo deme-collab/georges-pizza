@@ -1547,12 +1547,14 @@ function GeorgesPizza() {
               </div>
             </div>
 
+            <div className="red-banner">Full Menu</div>
             {/* Category Grid */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
               gap: 10,
               marginBottom: 24,
+              marginTop: 12,
             }}>
               {categories.map(cat => (
                 <div
