@@ -3953,6 +3953,38 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
     });
   };
 
+  // Collapsible cards: each customizable item starts collapsed with a summary
+  // line so the modal stays compact. Click to expand and customize.
+  const [expanded, setExpanded] = useState({});
+  const toggleExpand = (idx) => setExpanded(prev => ({ ...prev, [idx]: !prev[idx] }));
+
+  // Render a one-line summary of the current config so the customer can see
+  // what they'll get without expanding every card.
+  const getSummary = (item, idx) => {
+    const cfg = config[idx] || {};
+    if (item.kind === 'soda') return cfg.flavor || 'Pepsi';
+    if (item.kind === 'pepperoni') return `${cfg.style || 'Pork'} Pepperoni`;
+    if (item.kind === 'wings') return `${cfg.sauce || 'Mild'} Sauce`;
+    if (item.kind === 'cheesesteak') {
+      if (item.mirrorPrev && mirrors[idx]) return 'Same as #1';
+      const cheese = cfg.cheese || 'American';
+      const toast = (cfg.toast || 'not-toasted') === 'toasted' ? 'Toasted' : 'Not Toasted';
+      const addonCount = (cfg.addons || []).length;
+      const addonStr = addonCount ? `, +${addonCount} add-on${addonCount > 1 ? 's' : ''}` : '';
+      return `${cheese}, ${toast}${addonStr}`;
+    }
+    return '';
+  };
+
+  // Notes shown next to fixed items (no customization)
+  const getFixedNote = (item) => {
+    const lower = item.name.toLowerCase();
+    if (lower.includes('garlic knots')) return 'served with marinara';
+    if (lower.includes('wings')) return 'served with blue cheese on the side';
+    if (lower.includes('french fries')) return '';
+    return '';
+  };
+
   const updateConfig = (idx, key, value) => {
     setConfig(prev => ({ ...prev, [idx]: { ...prev[idx], [key]: value } }));
   };
@@ -4012,176 +4044,152 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
             <strong>Tax & delivery included.</strong> Feeds {deal.feeds}.
           </div>
 
-          {/* What's in the bundle */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>
-              INCLUDES
-            </div>
-            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#1a1a1a', lineHeight: 1.7 }}>
-              {deal.items.map((item, idx) => {
-                const lower = item.name.toLowerCase();
-                let note = '';
-                if (lower.includes('garlic knots')) note = ' (served with marinara)';
-                else if (lower.includes('wings')) note = ' (served with blue cheese on the side)';
-                return (
-                  <li key={idx}>
-                    {item.name}
-                    {note && <span style={{ color: '#555', fontSize: 13 }}>{note}</span>}
-                  </li>
-                );
-              })}
-            </ul>
+          {/* Hint above the cards */}
+          <div style={{ fontSize: 12, color: '#555', marginBottom: 8, textAlign: 'center' }}>
+            Tap any item to customize • Defaults work great
           </div>
 
-          {/* Per-item customizations */}
+          {/* Item cards — collapsed by default with summary; tap to expand */}
           {deal.items.map((item, idx) => {
-            if (item.kind === 'fixed') return null;
-
-            // Mirror toggle for "same as #1" items (e.g., cheesesteak #2).
-            // Guard idx > 0 so a future data typo can't NaN out the modal.
-            if (item.mirrorPrev && idx > 0) {
-              return (
-                <div key={idx} style={{ marginBottom: 16 }}>
-                  <label className="checkbox-row" style={{ padding: '8px 10px', background: '#f5f5f5' }}>
-                    <input
-                      type="checkbox"
-                      checked={!!mirrors[idx]}
-                      onChange={(e) => setMirrors(prev => ({ ...prev, [idx]: e.target.checked }))}
-                    />
-                    <span style={{ flex: 1, fontSize: 13 }}>
-                      <strong>{item.name}:</strong> Same as #1
-                    </span>
-                  </label>
-                  {!mirrors[idx] && item.kind === 'cheesesteak' && (
-                    <div style={{ marginTop: 6 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>
-                        {item.name} — Prep the Roll
-                      </div>
-                      <label className="radio-row">
-                        <input type="radio" name={`toast-${idx}`} checked={(config[idx]?.toast || 'not-toasted') === 'not-toasted'} onChange={() => updateConfig(idx, 'toast', 'not-toasted')} />
-                        <span style={{ flex: 1 }}>Not Toasted</span>
-                      </label>
-                      <label className="radio-row">
-                        <input type="radio" name={`toast-${idx}`} checked={config[idx]?.toast === 'toasted'} onChange={() => updateConfig(idx, 'toast', 'toasted')} />
-                        <span style={{ flex: 1 }}>Toasted</span>
-                      </label>
-                      <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
-                        {item.name} — Cheese Choice
-                      </div>
-                      {cheeseChoices.map(c => (
-                        <label key={c} className="radio-row">
-                          <input
-                            type="radio"
-                            name={`cheese-${idx}`}
-                            checked={(config[idx]?.cheese || 'American') === c}
-                            onChange={() => updateConfig(idx, 'cheese', c)}
-                          />
-                          <span style={{ flex: 1 }}>{c}</span>
-                        </label>
-                      ))}
-                      <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
-                        Add-Ons (free)
-                      </div>
-                      {cheesesteakAddons.map(a => (
-                        <label key={a} className="checkbox-row">
-                          <input
-                            type="checkbox"
-                            checked={(config[idx]?.addons || []).includes(a)}
-                            onChange={() => toggleAddon(idx, a)}
-                          />
-                          <span style={{ flex: 1 }}>{a}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
+            const isFixed = item.kind === 'fixed';
+            const isMirror = item.mirrorPrev && idx > 0;
+            const isExpanded = !!expanded[idx];
+            const summary = isFixed ? getFixedNote(item) : getSummary(item, idx);
+            const showChevron = !isFixed;
 
             return (
-              <div key={idx} style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#555' }}>
-                  {item.name.toUpperCase()}
-                </div>
-                {item.kind === 'soda' && (
-                  <select
-                    value={config[idx]?.flavor || 'Pepsi'}
-                    onChange={(e) => updateConfig(idx, 'flavor', e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', fontSize: 14, border: '1px solid #ccc' }}
-                  >
-                    {sodaFlavors.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                )}
-                {item.kind === 'pepperoni' && (
-                  <div>
-                    {['Pork', 'Beef'].map(s => (
-                      <label key={s} className="radio-row">
-                        <input
-                          type="radio"
-                          name={`pep-${idx}`}
-                          checked={(config[idx]?.style || 'Pork') === s}
-                          onChange={() => updateConfig(idx, 'style', s)}
-                        />
-                        <span style={{ flex: 1 }}>{s} Pepperoni</span>
-                      </label>
-                    ))}
+              <div key={idx} style={{ border: '1px solid #ddd', marginBottom: 8, background: 'white' }}>
+                {/* Card header — always visible */}
+                <div
+                  onClick={() => showChevron && toggleExpand(idx)}
+                  role={showChevron ? 'button' : undefined}
+                  tabIndex={showChevron ? 0 : undefined}
+                  onKeyDown={(e) => { if (showChevron && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleExpand(idx); } }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '10px 12px',
+                    cursor: showChevron ? 'pointer' : 'default',
+                    background: isExpanded ? '#FFF8DC' : 'white',
+                    borderBottom: isExpanded ? '1px solid #DAA520' : 'none',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: '#1a1a1a' }}>
+                      {item.name}
+                    </div>
+                    {summary && (
+                      <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>
+                        {summary}
+                      </div>
+                    )}
                   </div>
-                )}
-                {item.kind === 'cheesesteak' && (
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>
-                      Prep the Roll
-                    </div>
-                    <label className="radio-row">
-                      <input type="radio" name={`toast-${idx}`} checked={(config[idx]?.toast || 'not-toasted') === 'not-toasted'} onChange={() => updateConfig(idx, 'toast', 'not-toasted')} />
-                      <span style={{ flex: 1 }}>Not Toasted</span>
-                    </label>
-                    <label className="radio-row">
-                      <input type="radio" name={`toast-${idx}`} checked={config[idx]?.toast === 'toasted'} onChange={() => updateConfig(idx, 'toast', 'toasted')} />
-                      <span style={{ flex: 1 }}>Toasted</span>
-                    </label>
-                    <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
-                      Cheese
-                    </div>
-                    {cheeseChoices.map(c => (
-                      <label key={c} className="radio-row">
-                        <input
-                          type="radio"
-                          name={`cheese-${idx}`}
-                          checked={(config[idx]?.cheese || 'American') === c}
-                          onChange={() => updateConfig(idx, 'cheese', c)}
-                        />
-                        <span style={{ flex: 1 }}>{c}</span>
-                      </label>
-                    ))}
-                    <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
-                      Add-Ons (free)
-                    </div>
-                    {cheesesteakAddons.map(a => (
-                      <label key={a} className="checkbox-row">
+                  {showChevron && (
+                    <span style={{ fontSize: 14, color: '#C41E3A', marginLeft: 8 }}>
+                      {isExpanded ? '▾' : '▸'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Card body — only when expanded */}
+                {isExpanded && !isFixed && (
+                  <div style={{ padding: '10px 12px' }}>
+                    {/* Mirror checkbox for "Same as #1" items */}
+                    {isMirror && (
+                      <label className="checkbox-row" style={{ padding: '8px 10px', background: '#f5f5f5', marginBottom: 8 }}>
                         <input
                           type="checkbox"
-                          checked={(config[idx]?.addons || []).includes(a)}
-                          onChange={() => toggleAddon(idx, a)}
+                          checked={!!mirrors[idx]}
+                          onChange={(e) => setMirrors(prev => ({ ...prev, [idx]: e.target.checked }))}
                         />
-                        <span style={{ flex: 1 }}>{a}</span>
+                        <span style={{ flex: 1, fontSize: 13 }}>
+                          <strong>Same as #1</strong>
+                        </span>
                       </label>
-                    ))}
-                  </div>
-                )}
-                {item.kind === 'wings' && (
-                  <div>
-                    {wingFlavors.map(s => (
-                      <label key={s} className="radio-row">
-                        <input
-                          type="radio"
-                          name={`wings-${idx}`}
-                          checked={(config[idx]?.sauce || 'Mild') === s}
-                          onChange={() => updateConfig(idx, 'sauce', s)}
-                        />
-                        <span style={{ flex: 1 }}>{s}</span>
-                      </label>
-                    ))}
+                    )}
+
+                    {/* Soda flavor */}
+                    {item.kind === 'soda' && (
+                      <select
+                        value={config[idx]?.flavor || 'Pepsi'}
+                        onChange={(e) => updateConfig(idx, 'flavor', e.target.value)}
+                        style={{ width: '100%', padding: '8px 10px', fontSize: 14, border: '1px solid #ccc' }}
+                      >
+                        {sodaFlavors.map(f => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                    )}
+
+                    {/* Pepperoni style */}
+                    {item.kind === 'pepperoni' && (
+                      <div>
+                        {['Pork', 'Beef'].map(s => (
+                          <label key={s} className="radio-row">
+                            <input
+                              type="radio"
+                              name={`pep-${idx}`}
+                              checked={(config[idx]?.style || 'Pork') === s}
+                              onChange={() => updateConfig(idx, 'style', s)}
+                            />
+                            <span style={{ flex: 1 }}>{s} Pepperoni</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Cheesesteak: only show controls if NOT mirroring */}
+                    {item.kind === 'cheesesteak' && !(isMirror && mirrors[idx]) && (
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>Prep the Roll</div>
+                        <label className="radio-row">
+                          <input type="radio" name={`toast-${idx}`} checked={(config[idx]?.toast || 'not-toasted') === 'not-toasted'} onChange={() => updateConfig(idx, 'toast', 'not-toasted')} />
+                          <span style={{ flex: 1 }}>Not Toasted</span>
+                        </label>
+                        <label className="radio-row">
+                          <input type="radio" name={`toast-${idx}`} checked={config[idx]?.toast === 'toasted'} onChange={() => updateConfig(idx, 'toast', 'toasted')} />
+                          <span style={{ flex: 1 }}>Toasted</span>
+                        </label>
+                        <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>Cheese</div>
+                        {cheeseChoices.map(c => (
+                          <label key={c} className="radio-row">
+                            <input
+                              type="radio"
+                              name={`cheese-${idx}`}
+                              checked={(config[idx]?.cheese || 'American') === c}
+                              onChange={() => updateConfig(idx, 'cheese', c)}
+                            />
+                            <span style={{ flex: 1 }}>{c}</span>
+                          </label>
+                        ))}
+                        <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>Add-Ons (free)</div>
+                        {cheesesteakAddons.map(a => (
+                          <label key={a} className="checkbox-row">
+                            <input
+                              type="checkbox"
+                              checked={(config[idx]?.addons || []).includes(a)}
+                              onChange={() => toggleAddon(idx, a)}
+                            />
+                            <span style={{ flex: 1 }}>{a}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Wings sauce */}
+                    {item.kind === 'wings' && (
+                      <div>
+                        {wingFlavors.map(s => (
+                          <label key={s} className="radio-row">
+                            <input
+                              type="radio"
+                              name={`wings-${idx}`}
+                              checked={(config[idx]?.sauce || 'Mild') === s}
+                              onChange={() => updateConfig(idx, 'sauce', s)}
+                            />
+                            <span style={{ flex: 1 }}>{s}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
