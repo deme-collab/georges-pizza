@@ -452,6 +452,7 @@ function GeorgesPizza() {
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
   const [familyDealCustomizing, setFamilyDealCustomizing] = useState(null);
+  const [mealDealCustomizing, setMealDealCustomizing] = useState(null);
   const [storeStatus, setStoreStatus] = useState(() => getStoreStatus());
   const [siteEnabled, setSiteEnabled] = useState(true);
   const [siteMessage, setSiteMessage] = useState('');
@@ -695,6 +696,63 @@ function GeorgesPizza() {
 
   const familyDeals = [
     { id: 1, name: '2 Large Plain Pizzas', price: 21, desc: 'Two 14" pies', badge: 'Best Value', hasTwoLargePizzaMods: true },
+  ];
+
+  // Set-Price Meals — bundles priced "all-in" (tax included, free delivery).
+  // Cart line price = allIn / 1.08 so the existing 8% tax math lands the
+  // customer on the round headline price. The button IS the price; items
+  // are the proof. Designed for the "$X in my pocket" decision model.
+  const mealDeals = [
+    {
+      id: 'pizza-knots-20',
+      allIn: 20,
+      title: 'Pizza Night',
+      feeds: '2-3',
+      summary: 'Lg Plain + Knots + 2L Soda',
+      items: [
+        { name: 'Large Plain Pizza', kind: 'fixed' },
+        { name: 'Garlic Knots (3)', kind: 'fixed' },
+        { name: '2-Liter Soda', kind: 'soda' },
+      ],
+    },
+    {
+      id: 'two-pizza-30',
+      allIn: 30,
+      title: 'Family Dinner',
+      feeds: '4-5',
+      summary: 'Lg Plain + Lg Pepperoni + 2L Soda',
+      items: [
+        { name: 'Large Plain Pizza', kind: 'fixed' },
+        { name: 'Large Pepperoni Pizza', kind: 'pepperoni' },
+        { name: '2-Liter Soda', kind: 'soda' },
+      ],
+    },
+    {
+      id: 'cheesesteak-pair-35',
+      allIn: 35,
+      title: 'Two Cheesesteaks',
+      feeds: '2',
+      summary: '2 Cheese Steaks + Lg Fries + 2L Soda',
+      items: [
+        { name: 'Cheese Steak #1', kind: 'cheesesteak' },
+        { name: 'Cheese Steak #2', kind: 'cheesesteak', mirrorPrev: true },
+        { name: 'Large French Fries', kind: 'fixed' },
+        { name: '2-Liter Soda', kind: 'soda' },
+      ],
+    },
+    {
+      id: 'gameday-40',
+      allIn: 40,
+      title: 'Game Day',
+      feeds: '3-4',
+      summary: 'XL Pepperoni + 10 Wings + Knots + 2L Soda',
+      items: [
+        { name: 'X-Large Pepperoni Pizza', kind: 'pepperoni' },
+        { name: '10 Buffalo Wings', kind: 'wings' },
+        { name: 'Garlic Knots (3)', kind: 'fixed' },
+        { name: '2-Liter Soda', kind: 'soda' },
+      ],
+    },
   ];
 
   // Pizza menu - consolidated with size selector
@@ -1423,6 +1481,72 @@ function GeorgesPizza() {
               </p>
             </div>
 
+            {/* Set-Price Meals — bundles, tax included, free delivery */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>
+                  Set Price Meals
+                </div>
+                <div style={{ fontSize: 12, color: '#228B22', fontWeight: 600 }}>
+                  Tax & delivery included
+                </div>
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 10,
+              }}>
+                {mealDeals.map(deal => {
+                  // Cap each bundle to 1 per order — avoids 1¢ rounding drift
+                  // when multiple of the same bundle stack (e.g., 2× $35 → $70.01).
+                  // For 2 of the same meal, customer can add à la carte items.
+                  const dealInCart = cart.some(i => i.isMealDeal && i.mealDealId === deal.id);
+                  return (
+                    <button
+                      key={deal.id}
+                      onClick={() => !dealInCart && setMealDealCustomizing(deal)}
+                      disabled={dealInCart}
+                      aria-label={dealInCart
+                        ? `${deal.title} - already in cart. Limit 1 per order.`
+                        : `${deal.title} - $${deal.allIn} all-in. ${deal.summary}. Feeds ${deal.feeds}.`}
+                      style={{
+                        background: dealInCart ? '#f5f5f5' : 'white',
+                        border: `2px solid ${dealInCart ? '#999' : '#C41E3A'}`,
+                        borderRadius: 0,
+                        padding: '14px 10px',
+                        cursor: dealInCart ? 'default' : 'pointer',
+                        textAlign: 'center',
+                        fontFamily: 'inherit',
+                        transition: 'transform 0.1s',
+                        opacity: dealInCart ? 0.7 : 1,
+                      }}
+                      onMouseDown={(e) => { if (!dealInCart) e.currentTarget.style.transform = 'scale(0.98)'; }}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 36, fontWeight: 700, color: dealInCart ? '#999' : '#C41E3A', lineHeight: 1 }}>
+                        ${deal.allIn}
+                      </div>
+                      <div style={{ fontSize: 11, color: dealInCart ? '#999' : '#228B22', fontWeight: 600, margin: '4px 0 6px' }}>
+                        {dealInCart ? 'In Cart' : `Feeds ${deal.feeds}`}
+                      </div>
+                      <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 2 }}>
+                        {deal.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#555', lineHeight: 1.3 }}>
+                        {deal.summary}
+                      </div>
+                      {dealInCart && (
+                        <div style={{ fontSize: 10, color: '#999', marginTop: 4, fontStyle: 'italic' }}>
+                          Limit 1 per order
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Category Grid */}
             <div style={{
               display: 'grid',
@@ -1662,6 +1786,15 @@ function GeorgesPizza() {
           item={familyDealCustomizing}
           onClose={() => setFamilyDealCustomizing(null)}
           onAdd={(item) => { addToCart(item); setFamilyDealCustomizing(null); }}
+        />
+      )}
+
+      {/* Set-Price Meal Customizer Modal */}
+      {mealDealCustomizing && (
+        <MealDealCustomizer
+          deal={mealDealCustomizing}
+          onClose={() => setMealDealCustomizing(null)}
+          onAdd={(item) => { addToCart(item); setMealDealCustomizing(null); }}
         />
       )}
 
@@ -3759,6 +3892,221 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
   );
 }
 
+// ============ SET-PRICE MEAL CUSTOMIZER ============
+// Single-screen popup for bundles. Each item is configured via a few inline
+// inputs with smart defaults, so a customer who doesn't care can just hit
+// "Add to Cart". Bundle is added as ONE cart line with price = allIn / 1.08
+// so existing 8% tax math lands on the round headline price.
+function MealDealCustomizer({ deal, onClose, onAdd }) {
+  const sodaFlavors = ['Pepsi', '7up', "Frank's Ginger Ale", 'Grape', 'Orange'];
+  const cheeseChoices = ['American', 'Provolone', 'Whiz', 'No Cheese'];
+  const wingFlavors = ['Mild', 'Hot', 'BBQ'];
+  const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
+
+  // Initialize per-item state with sensible defaults
+  const [config, setConfig] = useState(() => {
+    const initial = {};
+    deal.items.forEach((item, idx) => {
+      if (item.kind === 'soda') initial[idx] = { flavor: 'Pepsi' };
+      else if (item.kind === 'pepperoni') initial[idx] = { style: 'Pork' };
+      else if (item.kind === 'cheesesteak') initial[idx] = { cheese: 'American' };
+      else if (item.kind === 'wings') initial[idx] = { sauce: 'Mild' };
+    });
+    return initial;
+  });
+
+  const updateConfig = (idx, key, value) => {
+    setConfig(prev => ({ ...prev, [idx]: { ...prev[idx], [key]: value } }));
+  };
+
+  // For "mirrorPrev" items (cheesesteak #2 same-as-#1), allow toggling a follower
+  const [mirrors, setMirrors] = useState(() => {
+    const m = {};
+    deal.items.forEach((item, idx) => {
+      if (item.mirrorPrev) m[idx] = true;
+    });
+    return m;
+  });
+
+  const handleAdd = () => {
+    const mods = [];
+    deal.items.forEach((item, idx) => {
+      const cfg = config[idx] || {};
+      const followingPrev = mirrors[idx] && config[idx - 1];
+      const effective = followingPrev ? config[idx - 1] : cfg;
+      if (item.kind === 'soda') {
+        mods.push(`${item.name}: ${effective.flavor || 'Pepsi'}`);
+      } else if (item.kind === 'pepperoni') {
+        mods.push(`${item.name}: ${effective.style || 'Pork'} Pepperoni`);
+      } else if (item.kind === 'cheesesteak') {
+        mods.push(`${item.name}: ${effective.cheese || 'American'} Cheese`);
+      } else if (item.kind === 'wings') {
+        mods.push(`${item.name}: ${effective.sauce || 'Mild'} Sauce`);
+      } else {
+        mods.push(item.name);
+      }
+    });
+
+    // Bundle stored as a single cart line; tax math on the subtotal lands the
+    // customer at the round all-in price (delivery is already free site-wide).
+    const subtotalEquivalent = Math.round((deal.allIn / 1.08) * 100) / 100;
+    onAdd({
+      name: `$${deal.allIn} ${deal.title} (All-In)`,
+      price: subtotalEquivalent,
+      mods,
+      isMealDeal: true,
+      mealDealId: deal.id,
+      mealDealAllIn: deal.allIn,
+    });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="red-banner">${deal.allIn} {deal.title}</div>
+        <div style={{ padding: 16 }}>
+
+          <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', padding: 10, marginBottom: 16, fontSize: 13, color: '#8B4513', textAlign: 'center' }}>
+            <strong>Tax & delivery included.</strong> Feeds {deal.feeds}.
+          </div>
+
+          {/* What's in the bundle */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>
+              INCLUDES
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#1a1a1a', lineHeight: 1.7 }}>
+              {deal.items.map((item, idx) => (
+                <li key={idx}>{item.name}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Per-item customizations */}
+          {deal.items.map((item, idx) => {
+            if (item.kind === 'fixed') return null;
+
+            // Mirror toggle for "same as #1" items (e.g., cheesesteak #2).
+            // Guard idx > 0 so a future data typo can't NaN out the modal.
+            if (item.mirrorPrev && idx > 0) {
+              return (
+                <div key={idx} style={{ marginBottom: 16 }}>
+                  <label className="checkbox-row" style={{ padding: '8px 10px', background: '#f5f5f5' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!mirrors[idx]}
+                      onChange={(e) => setMirrors(prev => ({ ...prev, [idx]: e.target.checked }))}
+                    />
+                    <span style={{ flex: 1, fontSize: 13 }}>
+                      <strong>{item.name}:</strong> Same as #1
+                    </span>
+                  </label>
+                  {!mirrors[idx] && item.kind === 'cheesesteak' && (
+                    <div style={{ marginTop: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>
+                        {item.name} — Cheese Choice
+                      </div>
+                      {cheeseChoices.map(c => (
+                        <label key={c} className="radio-row">
+                          <input
+                            type="radio"
+                            name={`cheese-${idx}`}
+                            checked={(config[idx]?.cheese || 'American') === c}
+                            onChange={() => updateConfig(idx, 'cheese', c)}
+                          />
+                          <span style={{ flex: 1 }}>{c}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div key={idx} style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#555' }}>
+                  {item.name.toUpperCase()}
+                </div>
+                {item.kind === 'soda' && (
+                  <select
+                    value={config[idx]?.flavor || 'Pepsi'}
+                    onChange={(e) => updateConfig(idx, 'flavor', e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: 14, border: '1px solid #ccc' }}
+                  >
+                    {sodaFlavors.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                )}
+                {item.kind === 'pepperoni' && (
+                  <div>
+                    {['Pork', 'Beef'].map(s => (
+                      <label key={s} className="radio-row">
+                        <input
+                          type="radio"
+                          name={`pep-${idx}`}
+                          checked={(config[idx]?.style || 'Pork') === s}
+                          onChange={() => updateConfig(idx, 'style', s)}
+                        />
+                        <span style={{ flex: 1 }}>{s} Pepperoni</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {item.kind === 'cheesesteak' && (
+                  <div>
+                    {cheeseChoices.map(c => (
+                      <label key={c} className="radio-row">
+                        <input
+                          type="radio"
+                          name={`cheese-${idx}`}
+                          checked={(config[idx]?.cheese || 'American') === c}
+                          onChange={() => updateConfig(idx, 'cheese', c)}
+                        />
+                        <span style={{ flex: 1 }}>{c}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {item.kind === 'wings' && (
+                  <div>
+                    {wingFlavors.map(s => (
+                      <label key={s} className="radio-row">
+                        <input
+                          type="radio"
+                          name={`wings-${idx}`}
+                          checked={(config[idx]?.sauce || 'Mild') === s}
+                          onChange={() => updateConfig(idx, 'sauce', s)}
+                        />
+                        <span style={{ flex: 1 }}>{s}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Sticky footer with cancel + add */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button
+              onClick={onClose}
+              style={{ flex: 1, padding: '12px 16px', background: 'white', color: '#555', border: '1px solid #ccc', cursor: 'pointer', fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600 }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              style={{ flex: 2, padding: '12px 16px', background: '#C41E3A', color: 'white', border: 'none', cursor: 'pointer', fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 700 }}
+            >
+              Add to Cart — ${deal.allIn}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============ STROMBOLI MENU ============
 function StromboliMenu({ stromboliMenu, onAddToCart }) {
   const [customizing, setCustomizing] = useState(null);
@@ -5500,6 +5848,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         name: item.name,
         price: item.price,
         mods: item.mods || [],
+        ...(item.isMealDeal && { isMealDeal: true, mealDealId: item.mealDealId, mealDealAllIn: item.mealDealAllIn }),
       })),
       customerName: customerName.trim(),
       customerEmail: email.trim(),
@@ -5646,9 +5995,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600 }}>{item.name}</div>
                   {item.mods?.length > 0 && <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>{item.mods.join(', ')}</div>}
+                  {item.isMealDeal && <div style={{ fontSize: 11, color: '#228B22', marginTop: 3, fontWeight: 600 }}>✓ Tax & delivery included</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontWeight: 700, color: '#C41E3A' }}>${item.price.toFixed(2)}</span>
+                  <span style={{ fontWeight: 700, color: '#C41E3A' }}>
+                    ${(item.isMealDeal ? item.mealDealAllIn : item.price).toFixed(2)}
+                  </span>
                   <button type="button" onClick={() => onRemove(item.id)} style={{ background: 'none', border: '1px solid #ccc', padding: '2px 6px', cursor: 'pointer', fontSize: 11 }}>✕</button>
                 </div>
               </div>
