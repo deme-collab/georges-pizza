@@ -708,7 +708,7 @@ function GeorgesPizza() {
       allIn: 20,
       title: 'Pizza Night',
       feeds: '2-3',
-      summary: 'Lg Plain + Knots + 2L Soda',
+      summary: 'Lg Plain + Garlic Knots + 2L Soda',
       items: [
         { name: 'Large Plain Pizza', kind: 'fixed' },
         { name: 'Garlic Knots (3)', kind: 'fixed' },
@@ -745,7 +745,7 @@ function GeorgesPizza() {
       allIn: 40,
       title: 'Game Day',
       feeds: '3-4',
-      summary: 'XL Pepperoni + 10 Wings + Knots + 2L Soda',
+      summary: 'XL Pepperoni + 10 Wings + Garlic Knots + 2L Soda',
       items: [
         { name: 'X-Large Pepperoni Pizza', kind: 'pepperoni' },
         { name: '10 Buffalo Wings', kind: 'wings' },
@@ -1483,13 +1483,13 @@ function GeorgesPizza() {
 
             {/* Set-Price Meals — bundles, tax included, free delivery */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>
+              <div style={{ marginBottom: 10 }}>
+                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>
                   Set Price Meals
-                </div>
-                <div style={{ fontSize: 12, color: '#228B22', fontWeight: 600 }}>
-                  Tax & delivery included
-                </div>
+                </span>
+                <span style={{ fontSize: 13, color: '#228B22', fontWeight: 600, marginLeft: 8 }}>
+                  (tax & delivery included)
+                </span>
               </div>
               <div style={{
                 display: 'grid',
@@ -3900,7 +3900,7 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
 function MealDealCustomizer({ deal, onClose, onAdd }) {
   const sodaFlavors = ['Pepsi', 'Ginger Ale', 'Grape', 'Orange', 'Pineapple', 'Black Cherry'];
   const cheeseChoices = ['American', 'Provolone', 'Whiz', 'No Cheese'];
-  const wingFlavors = ['Mild', 'Hot', 'BBQ'];
+  const wingFlavors = ['Mild', 'Hot', 'BBQ', 'Dry'];
   const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
 
   // Initialize per-item state with sensible defaults
@@ -3976,9 +3976,18 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
               INCLUDES
             </div>
             <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#1a1a1a', lineHeight: 1.7 }}>
-              {deal.items.map((item, idx) => (
-                <li key={idx}>{item.name}</li>
-              ))}
+              {deal.items.map((item, idx) => {
+                const lower = item.name.toLowerCase();
+                let note = '';
+                if (lower.includes('garlic knots')) note = ' (served with marinara)';
+                else if (lower.includes('wings')) note = ' (served with blue cheese on the side)';
+                return (
+                  <li key={idx}>
+                    {item.name}
+                    {note && <span style={{ color: '#555', fontSize: 13 }}>{note}</span>}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
