@@ -1049,7 +1049,7 @@ function GeorgesPizza() {
     { name: 'Soda (2 Liter)', desc: 'Pepsi, Ginger Ale, Grape, Orange, Pineapple, Black Cherry', price: 4, has2LiterChoice: true },
     { name: 'Water (16 oz.)', price: 1 },
     { name: 'Hot Coffee (Small)', price: 2 },
-    { name: 'Hot Coffee (Large)', price: 4 },
+    { name: 'Hot Coffee (Large)', price: 3 },
   ];
 
   const chipsMenu = [
