@@ -743,7 +743,7 @@ function GeorgesPizza() {
     {
       id: 'gameday-40',
       allIn: 40,
-      title: 'Game Day',
+      title: 'Pizza & Wings',
       feeds: '3-4',
       summary: 'XL Pepperoni + 10 Wings + Garlic Knots + 2L Soda',
       items: [
