@@ -1046,7 +1046,7 @@ function GeorgesPizza() {
   const drinksMenu = [
     { name: 'Soda (20 oz.)', desc: 'Pepsi, 7up, Canada Dry, Arizona Tea, Mt Dew, Diet Pepsi, Sunkist, Root Beer', price: 2.50, has20ozChoice: true },
     { name: 'Soda (Can)', desc: "Frank's Sodas", price: 1, hasCanChoice: true },
-    { name: 'Soda (2 Liter)', desc: "Pepsi, 7up, Frank's Ginger Ale, Grape, Orange", price: 4, has2LiterChoice: true },
+    { name: 'Soda (2 Liter)', desc: 'Pepsi, Ginger Ale, Grape, Orange, Pineapple, Black Cherry', price: 4, has2LiterChoice: true },
     { name: 'Water (16 oz.)', price: 1 },
     { name: 'Hot Coffee (Small)', price: 2 },
     { name: 'Hot Coffee (Large)', price: 4 },
@@ -2446,7 +2446,7 @@ function GenericCustomizer({ item, onClose, onAdd }) {
       return {
         title: 'Choose Your 2 Liter',
         required: [
-          { id: 'flavor', name: 'Flavor', options: ['Pepsi', '7up', "Frank's Ginger Ale", "Frank's Grape", "Frank's Orange"] }
+          { id: 'flavor', name: 'Flavor', options: ['Pepsi', 'Ginger Ale', 'Grape', 'Orange', 'Pineapple', 'Black Cherry'] }
         ],
         optional: [],
       };
@@ -3898,7 +3898,7 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
 // "Add to Cart". Bundle is added as ONE cart line with price = allIn / 1.08
 // so existing 8% tax math lands on the round headline price.
 function MealDealCustomizer({ deal, onClose, onAdd }) {
-  const sodaFlavors = ['Pepsi', '7up', "Frank's Ginger Ale", 'Grape', 'Orange'];
+  const sodaFlavors = ['Pepsi', 'Ginger Ale', 'Grape', 'Orange', 'Pineapple', 'Black Cherry'];
   const cheeseChoices = ['American', 'Provolone', 'Whiz', 'No Cheese'];
   const wingFlavors = ['Mild', 'Hot', 'BBQ'];
   const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
