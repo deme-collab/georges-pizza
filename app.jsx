@@ -3332,6 +3332,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { name: 'Cooper Sharp', price: 2 },
   ];
   const [steakCheese, setSteakCheese] = useState('American');
+  const [steakToast, setSteakToast] = useState('not-toasted');
   const setSteakCheeseWithPrice = (newCheese) => {
     const oldOpt = steakCheeseOptions.find(o => o.name === steakCheese);
     const newOpt = steakCheeseOptions.find(o => o.name === newCheese);
@@ -3349,7 +3350,6 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { id: 'steak-ketchup', name: 'Ketchup', price: 0 },
     { id: 'steak-mayo', name: 'Mayo', price: 0 },
     { id: 'steak-pickles', name: 'Pickles', price: 0 },
-    { id: 'steak-toast', name: 'Toast', price: 0 },
     { id: 'steak-fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'steak-hot-peppers', name: 'Hot Peppers', price: 0 },
     // Paid options, smallest to largest
@@ -3489,6 +3489,8 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     
     // Steak options - full customization
     if (hasSteak) {
+      // Toast preference (always shown on ticket so kitchen has zero ambiguity)
+      mods.push(steakToast === 'toasted' ? 'TOASTED' : 'Not Toasted');
       // Cheese
       if (steakCheese && steakCheese !== 'No Cheese') {
         mods.push(steakCheese + ' Cheese');
@@ -3684,6 +3686,18 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
             <>
               {/* Cheese Choice */}
               <div style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>PREP THE ROLL</div>
+                <div style={{ marginBottom: 12 }}>
+                  <label className="radio-row">
+                    <input type="radio" name="steakToast" checked={steakToast === 'not-toasted'} onChange={() => setSteakToast('not-toasted')} />
+                    <span style={{ flex: 1 }}>Not Toasted</span>
+                  </label>
+                  <label className="radio-row">
+                    <input type="radio" name="steakToast" checked={steakToast === 'toasted'} onChange={() => setSteakToast('toasted')} />
+                    <span style={{ flex: 1 }}>Toasted</span>
+                  </label>
+                </div>
+
                 <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHEESE</div>
                 {steakCheeseOptions.map(opt => (
                   <label key={opt.name} className="radio-row">
@@ -3917,7 +3931,7 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
   const cheeseChoices = ['American', 'Provolone', 'Whiz', 'No Cheese'];
   // Free-only cheesesteak add-ons (paid options live in the standard
   // SteakCustomizer; bundle deals stay clean — no upsells inside the bundle).
-  const cheesesteakAddons = ['Salt', 'Black Pepper', 'Ketchup', 'Mayo', 'Pickles', 'Toast', 'Fried Onions', 'Hot Peppers'];
+  const cheesesteakAddons = ['Salt', 'Black Pepper', 'Ketchup', 'Mayo', 'Pickles', 'Fried Onions', 'Hot Peppers'];
   const wingFlavors = ['Mild', 'Hot', 'BBQ', 'Dry'];
   const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
 
@@ -3927,7 +3941,7 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
     deal.items.forEach((item, idx) => {
       if (item.kind === 'soda') initial[idx] = { flavor: 'Pepsi' };
       else if (item.kind === 'pepperoni') initial[idx] = { style: 'Pork' };
-      else if (item.kind === 'cheesesteak') initial[idx] = { cheese: 'American', addons: [] };
+      else if (item.kind === 'cheesesteak') initial[idx] = { cheese: 'American', addons: [], toast: 'not-toasted' };
       else if (item.kind === 'wings') initial[idx] = { sauce: 'Mild' };
     });
     return initial;
@@ -3967,7 +3981,8 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
       } else if (item.kind === 'cheesesteak') {
         const cheese = effective.cheese || 'American';
         const addons = effective.addons || [];
-        const parts = [`${cheese} Cheese`, ...addons];
+        const toastLabel = (effective.toast || 'not-toasted') === 'toasted' ? 'TOASTED' : 'Not Toasted';
+        const parts = [toastLabel, `${cheese} Cheese`, ...addons];
         mods.push(`${item.name}: ${parts.join(', ')}`);
       } else if (item.kind === 'wings') {
         mods.push(`${item.name}: ${effective.sauce || 'Mild'} Sauce`);
@@ -4042,6 +4057,17 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                   {!mirrors[idx] && item.kind === 'cheesesteak' && (
                     <div style={{ marginTop: 6 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>
+                        {item.name} — Prep the Roll
+                      </div>
+                      <label className="radio-row">
+                        <input type="radio" name={`toast-${idx}`} checked={(config[idx]?.toast || 'not-toasted') === 'not-toasted'} onChange={() => updateConfig(idx, 'toast', 'not-toasted')} />
+                        <span style={{ flex: 1 }}>Not Toasted</span>
+                      </label>
+                      <label className="radio-row">
+                        <input type="radio" name={`toast-${idx}`} checked={config[idx]?.toast === 'toasted'} onChange={() => updateConfig(idx, 'toast', 'toasted')} />
+                        <span style={{ flex: 1 }}>Toasted</span>
+                      </label>
+                      <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
                         {item.name} — Cheese Choice
                       </div>
                       {cheeseChoices.map(c => (
@@ -4106,6 +4132,17 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                 {item.kind === 'cheesesteak' && (
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>
+                      Prep the Roll
+                    </div>
+                    <label className="radio-row">
+                      <input type="radio" name={`toast-${idx}`} checked={(config[idx]?.toast || 'not-toasted') === 'not-toasted'} onChange={() => updateConfig(idx, 'toast', 'not-toasted')} />
+                      <span style={{ flex: 1 }}>Not Toasted</span>
+                    </label>
+                    <label className="radio-row">
+                      <input type="radio" name={`toast-${idx}`} checked={config[idx]?.toast === 'toasted'} onChange={() => updateConfig(idx, 'toast', 'toasted')} />
+                      <span style={{ flex: 1 }}>Toasted</span>
+                    </label>
+                    <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
                       Cheese
                     </div>
                     {cheeseChoices.map(c => (
@@ -5085,6 +5122,7 @@ function SteakCustomizer({ item, onClose, onAdd }) {
   const [cheese, setCheese] = useState('american');
   const [addons, setAddons] = useState([]);
   const [extras, setExtras] = useState([]);
+  const [toast, setToast] = useState('not-toasted');
 
   const cheeseOpts = [
     { id: 'american', name: 'American', price: 0 },
@@ -5101,7 +5139,6 @@ function SteakCustomizer({ item, onClose, onAdd }) {
     { id: 'ketchup', name: 'Ketchup', price: 0 },
     { id: 'mayo', name: 'Mayo', price: 0 },
     { id: 'pickles', name: 'Pickles', price: 0 },
-    { id: 'toast', name: 'Toast', price: 0 },
     { id: 'fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
     // Paid options, smallest to largest
@@ -5130,7 +5167,7 @@ function SteakCustomizer({ item, onClose, onAdd }) {
   };
 
   const getMods = () => {
-    const mods = [];
+    const mods = [toast === 'toasted' ? 'TOASTED' : 'Not Toasted'];
     if (cheese !== 'none') mods.push(cheeseOpts.find(c => c.id === cheese).name);
     addons.forEach(id => { const a = addonOpts.find(x => x.id === id); if (a) mods.push(a.name); });
     extras.forEach(id => { const e = extraOpts.find(x => x.id === id); if (e) mods.push(e.name); });
@@ -5142,6 +5179,18 @@ function SteakCustomizer({ item, onClose, onAdd }) {
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="red-banner">Customize {item.name}</div>
         <div style={{ padding: 16 }}>
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>PREP THE ROLL</div>
+          <div style={{ marginBottom: 16 }}>
+            <label className="radio-row">
+              <input type="radio" name="toast" checked={toast === 'not-toasted'} onChange={() => setToast('not-toasted')} />
+              <span style={{ flex: 1 }}>Not Toasted</span>
+            </label>
+            <label className="radio-row">
+              <input type="radio" name="toast" checked={toast === 'toasted'} onChange={() => setToast('toasted')} />
+              <span style={{ flex: 1 }}>Toasted</span>
+            </label>
+          </div>
+
           <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHOOSE CHEESE</div>
           <div style={{ marginBottom: 16 }}>
             {cheeseOpts.map(c => (
@@ -5196,6 +5245,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
   const [cheese, setCheese] = useState('american');
   const [addons, setAddons] = useState([]);
   const [friesOptions, setFriesOptions] = useState([]);
+  const [toast, setToast] = useState('not-toasted');
 
   const cheeseOpts = [
     { id: 'american', name: 'American', price: 0 },
@@ -5212,7 +5262,6 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
     { id: 'ketchup', name: 'Ketchup', price: 0 },
     { id: 'mayo', name: 'Mayo', price: 0 },
     { id: 'pickles', name: 'Pickles', price: 0 },
-    { id: 'toast', name: 'Toast', price: 0 },
     { id: 'fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
     // Paid options, smallest to largest
@@ -5241,7 +5290,7 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
   };
 
   const getMods = () => {
-    const mods = ['With Fries'];
+    const mods = ['With Fries', toast === 'toasted' ? 'TOASTED' : 'Not Toasted'];
     if (cheese !== 'none') mods.push(cheeseOpts.find(c => c.id === cheese).name);
     addons.forEach(id => { const a = addonOpts.find(x => x.id === id); if (a) mods.push(a.name); });
     friesOptions.forEach(id => { const f = friesOpts.find(x => x.id === id); if (f) mods.push(f.name); });
@@ -5256,6 +5305,18 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
           
           <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', padding: 10, marginBottom: 16, fontSize: 13, color: '#8B4513' }}>
             <strong>Includes:</strong> Cheese Steak + French Fries
+          </div>
+
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>PREP THE ROLL</div>
+          <div style={{ marginBottom: 16 }}>
+            <label className="radio-row">
+              <input type="radio" name="toast" checked={toast === 'not-toasted'} onChange={() => setToast('not-toasted')} />
+              <span style={{ flex: 1 }}>Not Toasted</span>
+            </label>
+            <label className="radio-row">
+              <input type="radio" name="toast" checked={toast === 'toasted'} onChange={() => setToast('toasted')} />
+              <span style={{ flex: 1 }}>Toasted</span>
+            </label>
           </div>
 
           <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHEESE ON STEAK</div>
