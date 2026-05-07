@@ -3326,9 +3326,20 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { id: 'pepper', name: 'Black Pepper', price: 0 },
   ];
 
-  // Steak cheese choice (for #2, #4, #6) - American only for lunch specials
-  const steakCheeseOptions = ['American'];
+  // Steak cheese choice (for #2, #4, #6) - American included; Cooper Sharp upgrade.
+  const steakCheeseOptions = [
+    { name: 'American', price: 0 },
+    { name: 'Cooper Sharp', price: 2 },
+  ];
   const [steakCheese, setSteakCheese] = useState('American');
+  const setSteakCheeseWithPrice = (newCheese) => {
+    const oldOpt = steakCheeseOptions.find(o => o.name === steakCheese);
+    const newOpt = steakCheeseOptions.find(o => o.name === newCheese);
+    const oldPrice = oldOpt?.price || 0;
+    const newPrice = newOpt?.price || 0;
+    setExtraPrice(prev => prev - oldPrice + newPrice);
+    setSteakCheese(newCheese);
+  };
   
   // Steak add-ons (for #2, #4, #6)
   const steakAddOns = [
@@ -3336,6 +3347,9 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
     { id: 'steak-salt', name: 'Salt', price: 0 },
     { id: 'steak-pepper', name: 'Black Pepper', price: 0 },
     { id: 'steak-ketchup', name: 'Ketchup', price: 0 },
+    { id: 'steak-mayo', name: 'Mayo', price: 0 },
+    { id: 'steak-pickles', name: 'Pickles', price: 0 },
+    { id: 'steak-toast', name: 'Toast', price: 0 },
     { id: 'steak-fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'steak-hot-peppers', name: 'Hot Peppers', price: 0 },
     // Paid options, smallest to largest
@@ -3671,14 +3685,15 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
               {/* Cheese Choice */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>CHEESE</div>
-                <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic', marginBottom: 8 }}>
-                  Lunch specials come with American cheese only
-                </div>
-                <label className="radio-row">
-                  <input type="radio" name="steakCheese" checked={steakCheese === 'American'} onChange={() => setSteakCheese('American')} />
-                  <span style={{ flex: 1 }}>American Cheese</span>
-                  <span style={{ color: '#228B22', fontWeight: 600 }}>INCLUDED</span>
-                </label>
+                {steakCheeseOptions.map(opt => (
+                  <label key={opt.name} className="radio-row">
+                    <input type="radio" name="steakCheese" checked={steakCheese === opt.name} onChange={() => setSteakCheeseWithPrice(opt.name)} />
+                    <span style={{ flex: 1 }}>{opt.name} Cheese</span>
+                    <span style={{ color: opt.price > 0 ? '#C41E3A' : '#228B22', fontWeight: 600 }}>
+                      {opt.price > 0 ? `+$${opt.price}` : 'INCLUDED'}
+                    </span>
+                  </label>
+                ))}
               </div>
               
               {/* Add-Ons */}
@@ -3902,7 +3917,7 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
   const cheeseChoices = ['American', 'Provolone', 'Whiz', 'No Cheese'];
   // Free-only cheesesteak add-ons (paid options live in the standard
   // SteakCustomizer; bundle deals stay clean — no upsells inside the bundle).
-  const cheesesteakAddons = ['Salt', 'Black Pepper', 'Ketchup', 'Fried Onions', 'Hot Peppers'];
+  const cheesesteakAddons = ['Salt', 'Black Pepper', 'Ketchup', 'Mayo', 'Pickles', 'Toast', 'Fried Onions', 'Hot Peppers'];
   const wingFlavors = ['Mild', 'Hot', 'BBQ', 'Dry'];
   const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
 
@@ -5072,10 +5087,11 @@ function SteakCustomizer({ item, onClose, onAdd }) {
   const [extras, setExtras] = useState([]);
 
   const cheeseOpts = [
-    { id: 'american', name: 'American' },
-    { id: 'provolone', name: 'Provolone' },
-    { id: 'whiz', name: 'Cheese Whiz' },
-    { id: 'none', name: 'No Cheese' },
+    { id: 'american', name: 'American', price: 0 },
+    { id: 'provolone', name: 'Provolone', price: 0 },
+    { id: 'whiz', name: 'Cheese Whiz', price: 0 },
+    { id: 'cooper-sharp', name: 'Cooper Sharp', price: 2 },
+    { id: 'none', name: 'No Cheese', price: 0 },
   ];
 
   const addonOpts = [
@@ -5083,6 +5099,9 @@ function SteakCustomizer({ item, onClose, onAdd }) {
     { id: 'salt', name: 'Salt', price: 0 },
     { id: 'pepper', name: 'Black Pepper', price: 0 },
     { id: 'ketchup', name: 'Ketchup', price: 0 },
+    { id: 'mayo', name: 'Mayo', price: 0 },
+    { id: 'pickles', name: 'Pickles', price: 0 },
+    { id: 'toast', name: 'Toast', price: 0 },
     { id: 'fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
     // Paid options, smallest to largest
@@ -5103,6 +5122,8 @@ function SteakCustomizer({ item, onClose, onAdd }) {
 
   const getPrice = () => {
     let total = item.price;
+    const cheeseChoice = cheeseOpts.find(c => c.id === cheese);
+    if (cheeseChoice) total += cheeseChoice.price;
     addons.forEach(id => { const a = addonOpts.find(x => x.id === id); if (a) total += a.price; });
     extras.forEach(id => { const e = extraOpts.find(x => x.id === id); if (e) total += e.price; });
     return total;
@@ -5126,7 +5147,8 @@ function SteakCustomizer({ item, onClose, onAdd }) {
             {cheeseOpts.map(c => (
               <label key={c.id} className="radio-row">
                 <input type="radio" name="cheese" checked={cheese === c.id} onChange={() => setCheese(c.id)} />
-                <span>{c.name}</span>
+                <span style={{ flex: 1 }}>{c.name}</span>
+                {c.price > 0 && <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${c.price}</span>}
               </label>
             ))}
           </div>
@@ -5176,10 +5198,11 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
   const [friesOptions, setFriesOptions] = useState([]);
 
   const cheeseOpts = [
-    { id: 'american', name: 'American' },
-    { id: 'provolone', name: 'Provolone' },
-    { id: 'whiz', name: 'Cheese Whiz' },
-    { id: 'none', name: 'No Cheese' },
+    { id: 'american', name: 'American', price: 0 },
+    { id: 'provolone', name: 'Provolone', price: 0 },
+    { id: 'whiz', name: 'Cheese Whiz', price: 0 },
+    { id: 'cooper-sharp', name: 'Cooper Sharp', price: 2 },
+    { id: 'none', name: 'No Cheese', price: 0 },
   ];
 
   const addonOpts = [
@@ -5187,6 +5210,9 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
     { id: 'salt', name: 'Salt', price: 0 },
     { id: 'pepper', name: 'Black Pepper', price: 0 },
     { id: 'ketchup', name: 'Ketchup', price: 0 },
+    { id: 'mayo', name: 'Mayo', price: 0 },
+    { id: 'pickles', name: 'Pickles', price: 0 },
+    { id: 'toast', name: 'Toast', price: 0 },
     { id: 'fried-onions', name: 'Fried Onions', price: 0 },
     { id: 'hot-peppers', name: 'Hot Peppers', price: 0 },
     // Paid options, smallest to largest
@@ -5207,6 +5233,8 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 
   const getPrice = () => {
     let total = item.price;
+    const cheeseChoice = cheeseOpts.find(c => c.id === cheese);
+    if (cheeseChoice) total += cheeseChoice.price;
     addons.forEach(id => { const a = addonOpts.find(x => x.id === id); if (a) total += a.price; });
     friesOptions.forEach(id => { const f = friesOpts.find(x => x.id === id); if (f) total += f.price; });
     return total;
@@ -5235,7 +5263,8 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
             {cheeseOpts.map(c => (
               <label key={c.id} className="radio-row">
                 <input type="radio" name="cheese" checked={cheese === c.id} onChange={() => setCheese(c.id)} />
-                <span>{c.name}</span>
+                <span style={{ flex: 1 }}>{c.name}</span>
+                {c.price > 0 && <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${c.price}</span>}
               </label>
             ))}
           </div>
