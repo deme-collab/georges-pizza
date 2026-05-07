@@ -3900,6 +3900,9 @@ function TwoLargePizzaCustomizer({ item, pizzaToppings, onClose, onAdd }) {
 function MealDealCustomizer({ deal, onClose, onAdd }) {
   const sodaFlavors = ['Pepsi', 'Ginger Ale', 'Grape', 'Orange', 'Pineapple', 'Black Cherry'];
   const cheeseChoices = ['American', 'Provolone', 'Whiz', 'No Cheese'];
+  // Free-only cheesesteak add-ons (paid options live in the standard
+  // SteakCustomizer; bundle deals stay clean — no upsells inside the bundle).
+  const cheesesteakAddons = ['Salt', 'Black Pepper', 'Ketchup', 'Fried Onions', 'Hot Peppers'];
   const wingFlavors = ['Mild', 'Hot', 'BBQ', 'Dry'];
   const dippingSauces = ['Marinara', 'Ranch', 'No Sauce'];
 
@@ -3909,11 +3912,19 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
     deal.items.forEach((item, idx) => {
       if (item.kind === 'soda') initial[idx] = { flavor: 'Pepsi' };
       else if (item.kind === 'pepperoni') initial[idx] = { style: 'Pork' };
-      else if (item.kind === 'cheesesteak') initial[idx] = { cheese: 'American' };
+      else if (item.kind === 'cheesesteak') initial[idx] = { cheese: 'American', addons: [] };
       else if (item.kind === 'wings') initial[idx] = { sauce: 'Mild' };
     });
     return initial;
   });
+
+  const toggleAddon = (idx, addon) => {
+    setConfig(prev => {
+      const current = prev[idx]?.addons || [];
+      const next = current.includes(addon) ? current.filter(a => a !== addon) : [...current, addon];
+      return { ...prev, [idx]: { ...prev[idx], addons: next } };
+    });
+  };
 
   const updateConfig = (idx, key, value) => {
     setConfig(prev => ({ ...prev, [idx]: { ...prev[idx], [key]: value } }));
@@ -3939,7 +3950,10 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
       } else if (item.kind === 'pepperoni') {
         mods.push(`${item.name}: ${effective.style || 'Pork'} Pepperoni`);
       } else if (item.kind === 'cheesesteak') {
-        mods.push(`${item.name}: ${effective.cheese || 'American'} Cheese`);
+        const cheese = effective.cheese || 'American';
+        const addons = effective.addons || [];
+        const parts = [`${cheese} Cheese`, ...addons];
+        mods.push(`${item.name}: ${parts.join(', ')}`);
       } else if (item.kind === 'wings') {
         mods.push(`${item.name}: ${effective.sauce || 'Mild'} Sauce`);
       } else {
@@ -4026,6 +4040,19 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                           <span style={{ flex: 1 }}>{c}</span>
                         </label>
                       ))}
+                      <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
+                        Add-Ons (free)
+                      </div>
+                      {cheesesteakAddons.map(a => (
+                        <label key={a} className="checkbox-row">
+                          <input
+                            type="checkbox"
+                            checked={(config[idx]?.addons || []).includes(a)}
+                            onChange={() => toggleAddon(idx, a)}
+                          />
+                          <span style={{ flex: 1 }}>{a}</span>
+                        </label>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -4063,6 +4090,9 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                 )}
                 {item.kind === 'cheesesteak' && (
                   <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: '#555' }}>
+                      Cheese
+                    </div>
                     {cheeseChoices.map(c => (
                       <label key={c} className="radio-row">
                         <input
@@ -4072,6 +4102,19 @@ function MealDealCustomizer({ deal, onClose, onAdd }) {
                           onChange={() => updateConfig(idx, 'cheese', c)}
                         />
                         <span style={{ flex: 1 }}>{c}</span>
+                      </label>
+                    ))}
+                    <div style={{ fontSize: 12, fontWeight: 600, margin: '10px 0 4px', color: '#555' }}>
+                      Add-Ons (free)
+                    </div>
+                    {cheesesteakAddons.map(a => (
+                      <label key={a} className="checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={(config[idx]?.addons || []).includes(a)}
+                          onChange={() => toggleAddon(idx, a)}
+                        />
+                        <span style={{ flex: 1 }}>{a}</span>
                       </label>
                     ))}
                   </div>
