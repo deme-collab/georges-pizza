@@ -1959,7 +1959,7 @@ function CategoryView({ categoryId, onBack, onAddToCart, pizzaMenu, whitePizzaMe
             <div className="red-banner">Beef & Chicken Steaks</div>
             <div className="menu-section-content">
               <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
-                We Use Freshly Sliced Meat (Not Frozen) on a Fresh Roll
+                Ribeye Steak on Fresh Corropolese Rolls — Baked Locally
               </div>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, color: '#555', marginBottom: 8, borderBottom: '2px solid #C41E3A', paddingBottom: 4 }}>BEEF STEAKS</div>
               {steaksMenu.beef.map((item, i) => (
