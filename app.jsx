@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
 // George's Pizza - Complete Online Ordering System
 // 201 W. Girard Ave, Philadelphia - Est. 1984
@@ -448,6 +448,15 @@ function GeorgesPizza() {
   const [emailConsent, setEmailConsent] = useState(true);
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [driverTip, setDriverTip] = useState(0);
+
+  // Wrapper: changing orderType should keep driverTip honest.
+  // Pickup means zero tip (drivers don't deliver pickups), so we zero state here
+  // rather than leaving a stale value that the finalTotal ternary silently masks.
+  const changeOrderType = useCallback((newType) => {
+    if (newType === 'pickup') setDriverTip(0);
+    setOrderType(newType);
+  }, []);
+
   const [cartNotification, setCartNotification] = useState(null);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [lunchCustomizing, setLunchCustomizing] = useState(null);
@@ -1360,7 +1369,7 @@ function GeorgesPizza() {
           <div style={{ display: 'flex', border: '2px solid #C41E3A', overflow: 'hidden' }}>
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOrderType('pickup'); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); changeOrderType('pickup'); }}
               style={{
                 padding: '8px 16px',
                 border: 'none',
@@ -1376,7 +1385,7 @@ function GeorgesPizza() {
             </button>
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOrderType('delivery'); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); changeOrderType('delivery'); }}
               style={{
                 padding: '8px 16px',
                 border: 'none',
@@ -1729,7 +1738,7 @@ function GeorgesPizza() {
               setDeliveryAddress({ street: '', apt: '', city: 'Philadelphia', zip: '' });
             }}
             orderType={orderType}
-            setOrderType={setOrderType}
+            setOrderType={changeOrderType}
             subtotal={cartTotal}
             customerName={customerName}
             setCustomerName={setCustomerName}
@@ -5655,6 +5664,29 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   const [zipError, setZipError] = useState('');
   const [customTip, setCustomTip] = useState('');
   const [tipTouched, setTipTouched] = useState(false);
+
+  // Snapshot tip state when leaving delivery so we can restore it on return.
+  // Without this, a customer who set a custom $5 tip → toggled to pickup → toggled
+  // back to delivery would silently lose their $5 and fall back to the 15% default.
+  // NOTE: do NOT wrap handleOrderTypeChange in useCallback without a complete dep
+  // array — it reads driverTip/tipTouched/customTip from closure, and a stale dep
+  // list will silently snapshot stale values.
+  const tipSnapshotRef = useRef(null);
+  const handleOrderTypeChange = (newType) => {
+    if (newType === 'pickup' && orderType !== 'pickup') {
+      tipSnapshotRef.current = { driverTip, tipTouched, customTip };
+      setTipTouched(false);
+      setCustomTip('');
+      // driverTip is zeroed by the parent's changeOrderType wrapper
+    } else if (newType === 'delivery' && orderType === 'pickup' && tipSnapshotRef.current?.tipTouched) {
+      const snap = tipSnapshotRef.current;
+      setDriverTip(snap.driverTip);
+      setTipTouched(true);
+      setCustomTip(snap.customTip);
+      tipSnapshotRef.current = null;
+    }
+    setOrderType(newType);
+  };
   const [scheduleType, setScheduleType] = useState('asap'); // 'asap' or 'scheduled'
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -5738,6 +5770,10 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   const paymentIntentIdRef = useRef(null);
   const lastChargedAmountRef = useRef(null);
   const updatingPaymentRef = useRef(false);
+  // Monotonic id so older PI-update responses can't clobber newer ones on fast double-toggle.
+  const updateRequestIdRef = useRef(0);
+  // Tracks the in-flight update promise so confirmPayment can await it.
+  const updatePromiseRef = useRef(Promise.resolve());
   
   // Create the Payment Intent ONCE when Stripe is ready and we have a valid total
   useEffect(() => {
@@ -5789,55 +5825,48 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     createIntent();
   }, [stripeReady, testMode]);
 
-  // UPDATE the Payment Intent amount whenever finalTotal changes (e.g. tip added)
+  // UPDATE the Payment Intent amount whenever finalTotal changes (e.g. tip added).
+  // Each update gets a monotonic id; only the latest response is allowed to write
+  // lastChargedAmountRef, so a stale slower update can't clobber a newer fast one.
+  // handleCheckout awaits updatePromiseRef before confirmPayment.
   useEffect(() => {
-    console.log('[TIP-FIX] Update useEffect fired:', { 
-      piId: paymentIntentIdRef.current, 
-      testMode, 
-      finalTotal, 
-      lastCharged: lastChargedAmountRef.current,
-      newAmount: Math.round(finalTotal * 100) 
-    });
-    if (!paymentIntentIdRef.current || testMode) {
-      console.log('[TIP-FIX] Skipping update - no PI ID or test mode');
-      return;
-    }
+    if (!paymentIntentIdRef.current || testMode) return;
     const newAmount = Math.round(finalTotal * 100);
-    // Skip if the amount hasn't actually changed
-    if (newAmount === lastChargedAmountRef.current) {
-      console.log('[TIP-FIX] Skipping update - amount unchanged');
-      return;
-    }
+    if (newAmount === lastChargedAmountRef.current) return;
     if (newAmount < 100) return;
-    
-    console.log('[TIP-FIX] Sending update to Stripe:', paymentIntentIdRef.current, '$' + (newAmount / 100).toFixed(2));
+
+    const myRequestId = ++updateRequestIdRef.current;
+    const piId = paymentIntentIdRef.current;
+    console.log('[TIP-FIX] Sending update to Stripe:', piId, '$' + (newAmount / 100).toFixed(2), 'req', myRequestId);
     updatingPaymentRef.current = true;
-    
-    const updateIntent = async () => {
+
+    const updatePromise = (async () => {
       try {
         const res = await fetch(`${API_URL}/api/update-payment-intent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            paymentIntentId: paymentIntentIdRef.current,
-            amount: newAmount,
-          }),
+          body: JSON.stringify({ paymentIntentId: piId, amount: newAmount }),
         });
         const data = await res.json();
-        console.log('[TIP-FIX] Update response:', data);
+        if (myRequestId !== updateRequestIdRef.current) {
+          console.log('[TIP-FIX] Stale update ignored: req', myRequestId, 'latest', updateRequestIdRef.current);
+          return;
+        }
         if (data.success) {
           lastChargedAmountRef.current = newAmount;
         } else {
-          console.error('Failed to update payment intent:', data.error);
+          console.error('[TIP-FIX] Failed to update payment intent:', data.error);
         }
       } catch (err) {
         console.error('[TIP-FIX] Update payment intent error:', err);
       } finally {
-        updatingPaymentRef.current = false;
+        if (myRequestId === updateRequestIdRef.current) {
+          updatingPaymentRef.current = false;
+        }
       }
-    };
-    
-    updateIntent();
+    })();
+
+    updatePromiseRef.current = updatePromise;
   }, [finalTotal, testMode]);
 
   // Mount Payment Element when container is ready
@@ -6104,6 +6133,49 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         }
         // Also keep sessionStorage as a fallback
         try { sessionStorage.setItem('gp2_pending_order', JSON.stringify(orderData)); } catch (e) {}
+
+        // Make sure Stripe has the latest amount before we charge.
+        // 1) Wait (up to 5s) for any in-flight PI update to settle.
+        // 2) If state still disagrees with what Stripe holds, fire one final
+        //    synchronous update and wait for it. This closes the race where
+        //    confirmPayment ran before a toggle-induced update had landed.
+        try {
+          await Promise.race([
+            updatePromiseRef.current,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('update-timeout')), 5000)),
+          ]);
+        } catch (e) {
+          console.warn('[TIP-FIX] Timed out waiting for in-flight update; will resync synchronously:', e?.message || e);
+        }
+
+        const expectedAmount = Math.round(finalTotal * 100);
+        if (expectedAmount !== lastChargedAmountRef.current && paymentIntentIdRef.current && expectedAmount >= 100) {
+          try {
+            const syncRes = await fetch(`${API_URL}/api/update-payment-intent`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentIntentId: paymentIntentIdRef.current,
+                amount: expectedAmount,
+              }),
+            });
+            const syncData = await syncRes.json();
+            if (!syncData.success) {
+              setCardError('Could not finalize order total. Please try again.');
+              setProcessing(false);
+              return;
+            }
+            lastChargedAmountRef.current = expectedAmount;
+            updateRequestIdRef.current++;
+            console.log('[TIP-FIX] Pre-confirm sync update succeeded:', expectedAmount);
+          } catch (err) {
+            console.error('[TIP-FIX] Pre-confirm sync update error:', err);
+            setCardError('Could not reach payment server. Please try again.');
+            setProcessing(false);
+            return;
+          }
+        }
+
         // Confirm payment with Stripe Payment Element
         const { error, paymentIntent } = await stripeRef.current.confirmPayment({
           elements: elementsRef.current,
@@ -6244,7 +6316,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             type="button"
-            onClick={() => setOrderType('pickup')}
+            onClick={() => handleOrderTypeChange('pickup')}
             style={{
               flex: 1,
               padding: '16px 12px',
@@ -6262,7 +6334,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           </button>
           <button
             type="button"
-            onClick={() => setOrderType('delivery')}
+            onClick={() => handleOrderTypeChange('delivery')}
             style={{
               flex: 1,
               padding: '16px 12px',
