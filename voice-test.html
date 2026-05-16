@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Voice Test — internal</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f4f4f4; color: #1a1a1a;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { font-size: 12px; color: #666; margin-bottom: 14px; }
+  .device {
+    background: #fff; border: 1px solid #ddd; border-radius: 6px;
+    padding: 10px 12px; font-size: 12px; color: #444; margin-bottom: 14px;
+    word-break: break-word; line-height: 1.5;
+  }
+  .device b { color: #1a1a1a; }
+  button.mic {
+    width: 100%; padding: 22px; font-size: 20px; font-weight: 700;
+    border: none; border-radius: 8px; cursor: pointer; color: #fff;
+    background: #C41E3A; transition: background .15s;
+  }
+  button.mic.listening { background: #1a7a1a; }
+  button.mic:disabled { background: #999; cursor: default; }
+  .hint { text-align: center; font-size: 12px; color: #666; margin: 8px 0 16px; }
+  .live {
+    background: #fff; border: 2px solid #C41E3A; border-radius: 8px;
+    padding: 14px; min-height: 64px; font-size: 17px; line-height: 1.4;
+    margin-bottom: 6px;
+  }
+  .live .interim { color: #999; }
+  .conf { font-size: 12px; color: #666; margin-bottom: 18px; text-align: right; }
+  h2 { font-size: 14px; margin: 0 0 8px; color: #444; }
+  .log-item {
+    background: #fff; border: 1px solid #ddd; border-left: 4px solid #C41E3A;
+    border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; font-size: 15px;
+  }
+  .log-item .meta { font-size: 11px; color: #888; margin-top: 4px; }
+  .log-empty { font-size: 13px; color: #999; font-style: italic; }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .btn-row button {
+    flex: 1; padding: 12px; font-size: 13px; font-weight: 600;
+    border: 1px solid #bbb; background: #fff; color: #444;
+    border-radius: 6px; cursor: pointer;
+  }
+  .unsupported {
+    background: #fde8e8; border: 1px solid #C41E3A; color: #8a1020;
+    padding: 16px; border-radius: 8px; font-size: 15px; line-height: 1.5;
+  }
+  .footnote { font-size: 11px; color: #999; margin-top: 24px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h1>Voice Transcription Test</h1>
+<div class="sub">Internal — not a real order. Nothing is sent or saved anywhere.</div>
+
+<div class="device" id="deviceInfo">checking device…</div>
+
+<div id="app">
+  <button class="mic" id="micBtn">🎤 TAP TO TALK</button>
+  <div class="hint" id="hint">Tap, speak one order, tap again to stop.</div>
+
+  <div class="live" id="live"><span style="color:#bbb">Transcript appears here…</span></div>
+  <div class="conf" id="conf">&nbsp;</div>
+
+  <h2>Captured orders this session</h2>
+  <div id="log"><div class="log-empty">Nothing captured yet.</div></div>
+
+  <div class="btn-row">
+    <button id="clearBtn">Clear list</button>
+  </div>
+</div>
+
+<div class="footnote">
+  How to test: stand at the counter during a busy/noisy time. Speak 3–4 real
+  orders in normal shorthand (e.g. “large pep mush, cheesesteak whiz fried onion,
+  fries, cash”). Check if the words below match what you said — especially menu
+  names. Screenshot this screen and send it back. Do this on each phone.
+</div>
+
+<script>
+(function () {
+  // ---- Device / browser fingerprint (so screenshots from different phones are
+  //      distinguishable when comparing results) ----
+  var ua = navigator.userAgent;
+  var platform = navigator.platform || 'unknown';
+  var isiOS = /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+  var browser = 'Other';
+  if (/CriOS/.test(ua)) browser = 'Chrome-on-iOS (uses Safari engine)';
+  else if (/FxiOS/.test(ua)) browser = 'Firefox-on-iOS (uses Safari engine)';
+  else if (/Chrome\//.test(ua) && !/Edg|OPR/.test(ua)) browser = 'Chrome';
+  else if (/Safari/.test(ua) && !/Chrome/.test(ua)) browser = 'Safari';
+  else if (/Edg/.test(ua)) browser = 'Edge';
+  else if (/Firefox/.test(ua)) browser = 'Firefox';
+
+  document.getElementById('deviceInfo').innerHTML =
+    '<b>OS:</b> ' + (isiOS ? 'iOS / iPadOS' : isAndroid ? 'Android' : platform) +
+    ' &nbsp;|&nbsp; <b>Browser:</b> ' + browser +
+    '<br><b>UA:</b> ' + ua;
+
+  // ---- Speech recognition setup ----
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SR) {
+    document.getElementById('app').innerHTML =
+      '<div class="unsupported"><b>Speech recognition is NOT supported on this' +
+      ' browser/phone.</b><br><br>This is the key finding — note which phone' +
+      ' this is and report it back. On iPhone this usually means the iOS' +
+      ' version is too old or Safari has it disabled.</div>';
+    return;
+  }
+
+  var recognition = null;
+  var listening = false;
+  var sessionFinal = '';   // accumulated final text for the current utterance
+  var captures = [];
+
+  var micBtn = document.getElementById('micBtn');
+  var hint = document.getElementById('hint');
+  var live = document.getElementById('live');
+  var conf = document.getElementById('conf');
+  var logEl = document.getElementById('log');
+
+  function buildRecognition() {
+    var r = new SR();
+    r.lang = 'en-US';
+    r.continuous = true;       // keep going through pauses (Android honors this;
+                               // Safari may still cut out — that's a finding)
+    r.interimResults = true;   // show words as they come
+
+    r.onresult = function (event) {
+      var interim = '';
+      for (var i = event.resultIndex; i < event.results.length; i++) {
+        var res = event.results[i];
+        if (res.isFinal) {
+          sessionFinal += res[0].transcript;
+          var c = res[0].confidence;
+          if (typeof c === 'number' && c > 0) {
+            conf.textContent = 'last phrase confidence: ' + Math.round(c * 100) + '%';
+          } else {
+            conf.textContent = 'confidence: not reported (common on iOS)';
+          }
+        } else {
+          interim += res[0].transcript;
+        }
+      }
+      live.innerHTML = escapeHtml(sessionFinal) +
+        '<span class="interim">' + escapeHtml(interim) + '</span>';
+    };
+
+    r.onerror = function (e) {
+      hint.textContent = 'Error: ' + e.error +
+        (e.error === 'not-allowed'
+          ? ' — microphone permission was denied. That is itself a finding.'
+          : e.error === 'no-speech'
+          ? ' — heard nothing. Try again, closer to the mic.'
+          : '');
+    };
+
+    r.onend = function () {
+      // Safari/iOS frequently ends on its own mid-utterance. If we still
+      // think we're listening, that abrupt stop is a finding worth seeing.
+      if (listening) {
+        listening = false;
+        micBtn.classList.remove('listening');
+        micBtn.textContent = '🎤 TAP TO TALK';
+        hint.textContent = 'Recognition stopped (the browser ended it). ' +
+          'If you were mid-order, note that — it means this phone cuts off.';
+        finalizeCapture();
+      }
+    };
+
+    return r;
+  }
+
+  function finalizeCapture() {
+    var text = sessionFinal.trim();
+    if (!text) return;
+    captures.unshift({ text: text, at: new Date() });
+    renderLog();
+    sessionFinal = '';
+  }
+
+  function renderLog() {
+    if (!captures.length) {
+      logEl.innerHTML = '<div class="log-empty">Nothing captured yet.</div>';
+      return;
+    }
+    logEl.innerHTML = captures.map(function (c, idx) {
+      return '<div class="log-item">' + escapeHtml(c.text) +
+        '<div class="meta">#' + (captures.length - idx) + ' · ' +
+        c.at.toLocaleTimeString() + '</div></div>';
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (ch) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch];
+    });
+  }
+
+  micBtn.addEventListener('click', function () {
+    if (!listening) {
+      sessionFinal = '';
+      live.innerHTML = '<span style="color:#bbb">Listening…</span>';
+      conf.innerHTML = '&nbsp;';
+      recognition = buildRecognition();
+      try {
+        recognition.start();
+      } catch (err) {
+        hint.textContent = 'Could not start: ' + err.message;
+        return;
+      }
+      listening = true;
+      micBtn.classList.add('listening');
+      micBtn.textContent = '■ STOP';
+      hint.textContent = 'Listening — speak the order, then tap STOP.';
+    } else {
+      listening = false;
+      micBtn.classList.remove('listening');
+      micBtn.textContent = '🎤 TAP TO TALK';
+      hint.textContent = 'Tap, speak one order, tap again to stop.';
+      try { recognition.stop(); } catch (e) {}
+      finalizeCapture();
+    }
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    captures = [];
+    renderLog();
+  });
+})();
+</script>
+
+</body>
+</html>
