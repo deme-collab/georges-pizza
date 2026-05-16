@@ -118,7 +118,7 @@
 
   var recognition = null;
   var listening = false;
-  var sessionFinal = '';   // accumulated final text for the current utterance
+  var lastTranscript = '';  // full transcript, rebuilt every event (not accumulated)
   var captures = [];
 
   var micBtn = document.getElementById('micBtn');
@@ -135,22 +135,29 @@
     r.interimResults = true;   // show words as they come
 
     r.onresult = function (event) {
+      // Rebuild the WHOLE transcript from scratch every event. In continuous
+      // mode the browser re-reports earlier results, so accumulating with +=
+      // duplicates words ("oneoneone large..."). Iterating all results and
+      // replacing each time is the correct pattern.
+      var finalText = '';
       var interim = '';
-      for (var i = event.resultIndex; i < event.results.length; i++) {
+      var lastConf = null;
+      for (var i = 0; i < event.results.length; i++) {
         var res = event.results[i];
         if (res.isFinal) {
-          sessionFinal += res[0].transcript;
-          var c = res[0].confidence;
-          if (typeof c === 'number' && c > 0) {
-            conf.textContent = 'last phrase confidence: ' + Math.round(c * 100) + '%';
-          } else {
-            conf.textContent = 'confidence: not reported (common on iOS)';
-          }
+          finalText += res[0].transcript;
+          lastConf = res[0].confidence;
         } else {
           interim += res[0].transcript;
         }
       }
-      live.innerHTML = escapeHtml(sessionFinal) +
+      lastTranscript = finalText;
+      if (typeof lastConf === 'number' && lastConf > 0) {
+        conf.textContent = 'last phrase confidence: ' + Math.round(lastConf * 100) + '%';
+      } else if (lastConf !== null) {
+        conf.textContent = 'confidence: not reported (common on iOS)';
+      }
+      live.innerHTML = escapeHtml(finalText) +
         '<span class="interim">' + escapeHtml(interim) + '</span>';
     };
 
@@ -180,11 +187,11 @@
   }
 
   function finalizeCapture() {
-    var text = sessionFinal.trim();
+    var text = lastTranscript.trim();
     if (!text) return;
     captures.unshift({ text: text, at: new Date() });
     renderLog();
-    sessionFinal = '';
+    lastTranscript = '';
   }
 
   function renderLog() {
@@ -207,7 +214,7 @@
 
   micBtn.addEventListener('click', function () {
     if (!listening) {
-      sessionFinal = '';
+      lastTranscript = '';
       live.innerHTML = '<span style="color:#bbb">Listening…</span>';
       conf.innerHTML = '&nbsp;';
       recognition = buildRecognition();
