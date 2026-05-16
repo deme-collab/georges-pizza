@@ -58,7 +58,7 @@
 
 <h1>Voice Transcription Test</h1>
 <div class="sub">Internal — not a real order. Nothing is sent or saved anywhere.
-<b style="color:#C41E3A">BUILD 3</b> — if you don't see "BUILD 3", you're on a cached old version; hard-refresh.</div>
+<b style="color:#C41E3A">BUILD 4</b> — if you don't see "BUILD 4", you're on a cached old version; load with ?v=4.</div>
 
 <div class="device" id="deviceInfo">checking device…</div>
 
@@ -136,22 +136,25 @@
     r.interimResults = true;   // show words as they come
 
     r.onresult = function (event) {
-      // Rebuild the WHOLE transcript from scratch every event. In continuous
-      // mode the browser re-reports earlier results, so accumulating with +=
-      // duplicates words ("oneoneone large..."). Iterating all results and
-      // replacing each time is the correct pattern.
-      var finalText = '';
+      // Android Chrome (cumulative-final engine) re-promotes the same utterance
+      // as a series of growing finals; concatenating them duplicates words.
+      // Take only the LAST final entry — on cumulative engines it's the full
+      // utterance. This under-reports multi-segment on disjoint engines, which
+      // is acceptable: Phase 1's only remaining job is a single-utterance
+      // raw-accuracy probe (does it hear "pep mush" / "whiz" correctly).
+      var finals = [];
       var interim = '';
       var lastConf = null;
       for (var i = 0; i < event.results.length; i++) {
         var res = event.results[i];
         if (res.isFinal) {
-          finalText += res[0].transcript;
+          finals.push(res[0].transcript.trim());
           lastConf = res[0].confidence;
         } else {
           interim += res[0].transcript;
         }
       }
+      var finalText = finals.length ? finals[finals.length - 1] : '';
       lastTranscript = finalText;
       if (typeof lastConf === 'number' && lastConf > 0) {
         conf.textContent = 'last phrase confidence: ' + Math.round(lastConf * 100) + '%';
