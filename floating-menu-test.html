@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<!--
+  George's Pizza — FLOATING MENU · Milestone 1 probe (THROWAWAY, UNLINKED)
+  Goal: prove the Apple-Watch proximity "feel" on a real low-end Android.
+  Cart is STUBBED on purpose — this is NOT connected to checkout/Stripe.
+  Perf contract: pointer -> var -> single rAF loop -> element.style.transform.
+  No per-pointer-move state. Only transform/opacity animated. ~8 bubbles.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>George's — Floating Menu (prototype)</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --red:#C41E3A; --cream:#FFF8F0; --ink:#2a1f1a; --stage:#0a0a0c; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; overflow:hidden; background:var(--stage);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--ink); }
+
+  .flag{ position:fixed; top:0; left:0; right:0; z-index:50; background:#2a1f1a; color:#ffd9c2;
+    font-size:12px; text-align:center; padding:6px 10px; letter-spacing:.3px; }
+  .flag b{ color:#ffb38a; }
+
+  header{ position:fixed; top:28px; left:0; right:0; z-index:40; padding:14px 18px 4px;
+    pointer-events:none; }
+  header h1{ font-family:"Oswald",sans-serif; font-weight:600; color:#ff5a73;
+    margin:0; font-size:22px; letter-spacing:.5px; }
+  header p{ margin:2px 0 0; font-size:13px; color:#8a7d72; }
+
+  /* horizontal-scroll canvas */
+  .scroller{ position:absolute; inset:0; overflow-x:auto; overflow-y:hidden;
+    -webkit-overflow-scrolling:touch; touch-action:pan-x; }
+  .canvas{ position:relative; height:100%; min-width:100%; }
+
+  /* Bubbles never hit-test: hover + click are resolved by distance math in
+     the rAF loop (the only source of truth). This kills the transparent-
+     square-corner bug permanently. Cursor is driven by ONE variable write
+     on the scroller, not per-element CSS. */
+  .bubble{ position:absolute; will-change:transform; pointer-events:none;
+    transform:translate3d(-50%,-50%,0) scale(1); }
+  /* on black: tight depth shadow + faint warm rim — kept narrow so it does
+     NOT bleed over the food edges (wide blur reads as "low quality"). */
+  .bubble img{ width:100%; height:100%; object-fit:contain; display:block;
+    pointer-events:none;
+    filter:drop-shadow(0 6px 11px rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(255,170,90,.13)); }
+
+  /* detail card */
+  .scrim{ position:fixed; inset:0; background:rgba(8,8,12,.66); z-index:900;
+    opacity:0; pointer-events:none; transition:opacity .22s ease; }
+  .scrim.on{ opacity:1; pointer-events:auto; }
+  /* pointer-events:none while closed — an opacity:0 card still hit-tests and
+     was a ~440px invisible panel dead-center eating all pointer/click events
+     (every center bubble looked "dead"). Re-enabled only when open, exactly
+     like .scrim above. */
+  .card{ position:fixed; left:50%; bottom:0; z-index:901; width:min(440px,100%);
+    background:#fff; border-radius:22px 22px 0 0; padding:20px 22px 26px;
+    pointer-events:none;
+    transform:translate(-50%,110%); transition:transform .26s cubic-bezier(.22,1,.36,1);
+    box-shadow:0 -12px 40px rgba(40,25,18,.25); }
+  .card.on{ transform:translate(-50%,0); pointer-events:auto; }
+  @media(min-width:560px){
+    .card{ bottom:auto; top:50%; border-radius:22px;
+      transform:translate(-50%,calc(-50% + 20px)); opacity:0; transition:.24s; }
+    .card.on{ transform:translate(-50%,-50%); opacity:1; }
+  }
+  .card .ph{ height:170px; display:flex; align-items:center; justify-content:center; margin:-4px 0 8px; }
+  .card .ph img{ max-height:100%; max-width:80%;
+    filter:drop-shadow(0 10px 16px rgba(60,30,10,.3)); }
+  .card h2{ font-family:"Oswald",sans-serif; margin:0; font-size:23px; color:var(--ink); }
+  .card .desc{ color:#7a6a5e; font-size:14px; margin:6px 0 14px; line-height:1.5; }
+  .card .price{ font-family:"Oswald",sans-serif; font-size:22px; color:var(--red); }
+  .card .add{ margin-top:16px; width:100%; border:0; border-radius:13px; padding:15px;
+    background:var(--red); color:#fff; font-size:16px; font-weight:700; cursor:pointer;
+    font-family:"Oswald",sans-serif; letter-spacing:.5px; transition:transform .12s; }
+  .card .add:active{ transform:scale(.97); }
+  .card .add.added{ background:#1a7a3a; }
+  .card .x{ position:absolute; top:12px; right:14px; width:34px; height:34px; border:0;
+    border-radius:50%; background:#f0e6da; color:#7a6a5e; font-size:18px; cursor:pointer; }
+
+  .toast{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:#1a7a3a; color:#fff; padding:11px 20px; border-radius:30px; font-size:14px;
+    font-weight:600; z-index:902; opacity:0; transition:.25s; pointer-events:none;
+    box-shadow:0 6px 20px rgba(0,0,0,.25); }
+  .toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast small{ opacity:.8; font-weight:400; }
+
+  .hint{ position:fixed; bottom:10px; left:0; right:0; text-align:center;
+    font-size:11px; color:#b8a99c; pointer-events:none; z-index:30; }
+</style>
+</head>
+<body>
+  <div class="flag"><b style="color:#7CFC00">BUILD 7</b> · PROTOTYPE Milestone 1 — proving the <b>feel</b>. Cart is <b>stubbed</b> (not connected to checkout).</div>
+  <header>
+    <h1>George's Pizza</h1>
+    <p>Drag your finger across the menu →</p>
+  </header>
+
+  <div class="scroller" id="scroller">
+    <div class="canvas" id="canvas"></div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="card" id="card">
+    <button class="x" id="cardX">✕</button>
+    <div class="ph"><img id="cardImg" alt=""></div>
+    <h2 id="cardName"></h2>
+    <div class="desc" id="cardDesc"></div>
+    <div class="price" id="cardPrice"></div>
+    <button class="add" id="cardAdd">Add to Cart</button>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="hint">Throwaway probe · not linked anywhere · prices are demo values</div>
+
+<script>
+"use strict";
+/* ---- Starter items (Milestone 1 display data only — NOT real menu/pricing;
+        real menu data + real cart are Milestones 3 & 4). tier drives size. ---- */
+const ITEMS = [
+  { img:"XL_Cheese_pizza.webp",              name:"XL Cheese Pizza",        tier:"xl",  price:"$15",
+    desc:"Our hand-stretched extra-large pie — tomato sauce & a full blanket of mozzarella." },
+  { img:"XL_pepperoni_pizza.webp",           name:"XL Pepperoni Pizza",     tier:"xl",  price:"$17",
+    desc:"Extra-large, loaded edge-to-edge with pepperoni. Choose beef or pork." },
+  { img:"Large_ricotta_mozzarella_pizza.webp",name:"Ricotta & Mozzarella",  tier:"lg",  price:"$14",
+    desc:"White pie — creamy ricotta and mozzarella, no red sauce." },
+  { img:"Small_groundbeef_pizza.webp",       name:"Ground Beef Pizza",      tier:"lg",  price:"$13",
+    desc:"Seasoned ground beef over sauce and mozzarella." },
+  { img:"small_spinach_white_pizza.webp",    name:"Spinach White Pizza",    tier:"md",  price:"$13",
+    desc:"Fresh spinach, garlic, ricotta & mozzarella on a white base." },
+  { img:"Sm_Steak_Stromboli.webp",           name:"Steak Stromboli",        tier:"md",  price:"$12",
+    desc:"Rolled & baked — cheesesteak, onions and mozzarella inside." },
+  { img:"megafries.webp",                    name:"Mega Fries",             tier:"sm",  price:"$7",
+    desc:"A mountain of crispy fries. Add cheese or gravy." },
+  { img:"garlicknots.webp",                  name:"Garlic Knots (3)",       tier:"sm",  price:"$3",
+    desc:"Three warm knots, garlic & oil, side of marinara.", quick:true },
+];
+const TIER = { xl:170, lg:148, md:120, sm:96 };   // base diameter px
+
+/* Loose organic placement: x in canvas px, y as % of height. Deliberate, not a grid;
+   left→right roughly mains → sides, slight vertical scatter, gentle overlaps allowed. */
+/* tighter cluster — centers ~110-135px apart so the bigger pies gently
+   overlap their neighbours ("food scattered on a table", spec-sanctioned).
+   Proximity z-index lifts whichever bubble you're nearest above the rest. */
+const SPOTS = [
+  {x:120,y:47},{x:240,y:64},{x:355,y:41},{x:470,y:60},
+  {x:575,y:44},{x:675,y:62},{x:765,y:46},{x:850,y:60},
+];
+
+const RADIUS = 230;     // px of pointer influence
+const BOOST  = 0.62;    // extra scale at pointer center
+const EASE   = 0.18;    // lerp toward target each frame (fluid trailing)
+
+const canvas  = document.getElementById('canvas');
+const scroller= document.getElementById('scroller');
+let pointer = { x:-9999, y:-9999, active:false };
+const bubbles = [];
+
+/* --- Bug 3 (Milestone-1-safe): center the cluster horizontally.
+   The SPOTS span from minX..maxX (edge to edge incl. bubble radius).
+   We shift every bubble by clusterOffset so the cluster's midpoint sits
+   at the viewport's horizontal center. When more items are added later
+   they spread out from this center instead of piling from a fixed left
+   origin. Full category-zone layout is Milestone 3 (see report). */
+let minEdge = Infinity, maxEdge = -Infinity;
+ITEMS.forEach((it,i)=>{
+  const r = TIER[it.tier]/2;
+  minEdge = Math.min(minEdge, SPOTS[i].x - r);
+  maxEdge = Math.max(maxEdge, SPOTS[i].x + r);
+});
+const clusterW = maxEdge - minEdge;
+function clusterOffset(){
+  // center cluster in viewport; if cluster is wider than viewport, pin to a
+  // small left margin so it stays scrollable left→right.
+  const vw = scroller.clientWidth;
+  return Math.max(24, (vw - clusterW)/2) - minEdge;
+}
+let xOffset = clusterOffset();
+
+ITEMS.forEach((it,i)=>{
+  const d = TIER[it.tier];
+  const spot = SPOTS[i];
+  const el = document.createElement('div');
+  el.className = 'bubble';
+  el.style.width = d+'px'; el.style.height = d+'px';
+  el.style.left = (spot.x + xOffset)+'px'; el.style.top = spot.y+'%';
+  el.innerHTML = `<img src="images/small/${it.img}" alt="${it.name}">`;
+  canvas.appendChild(el);
+  // vr = visual hit radius: the food art is object-fit:contain inside a
+  // square; ~0.46*d is a tight circle over the visible food, used for BOTH
+  // hover-cursor and click resolution.
+  bubbles.push({ el, it, base:d, vr:d*0.46, cx:0, cy:0, cur:1, target:1 });
+});
+
+function layoutX(){
+  xOffset = clusterOffset();
+  bubbles.forEach((b,i)=>{ b.el.style.left = (SPOTS[i].x + xOffset)+'px'; });
+}
+// widen canvas so the cluster + breathing room is scrollable when it
+// overflows the viewport (offset already centers it when it fits).
+canvas.style.minWidth = Math.max(scroller.clientWidth, clusterW + 48) + 'px';
+
+/* measure() resolves bubble centers in canvas-local coords. Bubble rects
+   already include scroll offset, and setPointer() uses the SAME canvas
+   rect, so the two stay consistent. measure() must re-run after scroll
+   (centers shift relative to the canvas rect) — debounced via a rAF flag
+   so it never runs more than once per frame (perf contract). */
+let needMeasure = true;
+function measure(){
+  const cr = canvas.getBoundingClientRect();
+  for(let i=0;i<bubbles.length;i++){
+    const b=bubbles[i], r=b.el.getBoundingClientRect();
+    b.cx = (r.left - cr.left) + r.width/2;
+    b.cy = (r.top  - cr.top ) + r.height/2;
+  }
+  needMeasure = false;
+}
+window.addEventListener('resize', ()=>{
+  layoutX();
+  canvas.style.minWidth = Math.max(scroller.clientWidth, clusterW + 48) + 'px';
+  needMeasure = true;
+});
+// Scroll cancels a pending TAP only (so a drag-scroll can't open a card).
+// It must NOT kill the magnet field — that was why the right-side bubbles
+// never magnified once you scrolled to reach them.
+scroller.addEventListener('scroll', ()=>{ dragged=true; needMeasure=true; }, {passive:true});
+
+/* pointer -> var ONLY. No state writes here. */
+function setPointer(e){
+  const cr = canvas.getBoundingClientRect();
+  pointer.x = e.clientX - cr.left;
+  pointer.y = e.clientY - cr.top;
+  pointer.active = true;
+}
+scroller.addEventListener('pointermove', setPointer, {passive:true});
+scroller.addEventListener('pointerdown', setPointer, {passive:true});
+scroller.addEventListener('pointerleave', ()=>{ pointer.active=false; }, {passive:true});
+
+/* tap vs scroll-drag discrimination */
+let dragged=false, sx=0, sy=0;
+scroller.addEventListener('pointerdown', e=>{ dragged=false; sx=e.clientX; sy=e.clientY; });
+scroller.addEventListener('pointermove', e=>{
+  if(Math.abs(e.clientX-sx)>8 || Math.abs(e.clientY-sy)>8) dragged=true;
+});
+
+/* APPLE-WATCH hit resolution — the SINGLE source of truth for hover-cursor
+   AND click. The screen belongs to whichever bubble's center is NEAREST the
+   pointer (a Voronoi cell), full stop. No per-bubble on/off radius, no
+   stickiness, no paint-order games.
+   Why: the Watch home screen always has exactly one focal item — the one
+   nearest the focus — and every icon's size is a smooth function of its
+   distance from it. There is no threshold and no dead space; every icon is
+   reachable because every point maps to its nearest icon. Our two earlier
+   models gated on a small visual-radius circle, which MANUFACTURED the dead
+   zones and the unreachable interior (a horizontal finger sweep passes
+   above/below the small mid/sm circles entirely). Nearest-center has no
+   dead zones by construction: an interior bubble owns the region closest to
+   its center, so it is always reachable there.
+   PICK_MAX only suppresses a pick in true far whitespace so a click in
+   empty space opens nothing — within the cluster there is always a focal
+   bubble, exactly like the Watch. O(n)/frame, no DOM hit-testing. */
+const PICK_MAX = RADIUS * 1.15;   // beyond this from EVERY bubble = whitespace
+let hoverIdx = -1;
+function resolveHit(px,py){
+  let best=-1, bestD=Infinity;
+  for(let i=0;i<bubbles.length;i++){
+    const b=bubbles[i];
+    const d=Math.hypot(px-b.cx, py-b.cy);
+    if(d < bestD){ bestD=d; best=i; }
+  }
+  return bestD <= PICK_MAX ? best : -1;
+}
+// Click reads the SAME hoverIdx the rAF loop already resolved (single
+// source of truth + sticky). No re-resolution, no extra getBoundingClientRect
+// on the click path — the bubble under the cursor IS the one that opens.
+scroller.addEventListener('click', ()=>{
+  if(dragged) return;
+  if(hoverIdx>=0) openCard(bubbles[hoverIdx].it);
+});
+
+/* single rAF loop — the only place layout is read/written */
+let cursorIsPointer = null;       // tracks last cursor write (avoid redundant)
+const FOCUS = 0.30;   // extra scale layered ONLY on the resolved bubble
+function frame(){
+  if(needMeasure) measure();      // debounced re-measure after scroll/resize
+  // Resolve the topmost-under-pointer bubble ONCE per frame, before the
+  // transform pass. resolveHit reads b.cur (last frame's scaled radius) +
+  // the stable centers measure() just settled, so it's frame-consistent.
+  // This is the single source of truth: the magnet emphasis below and the
+  // hover-cursor / click all read this same index.
+  hoverIdx = pointer.active ? resolveHit(pointer.x, pointer.y) : -1;
+  for(let i=0;i<bubbles.length;i++){
+    const b = bubbles[i];
+    let infl = 0;
+    if(pointer.active){
+      const dx=pointer.x-b.cx, dy=pointer.y-b.cy;
+      const dist=Math.hypot(dx,dy);
+      if(dist<RADIUS){
+        const t=1-dist/RADIUS;        // 1 at center → 0 at edge
+        infl = t*t*(3-2*t);           // smoothstep — Apple-Watch magnet ease
+      }
+    }
+    // Ambient distance field stays for ALL bubbles (keeps neighbours
+    // breathing — that's the fluid feel; a hard single-select would kill
+    // it). The RESOLVED bubble gets an ADDITIVE focus term on top, so the
+    // thing under the cursor always pops MOST — but nothing snaps to 0.
+    const focused = (i===hoverIdx);
+    b.target = 1 + infl*BOOST + (focused ? FOCUS : 0);
+    b.cur += (b.target-b.cur)*EASE;   // fluid trailing (focus eases in too)
+    if(Math.abs(b.cur-b.target)<0.001) b.cur=b.target;
+    const lift = (b.cur-1) * -22;     // subtle rise toward you
+    b.el.style.transform =
+      `translate3d(-50%,calc(-50% + ${lift.toFixed(1)}px),0) scale(${b.cur.toFixed(3)})`;
+    // Paint order: the resolved bubble is forced above its overlappers
+    // (FOCUS_Z) so an interior pick can't be re-buried by a bigger
+    // neighbour's larger distance-driven z. Still capped well below the
+    // scrim (900) so an emphasised bubble can never obscure the card.
+    b.el.style.zIndex = (focused ? 400 : 0) + (10 + ((b.cur-1)*60|0));
+  }
+  // hover-cursor reads the SAME resolved index (no DOM hit-test).
+  // One style write on the scroller, only when the state actually flips.
+  const wantPointer = hoverIdx >= 0;
+  if(wantPointer !== cursorIsPointer){
+    scroller.style.cursor = wantPointer ? 'pointer' : 'default';
+    cursorIsPointer = wantPointer;
+  }
+  requestAnimationFrame(frame);
+}
+measure();
+requestAnimationFrame(frame);
+
+/* ---- detail card (stubbed add-to-cart) ---- */
+const scrim=document.getElementById('scrim'), card=document.getElementById('card');
+const cImg=document.getElementById('cardImg'), cName=document.getElementById('cardName');
+const cDesc=document.getElementById('cardDesc'), cPrice=document.getElementById('cardPrice');
+const cAdd=document.getElementById('cardAdd'), toast=document.getElementById('toast');
+
+function openCard(it){
+  cImg.src=`images/small/${it.img}`; cName.textContent=it.name;
+  cDesc.textContent=it.desc; cPrice.textContent=it.price;
+  cAdd.textContent='Add to Cart'; cAdd.classList.remove('added');
+  pointer.active=false;          // relax the bubbles behind the scrim
+  scrim.classList.add('on'); card.classList.add('on');
+}
+function closeCard(){ scrim.classList.remove('on'); card.classList.remove('on'); }
+scrim.addEventListener('click', closeCard);
+document.getElementById('cardX').addEventListener('click', closeCard);
+
+cAdd.addEventListener('click', ()=>{
+  // STUB. Real cart wiring = Milestone 4 (flag-gated, separate @archie consult).
+  cAdd.textContent='✓ Added'; cAdd.classList.add('added');
+  toast.innerHTML = `Added to cart &nbsp;<small>· stubbed demo, no real cart</small>`;
+  toast.classList.add('on');
+  setTimeout(()=>toast.classList.remove('on'), 1600);
+  setTimeout(closeCard, 480);
+});
+</script>
+</body>
+</html>
