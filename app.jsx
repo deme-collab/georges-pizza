@@ -1041,7 +1041,7 @@ function GeorgesPizza() {
     { name: 'Cheese Fries', prices: { small: 6, large: 8 }, hasCondiments: true, hasSize: true },
     { name: 'Pizza Fries', prices: { small: 7, large: 9 }, hasCondiments: true, hasSize: true },
     { name: 'Mozzarella Fries', desc: 'Fries topped with melted mozzarella', prices: { small: 7, large: 9 }, hasCondiments: true, hasSize: true },
-    { name: 'Mega Fries', desc: 'Mozzarella, Cheese Whiz & Bacon', price: 9, hasCondiments: true },
+    { name: 'Mega Fries', desc: 'Fries topped with Mozzarella, Cheese Whiz & Bacon', price: 9, hasCondiments: true, includesWhiz: true },
     { name: 'Onion Rings (12)', price: 6, hasCondiments: true },
     { name: 'Mozzarella Sticks (6)', price: 7, hasDippingSauce: true },
     { name: 'Fried Broccoli & Cheese (8)', price: 8 },
@@ -2879,6 +2879,12 @@ function SidesCustomizer({ item, onClose, onAdd }) {
   const paidCondimentOptions = [
     { id: 'cheese-whiz', name: 'Cheese Whiz', price: 2 },
   ];
+  // Items that already include Cheese Whiz (e.g. Mega Fries) must NOT offer
+  // it as a paid extra. ONE filtered source used by render + pricing + mods
+  // so they can never diverge. Other sides keep the legit Whiz upsell.
+  const paidExtraOpts = item.includesWhiz
+    ? paidCondimentOptions.filter(x => x.id !== 'cheese-whiz')
+    : paidCondimentOptions;
   const dippingSauceOptions = ['Marinara', 'Ranch', 'Honey Mustard', 'BBQ Sauce', 'Bleu Cheese'];
 
   const toggleCondiment = (c) => setCondiments(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
@@ -2893,7 +2899,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
 
   const getExtrasPrice = () => {
     return paidExtras.reduce((sum, id) => {
-      const extra = paidCondimentOptions.find(x => x.id === id);
+      const extra = paidExtraOpts.find(x => x.id === id);
       return sum + (extra ? extra.price : 0);
     }, 0);
   };
@@ -2907,7 +2913,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
     }
     if (condiments.length > 0) mods.push(condiments.join(', '));
     paidExtras.forEach(id => {
-      const extra = paidCondimentOptions.find(x => x.id === id);
+      const extra = paidExtraOpts.find(x => x.id === id);
       if (extra) mods.push(extra.name);
     });
     if (dippingSauce) mods.push(`Dipping: ${dippingSauce}`);
@@ -2966,17 +2972,21 @@ function SidesCustomizer({ item, onClose, onAdd }) {
                 ))}
               </div>
               
-              {/* Paid Extras */}
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
-              <div style={{ marginBottom: 16 }}>
-                {paidCondimentOptions.map(extra => (
-                  <label key={extra.id} className="checkbox-row">
-                    <input type="checkbox" checked={paidExtras.includes(extra.id)} onChange={() => togglePaidExtra(extra.id)} />
-                    <span style={{ flex: 1 }}>{extra.name}</span>
-                    <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${extra.price}</span>
-                  </label>
-                ))}
-              </div>
+              {/* Paid Extras — hidden entirely when the item already includes them */}
+              {paidExtraOpts.length > 0 && (
+                <>
+                  <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>EXTRAS</div>
+                  <div style={{ marginBottom: 16 }}>
+                    {paidExtraOpts.map(extra => (
+                      <label key={extra.id} className="checkbox-row">
+                        <input type="checkbox" checked={paidExtras.includes(extra.id)} onChange={() => togglePaidExtra(extra.id)} />
+                        <span style={{ flex: 1 }}>{extra.name}</span>
+                        <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${extra.price}</span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
 
