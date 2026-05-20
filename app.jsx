@@ -1043,11 +1043,11 @@ function GeorgesPizza() {
     { name: 'Mozzarella Fries', desc: 'Fries topped with melted mozzarella', prices: { small: 7, large: 9 }, hasCondiments: true, hasSize: true },
     { name: 'Mega Fries', desc: 'Fries topped with Mozzarella, Cheese Whiz & Bacon', price: 9, hasCondiments: true, includesWhiz: true },
     { name: 'Onion Rings (12)', price: 6, hasCondiments: true },
-    { name: 'Mozzarella Sticks (6)', price: 7, hasDippingSauce: true },
+    { name: 'Mozzarella Sticks (6)', desc: 'Comes with a side of marinara', price: 7 },
     { name: 'Fried Broccoli & Cheese (8)', price: 8 },
     { name: 'Jalapeno Poppers (6)', price: 8, hasDippingSauce: true },
     { name: 'Fried Mini Tacos (12)', desc: 'Crispy beef tacos', price: 8 },
-    { name: 'Garlic Knots (3)', price: 3, badge: 'NEW!' },
+    { name: 'Garlic Knots (3)', desc: 'Comes with a side of marinara', price: 3, badge: 'NEW!' },
     { name: 'Plain Slice of Pizza', price: 3 },
     { name: 'Cole Slaw', price: 1 },
   ];
