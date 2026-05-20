@@ -1045,7 +1045,7 @@ function GeorgesPizza() {
     { name: 'Onion Rings (12)', price: 6, hasCondiments: true },
     { name: 'Mozzarella Sticks (6)', desc: 'Comes with a side of marinara', price: 7 },
     { name: 'Fried Broccoli & Cheese (8)', price: 8 },
-    { name: 'Jalapeno Poppers (6)', price: 8, hasDippingSauce: true },
+    { name: 'Jalapeno Poppers (6)', price: 8, hasDippingSauce: true, dippingOptions: ['Marinara Sauce', 'Salsa'] },
     { name: 'Fried Mini Tacos (12)', desc: 'Crispy beef tacos', price: 8 },
     { name: 'Garlic Knots (3)', desc: 'Comes with a side of marinara', price: 3, badge: 'NEW!' },
     { name: 'Plain Slice of Pizza', price: 3 },
@@ -2999,7 +2999,7 @@ function SidesCustomizer({ item, onClose, onAdd }) {
                   <input type="radio" name="sauce" checked={dippingSauce === ''} onChange={() => setDippingSauce('')} />
                   <span>No Sauce</span>
                 </label>
-                {dippingSauceOptions.map(s => (
+                {(item.dippingOptions || dippingSauceOptions).map(s => (
                   <label key={s} className="radio-row">
                     <input type="radio" name="sauce" checked={dippingSauce === s} onChange={() => setDippingSauce(s)} />
                     <span style={{ flex: 1 }}>{s}</span>
