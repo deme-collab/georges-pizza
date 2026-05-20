@@ -699,8 +699,8 @@ function GeorgesPizza() {
     { num: 8, name: 'Small Plain Pizza, Fries & Soda', price: 10, hasLunchPizzaFriesSodaMods: true },
     { num: 9, name: '4 Wings, Fries & Soda', price: 10, hasLunchWingsFriesSodaMods: true },
     { num: 10, name: 'Cheeseburger, Fries & Soda', price: 10, hasLunchBurgerFriesSodaMods: true },
-    { num: 14, name: 'Grilled Chicken Caesar Salad & Soda', price: 10, hasLunchSaladSodaMods: true, saladType: 'caesar' },
-    { num: 15, name: 'Grilled Chicken Wrap, Fries & Soda', price: 10, hasLunchFriesSodaMods: true },
+    { num: 11, name: 'Grilled Chicken Caesar Salad & Soda', price: 10, hasLunchSaladSodaMods: true, saladType: 'caesar' },
+    { num: 12, name: 'Grilled Chicken Wrap, Fries & Soda', price: 10, hasLunchFriesSodaMods: true },
   ];
 
   const familyDeals = [
@@ -3279,12 +3279,12 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   const hasWings = item.name.includes('Wings');
   const hasFingers = item.name.includes('Fingers');
   const isChefSalad = item.num === 7;
-  const isCaesarSalad = item.num === 14;
+  const isCaesarSalad = item.num === 11;
   const isTurkeyHoagie = item.num === 3;
   const isChickenParm = item.num === 1;
   const isPizzaSteak = item.num === 6;
   const isBurger = item.num === 10;
-  const isWrap = item.num === 15;
+  const isWrap = item.num === 12;
   const isLunchWings = item.num === 9; // #9 4 Wings special
 
   const chipsFlavors = ["Herr's BBQ", "Herr's Classic", "Herr's Sour Cream & Onion"];
