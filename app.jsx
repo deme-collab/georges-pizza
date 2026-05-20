@@ -1047,14 +1047,14 @@ function GeorgesPizza() {
     { name: 'Fried Broccoli & Cheese (8)', price: 8 },
     { name: 'Jalapeno Poppers (6)', price: 8, hasDippingSauce: true },
     { name: 'Fried Mini Tacos (12)', desc: 'Crispy beef tacos', price: 8 },
-    { name: 'Garlic Knots (3)', price: 3, badge: 'NEW!', hasDippingSauce: true },
+    { name: 'Garlic Knots (3)', price: 3, badge: 'NEW!' },
     { name: 'Plain Slice of Pizza', price: 3 },
     { name: 'Cole Slaw', price: 1 },
   ];
 
   const drinksMenu = [
     { name: 'Soda (20 oz.)', desc: 'Pepsi, 7up, Canada Dry, Arizona Tea, Mt Dew, Diet Pepsi, Sunkist, Root Beer', price: 2.50, has20ozChoice: true },
-    { name: 'Soda (Can)', desc: "Frank's Sodas", price: 1, hasCanChoice: true },
+    { name: 'Soda (Can)', desc: "Day's Sodas", price: 1, hasCanChoice: true },
     { name: 'Soda (2 Liter)', desc: 'Pepsi, Ginger Ale, Grape, Orange, Pineapple, Black Cherry', price: 4, has2LiterChoice: true },
     { name: 'Water (16 oz.)', price: 1 },
     { name: 'Hot Coffee (Small)', price: 2 },
@@ -2440,9 +2440,9 @@ function GenericCustomizer({ item, onClose, onAdd }) {
         optional: [],
       };
     }
-    if (item.hasCanChoice) { // Can Sodas (Frank's)
+    if (item.hasCanChoice) { // Can Sodas (Day's)
       return {
-        title: "Choose Your Frank's Flavor",
+        title: "Choose Your Day's Flavor",
         required: [
           { id: 'flavor', name: 'Flavor', options: ['Orange', 'Orange Mango', 'Grape', 'Black Cherry', 'Fruit Punch', 'Cola', 'Ginger Ale'] }
         ],
@@ -3551,7 +3551,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
       mods.push(chipsFlavor);
     }
     
-    if (soda) mods.push("Frank's " + soda);
+    if (soda) mods.push("Day's " + soda);
     return mods;
   };
 
@@ -3809,7 +3809,7 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
 
           {/* Can Soda Selection */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>CHOOSE YOUR FRANK'S SODA *</div>
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#C41E3A' }}>CHOOSE YOUR DAY'S SODA *</div>
             <div style={{ fontSize: 11, color: '#555', fontStyle: 'italic', marginBottom: 8 }}>
               If your selected flavor is unavailable, we will substitute at our discretion.
             </div>
