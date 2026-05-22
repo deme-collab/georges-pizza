@@ -45,38 +45,68 @@
     pointer-events:none;
     filter:drop-shadow(0 6px 11px rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(255,170,90,.13)); }
 
-  /* detail card */
-  .scrim{ position:fixed; inset:0; background:rgba(8,8,12,.66); z-index:900;
-    opacity:0; pointer-events:none; transition:opacity .22s ease; }
+  /* detail card — matched to the real gp2.shop PizzaCustomizer: warm cream
+     paper, square corners, red gradient banner, segmented .opt selectors
+     (red when chosen), Total + Cancel/Add footer. Centered dialog over a
+     dark scrim, same as the live modal. Crust note + photo-size line are
+     prototype additions Demetrios asked to keep. */
+  .scrim{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:900;
+    display:flex; align-items:center; justify-content:center; padding:16px;
+    opacity:0; pointer-events:none; transition:opacity .2s ease; }
   .scrim.on{ opacity:1; pointer-events:auto; }
-  /* pointer-events:none while closed — an opacity:0 card still hit-tests and
-     was a ~440px invisible panel dead-center eating all pointer/click events
-     (every center bubble looked "dead"). Re-enabled only when open, exactly
-     like .scrim above. */
-  .card{ position:fixed; left:50%; bottom:0; z-index:901; width:min(440px,100%);
-    background:#fff; border-radius:22px 22px 0 0; padding:20px 22px 26px;
-    pointer-events:none;
-    transform:translate(-50%,110%); transition:transform .26s cubic-bezier(.22,1,.36,1);
-    box-shadow:0 -12px 40px rgba(40,25,18,.25); }
-  .card.on{ transform:translate(-50%,0); pointer-events:auto; }
-  @media(min-width:560px){
-    .card{ bottom:auto; top:50%; border-radius:22px;
-      transform:translate(-50%,calc(-50% + 20px)); opacity:0; transition:.24s; }
-    .card.on{ transform:translate(-50%,-50%); opacity:1; }
-  }
-  .card .ph{ height:170px; display:flex; align-items:center; justify-content:center; margin:-4px 0 8px; }
-  .card .ph img{ max-height:100%; max-width:80%;
-    filter:drop-shadow(0 10px 16px rgba(60,30,10,.3)); }
-  .card h2{ font-family:"Oswald",sans-serif; margin:0; font-size:23px; color:var(--ink); }
-  .card .desc{ color:#7a6a5e; font-size:14px; margin:6px 0 14px; line-height:1.5; }
-  .card .price{ font-family:"Oswald",sans-serif; font-size:22px; color:var(--red); }
-  .card .add{ margin-top:16px; width:100%; border:0; border-radius:13px; padding:15px;
-    background:var(--red); color:#fff; font-size:16px; font-weight:700; cursor:pointer;
-    font-family:"Oswald",sans-serif; letter-spacing:.5px; transition:transform .12s; }
-  .card .add:active{ transform:scale(.97); }
-  .card .add.added{ background:#1a7a3a; }
-  .card .x{ position:absolute; top:12px; right:14px; width:34px; height:34px; border:0;
-    border-radius:50%; background:#f0e6da; color:#7a6a5e; font-size:18px; cursor:pointer; }
+  /* card is INSIDE the scrim now; the scrim's pointer-events gate covers it
+     (the earlier opacity:0 invisible-panel click-eater can't recur). */
+  .card{ width:min(460px,100%); max-height:86vh; overflow-y:auto;
+    background:#F5F0E6; border-radius:0; pointer-events:none;
+    transform:translateY(14px) scale(.985); opacity:0; transition:.2s ease; }
+  .scrim.on .card{ transform:none; opacity:1; pointer-events:auto; }
+  .card .bn{ background:linear-gradient(180deg,#C41E3A 0%,#8B0000 100%);
+    color:#fff; padding:10px 16px; font-family:"Oswald",sans-serif;
+    font-weight:700; font-size:19px; text-transform:uppercase;
+    letter-spacing:1px; text-align:center; border:3px solid #8B0000;
+    box-shadow:inset 0 1px 3px rgba(255,255,255,.2); }
+  .card .bd{ padding:16px; }
+  .card .ph{ height:138px; display:flex; align-items:center; justify-content:center; margin:0 0 12px; }
+  .card .ph img{ max-height:100%; max-width:72%;
+    filter:drop-shadow(0 8px 14px rgba(60,30,10,.28)); }
+  .card .inc{ background:#FFF8DC; border:1px solid #DAA520; color:#8B4513;
+    padding:10px; margin-bottom:16px; font-size:13px; line-height:1.45; }
+  .card .gh{ font-family:"Oswald",sans-serif; font-size:14px; font-weight:600;
+    margin:0 0 8px; color:#555; }
+  .card .row{ display:flex; gap:8px; margin-bottom:16px; }
+  .card .opt{ flex:1; padding:12px 8px; border:2px solid #ddd; background:#fff;
+    font-family:"Oswald",sans-serif; font-weight:600; cursor:pointer; color:#333;
+    transition:all .15s; border-radius:0;
+    display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .card .opt:hover{ border-color:#C41E3A; }
+  .card .opt.sel{ background:#C41E3A; color:#fff; border-color:#8B0000; }
+  .card .opt .ol{ font-size:13px; }
+  .card .opt .os{ font-size:10px; opacity:.8; }
+  .card .opt .op{ font-size:16px; font-weight:700; }
+  /* Vertical list layout — used automatically for groups with many options
+     (flavors, dipping sauces). Label left, sub/price/FREE right, one per row. */
+  .card .row.list{ flex-direction:column; gap:4px; }
+  .card .row.list .opt{ flex:1 1 auto; padding:10px 14px;
+    flex-direction:row; justify-content:space-between; align-items:center; gap:8px; }
+  .card .row.list .opt .ol{ font-size:13px; text-align:left; flex:1; }
+  .card .row.list .opt .os,
+  .card .row.list .opt .op{ font-size:12px; opacity:.85; flex:0 0 auto; }
+  .card .crust{ font-size:12.5px; color:#8B4513; margin:-6px 0 14px; line-height:1.5; }
+  .card .crust b{ color:#333; }
+  .card .crust .cam{ display:block; margin-top:3px; color:#9a7b53; font-size:11.5px; }
+  .card .ftr{ border-top:2px solid #C41E3A; margin-top:4px; padding-top:12px;
+    display:flex; justify-content:space-between; align-items:center; }
+  .card .tot small{ display:block; font-size:12px; color:#555; }
+  .card .tot b{ font-family:"Oswald",sans-serif; font-size:26px; font-weight:700; color:#C41E3A; }
+  .card .acts{ display:flex; gap:8px; }
+  .card .bo{ background:#fff; color:#C41E3A; border:2px solid #C41E3A;
+    padding:8px 16px; font-family:"Oswald",sans-serif; font-weight:600;
+    font-size:13px; text-transform:uppercase; cursor:pointer; }
+  .card .br{ background:linear-gradient(180deg,#C41E3A 0%,#8B0000 100%);
+    color:#fff; border:2px solid #8B0000; padding:10px 20px;
+    font-family:"Oswald",sans-serif; font-weight:600; font-size:14px;
+    text-transform:uppercase; cursor:pointer; }
+  .card .br.added{ background:#1a7a3a; border-color:#0f5a28; }
 
   .toast{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
     background:#1a7a3a; color:#fff; padding:11px 20px; border-radius:30px; font-size:14px;
@@ -87,52 +117,133 @@
 
   .hint{ position:fixed; bottom:10px; left:0; right:0; text-align:center;
     font-size:11px; color:#b8a99c; pointer-events:none; z-index:30; }
+
+  /* horizontal-scroll affordance — a live progress rail so phone users see
+     the canvas scrolls and how far along they are. Updated transform-only
+     in the rAF loop (scroll metrics read in the read-phase, scaleX/translateX
+     written in the write-phase — perf contract intact). Hidden when nothing
+     overflows; pulses gently on load until the first scroll. */
+  .srail{ position:fixed; left:50%; bottom:30px; transform:translateX(-50%);
+    width:140px; height:4px; border-radius:4px; background:rgba(255,255,255,.13);
+    z-index:35; opacity:0; transition:opacity .35s ease; pointer-events:none; }
+  .srail.on{ opacity:1; }
+  .srail.hintpulse{ animation:srp 1.7s ease-in-out 2; }
+  @keyframes srp{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,170,90,0); }
+                  50%{ box-shadow:0 0 0 5px rgba(255,170,90,.20); } }
+  .sthumb{ position:absolute; left:0; top:0; height:100%; width:140px;
+    border-radius:4px; background:rgba(255,255,255,.6);
+    transform-origin:left center; will-change:transform; }
 </style>
 </head>
 <body>
-  <div class="flag"><b style="color:#7CFC00">BUILD 7</b> · PROTOTYPE Milestone 1 — proving the <b>feel</b>. Cart is <b>stubbed</b> (not connected to checkout).</div>
+  <div class="flag"><b style="color:#7CFC00">BUILD 20</b> · PROTOTYPE Milestone 1 — proving the <b>feel</b>. Cart is <b>stubbed</b> (not connected to checkout).</div>
   <header>
     <h1>George's Pizza</h1>
-    <p>Drag your finger across the menu →</p>
+    <p>Swipe across to explore the menu →</p>
   </header>
 
   <div class="scroller" id="scroller">
     <div class="canvas" id="canvas"></div>
   </div>
 
-  <div class="scrim" id="scrim"></div>
-  <div class="card" id="card">
-    <button class="x" id="cardX">✕</button>
-    <div class="ph"><img id="cardImg" alt=""></div>
-    <h2 id="cardName"></h2>
-    <div class="desc" id="cardDesc"></div>
-    <div class="price" id="cardPrice"></div>
-    <button class="add" id="cardAdd">Add to Cart</button>
+  <div class="scrim" id="scrim">
+    <div class="card" id="card">
+      <div class="bn" id="cBn"></div>
+      <div class="bd">
+        <div class="ph"><img id="cImg" alt=""></div>
+        <div class="inc" id="cInc"></div>
+        <div id="cGroups"></div>
+        <div class="crust" id="cCrust"></div>
+        <div class="ftr">
+          <div class="tot"><small>Total</small><b id="cTot"></b></div>
+          <div class="acts">
+            <button class="bo" id="cCancel">Cancel</button>
+            <button class="br" id="cAdd">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="toast" id="toast"></div>
+  <div class="srail hintpulse" id="srail"><div class="sthumb" id="sthumb"></div></div>
   <div class="hint">Throwaway probe · not linked anywhere · prices are demo values</div>
 
 <script>
 "use strict";
-/* ---- Starter items (Milestone 1 display data only — NOT real menu/pricing;
-        real menu data + real cart are Milestones 3 & 4). tier drives size. ---- */
+/* Data-driven detail card, matched to the real gp2.shop PizzaCustomizer.
+   `photo` = the size the photographed item actually IS (filename prefix);
+   the SELECT SIZE group defaults to it and the card discloses it.
+   Group types: size (priced, drives base + crust note for pizzas),
+   one (single-select, e.g. cooking pref / pepperoni type),
+   multi (FREE add-ons/condiments, or +$ EXTRAS). "Minimal" per Demetrios:
+   the real simple groups, NOT the full topping-builder checklist.
+   PRICES: Cheese & Pepperoni are REAL (from Demetrios). Ricotta / Ground
+   Beef / Spinach sizes are DEMO placeholders pending real numbers.
+   Never import real pricing logic into a probe (server-auth-pricing rule). */
+const CRUST = { Small:"our thickest crust", Large:"medium-thick crust", XL:"thin crust" };
+const COOK  = { t:"one", h:"COOKING PREFERENCE", def:"Regular", o:[
+  {k:"Light", s:"Less cooked"}, {k:"Regular", s:"Standard"}, {k:"Well Done", s:"Extra crispy"} ] };
+const SZ = (s,l,x)=>({ t:"size", h:"SELECT SIZE", o:[
+  {k:'Small 10"', size:"Small", price:s}, {k:'Large 14"', size:"Large", price:l},
+  {k:'X-Large 16"', size:"XL", price:x} ] });
+
+/* All data below MATCHES the live gp2.shop app.jsx (verified 2026-05-20 by
+   read-only extraction): names, includes/desc strings, per-size prices,
+   option groups, and per-option labels are real. Deliberate scope deltas
+   per Demetrios' "minimal customizations" lean:
+     • NO "ADD EXTRA TOPPINGS" 11-checkbox builder on pizzas (live menu has it).
+     • Stromboli "Extra Cheese" uses size-dependent add (Small +$2 / Large +$3)
+       via `addBy` — matches live `stromboliMenu.extraCheese`. */
 const ITEMS = [
-  { img:"XL_Cheese_pizza.webp",              name:"XL Cheese Pizza",        tier:"xl",  price:"$15",
-    desc:"Our hand-stretched extra-large pie — tomato sauce & a full blanket of mozzarella." },
-  { img:"XL_pepperoni_pizza.webp",           name:"XL Pepperoni Pizza",     tier:"xl",  price:"$17",
-    desc:"Extra-large, loaded edge-to-edge with pepperoni. Choose beef or pork." },
-  { img:"Large_ricotta_mozzarella_pizza.webp",name:"Ricotta & Mozzarella",  tier:"lg",  price:"$14",
-    desc:"White pie — creamy ricotta and mozzarella, no red sauce." },
-  { img:"Small_groundbeef_pizza.webp",       name:"Ground Beef Pizza",      tier:"lg",  price:"$13",
-    desc:"Seasoned ground beef over sauce and mozzarella." },
-  { img:"small_spinach_white_pizza.webp",    name:"Spinach White Pizza",    tier:"md",  price:"$13",
-    desc:"Fresh spinach, garlic, ricotta & mozzarella on a white base." },
-  { img:"Sm_Steak_Stromboli.webp",           name:"Steak Stromboli",        tier:"md",  price:"$12",
-    desc:"Rolled & baked — cheesesteak, onions and mozzarella inside." },
-  { img:"megafries.webp",                    name:"Mega Fries",             tier:"sm",  price:"$7",
-    desc:"A mountain of crispy fries. Add cheese or gravy." },
-  { img:"garlicknots.webp",                  name:"Garlic Knots (3)",       tier:"sm",  price:"$3",
-    desc:"Three warm knots, garlic & oil, side of marinara.", quick:true },
+  { img:"XL_Cheese_pizza.webp", name:"Cheese Pizza", tier:"xl", kind:"pizza", photo:"XL",
+    inc:"Tomato Sauce & Mozzarella Cheese", groups:[ SZ(9,12,15), COOK ] },
+  { img:"XL_pepperoni_pizza.webp", name:"Pepperoni Pizza", tier:"xl", kind:"pizza", photo:"XL",
+    inc:"Choose Beef or Pork Pepperoni", groups:[
+      { t:"one", h:"PEPPERONI TYPE", def:"🐷 Pork", o:[
+        {k:"🐷 Pork", s:"Traditional"}, {k:"🐮 Beef", s:"Halal Option"} ] },
+      SZ(12,15,19), COOK ] },
+  { img:"Large_ricotta_mozzarella_pizza.webp", name:"Ricotta & Mozzarella", tier:"lg", kind:"pizza", photo:"Large",
+    inc:"Creamy Ricotta & Mozzarella Blend", groups:[ SZ(11,14,17), COOK ] },
+  { img:"Small_groundbeef_pizza.webp", name:"Ground Beef Pizza", tier:"lg", kind:"pizza", photo:"Small",
+    inc:"Seasoned Ground Beef", groups:[ SZ(12,15,19), COOK ] },
+  { img:"small_spinach_white_pizza.webp", name:"Spinach White Pizza", tier:"md", kind:"pizza", photo:"Small",
+    inc:"Fresh Spinach on Garlic Base", groups:[ SZ(12,14,17), COOK ] },
+  { img:"large_veggiewhite_pizza.webp", name:"Veggie White Pizza", tier:"lg", kind:"pizza", photo:"Large",
+    inc:"Broccoli, Green Peppers, Onions, Tomatoes & Mushrooms", groups:[ SZ(14,18,20), COOK ] },
+  { img:"Large_georgesspecial_pizza.webp", name:"George's Special", tier:"lg", kind:"pizza", photo:"Large",
+    inc:"Pepperoni, Sausage, Green Peppers, Onions & Mushrooms", groups:[
+      { t:"one", h:"PEPPERONI TYPE", def:"🐷 Pork", o:[
+        {k:"🐷 Pork", s:"Traditional"}, {k:"🐮 Beef", s:"Halal Option"} ] },
+      SZ(14,18,20), COOK ] },
+  { img:"Sm_Steak_Stromboli.webp", name:"Steak Stromboli", tier:"md", kind:"stromboli", photo:"Small",
+    inc:"Steak, Mozzarella Cheese & Sauce", groups:[
+      { t:"size", h:"SELECT SIZE", o:[ {k:"Small", size:"Small", price:14}, {k:"Large", size:"Large", price:16} ] },
+      { t:"multi", h:"FREE ADD-ONS", o:[ {k:"Green Peppers"}, {k:"Mushrooms"}, {k:"Grilled Onions"} ] },
+      { t:"multi", h:"EXTRAS", o:[ {k:"Extra Cheese", addBy:{Small:2, Large:3}} ] } ] },
+  { img:"megafries.webp", name:"Mega Fries", tier:"sm", kind:"side", photo:null, flat:9,
+    inc:"Cheese Whiz, Melted Mozzarella & Bacon", groups:[
+      { t:"multi", h:"CONDIMENTS (FREE)", o:[ {k:"Salt"}, {k:"Pepper"}, {k:"Ketchup"}, {k:"Hot Sauce"} ] } ] },
+  { img:"garlicknots.webp", name:"Garlic Knots (3)", tier:"sm", kind:"side", photo:null, flat:3,
+    inc:"3 Garlic Knots · Side of Marinara Sauce", groups:[] },
+  { img:"cansoda_drinks.webp", name:"Soda (Can)", tier:"sm", kind:"drink", photo:null, flat:1,
+    inc:"Day's Sodas", groups:[
+      { t:"one", h:"FLAVOR", def:"Orange", o:[
+        {k:"Orange"}, {k:"Orange Mango"}, {k:"Grape"}, {k:"Black Cherry"},
+        {k:"Fruit Punch"}, {k:"Cola"}, {k:"Ginger Ale"} ] } ] },
+  { img:"20ozsoda_drinks.webp", name:"Soda (20 oz.)", tier:"sm", kind:"drink", photo:null, flat:2.50,
+    groups:[
+      { t:"one", h:"FLAVOR", def:"Pepsi", o:[
+        {k:"Pepsi"}, {k:"Diet Pepsi"}, {k:"Mountain Dew"}, {k:"Canada Dry Ginger Ale"},
+        {k:"Arizona Iced Tea"}, {k:"Sunkist Orange"}, {k:"Diet Sunkist"}, {k:"Root Beer"} ] } ] },
+  { img:"2Liter_drinks.webp", name:"Soda (2 Liter)", tier:"sm", kind:"drink", photo:null, flat:4,
+    groups:[
+      { t:"one", h:"FLAVOR", def:"Pepsi", o:[
+        {k:"Pepsi"}, {k:"Ginger Ale"}, {k:"Grape"}, {k:"Orange"},
+        {k:"Pineapple"}, {k:"Black Cherry"} ] } ] },
+  { img:"cherrycheesecake_dessert.webp", name:"Cheesecake", tier:"sm", kind:"dessert", photo:null, flat:5,
+    groups:[
+      { t:"one", h:"TOPPING", def:"Cherry", o:[
+        {k:"Plain"}, {k:"Pineapple"}, {k:"Cherry"}, {k:"Strawberry"} ] } ] },
 ];
 const TIER = { xl:170, lg:148, md:120, sm:96 };   // base diameter px
 
@@ -142,13 +253,25 @@ const TIER = { xl:170, lg:148, md:120, sm:96 };   // base diameter px
    overlap their neighbours ("food scattered on a table", spec-sanctioned).
    Proximity z-index lifts whichever bubble you're nearest above the rest. */
 const SPOTS = [
-  {x:120,y:47},{x:240,y:64},{x:355,y:41},{x:470,y:60},
-  {x:575,y:44},{x:675,y:62},{x:765,y:46},{x:850,y:60},
+  {x:120,y:47},{x:235,y:64},{x:350,y:41},{x:460,y:60},
+  {x:560,y:44},{x:660,y:62},{x:770,y:46},          // pizzas (incl. Veggie + George's Special)
+  {x:875,y:63},{x:965,y:46},{x:1050,y:62},         // Stromboli, Mega Fries, Garlic Knots
+  {x:1130,y:46},{x:1210,y:62},{x:1290,y:46},        // drinks: Can, 20oz, 2L
+  {x:1370,y:62},                                    // dessert: Cherry Cheesecake
 ];
 
 const RADIUS = 230;     // px of pointer influence
-const BOOST  = 0.62;    // extra scale at pointer center
+const BOOST  = 0.62;    // extra ambient scale at pointer center
+const FOCUS  = 0.30;    // additive scale ONLY on the resolved bubble
 const EASE   = 0.18;    // lerp toward target each frame (fluid trailing)
+// Rasterize-large-scale-DOWN: the bubble element BOX is sized at the MAX
+// (focused) visual dimension, so the GPU layer is composited at full size
+// and the proximity effect only ever scales it BETWEEN 1/MAX_SCALE and 1.0
+// — never UP. Upscaling a cached GPU bitmap was what read as soft;
+// downscaling stays crisp. Visual size at rest is unchanged (the box's
+// BASE_SCALE rendering equals the original TIER diameter).
+const MAX_SCALE  = 1 + BOOST + FOCUS;    // ≈ 1.92
+const BASE_SCALE = 1 / MAX_SCALE;        // ≈ 0.521 — visible scale at rest
 
 const canvas  = document.getElementById('canvas');
 const scroller= document.getElementById('scroller');
@@ -178,17 +301,18 @@ let xOffset = clusterOffset();
 
 ITEMS.forEach((it,i)=>{
   const d = TIER[it.tier];
+  const box = Math.round(d * MAX_SCALE);      // element box = MAX visual size
   const spot = SPOTS[i];
   const el = document.createElement('div');
   el.className = 'bubble';
-  el.style.width = d+'px'; el.style.height = d+'px';
+  el.style.width = box+'px'; el.style.height = box+'px';
   el.style.left = (spot.x + xOffset)+'px'; el.style.top = spot.y+'%';
   el.innerHTML = `<img src="images/small/${it.img}" alt="${it.name}">`;
   canvas.appendChild(el);
-  // vr = visual hit radius: the food art is object-fit:contain inside a
-  // square; ~0.46*d is a tight circle over the visible food, used for BOTH
-  // hover-cursor and click resolution.
-  bubbles.push({ el, it, base:d, vr:d*0.46, cx:0, cy:0, cur:1, target:1 });
+  // base = visible diameter at rest (used for layout/centering math, NOT the
+  // element box). cur/target are the transform-scale values: BASE_SCALE at
+  // rest, 1.0 at peak focus. (vr unused since hit-resolution is Voronoi.)
+  bubbles.push({ el, it, base:d, vr:d*0.46, cx:0, cy:0, cur:BASE_SCALE, target:BASE_SCALE });
 });
 
 function layoutX(){
@@ -277,11 +401,17 @@ scroller.addEventListener('click', ()=>{
   if(hoverIdx>=0) openCard(bubbles[hoverIdx].it);
 });
 
+/* scroll-affordance rail (phone navigation cue) */
+const srail=document.getElementById('srail'), sthumb=document.getElementById('sthumb');
+const RAIL_W=140; let srailOn=false, sawScroll=false;
+
 /* single rAF loop — the only place layout is read/written */
 let cursorIsPointer = null;       // tracks last cursor write (avoid redundant)
-const FOCUS = 0.30;   // extra scale layered ONLY on the resolved bubble
 function frame(){
   if(needMeasure) measure();      // debounced re-measure after scroll/resize
+  // READ-PHASE: scroll metrics captured here (with measure()) BEFORE any
+  // style write this frame, so reading them can't force a reflow.
+  const _sw=scroller.scrollWidth, _cw=scroller.clientWidth, _sl=scroller.scrollLeft;
   // Resolve the topmost-under-pointer bubble ONCE per frame, before the
   // transform pass. resolveHit reads b.cur (last frame's scaled radius) +
   // the stable centers measure() just settled, so it's frame-consistent.
@@ -304,17 +434,21 @@ function frame(){
     // it). The RESOLVED bubble gets an ADDITIVE focus term on top, so the
     // thing under the cursor always pops MOST — but nothing snaps to 0.
     const focused = (i===hoverIdx);
-    b.target = 1 + infl*BOOST + (focused ? FOCUS : 0);
+    // perceivedTarget is the OLD scale range [1.0 .. MAX_SCALE] — the feel
+    // was tuned to this. Actual transform scale = perceived / MAX_SCALE so
+    // the GPU layer is only scaled DOWN from its full-size raster (crisp).
+    const perceivedTarget = 1 + infl*BOOST + (focused ? FOCUS : 0);
+    b.target = perceivedTarget / MAX_SCALE;
     b.cur += (b.target-b.cur)*EASE;   // fluid trailing (focus eases in too)
     if(Math.abs(b.cur-b.target)<0.001) b.cur=b.target;
-    const lift = (b.cur-1) * -22;     // subtle rise toward you
+    const perceived = b.cur * MAX_SCALE;        // 1.0 at rest .. MAX_SCALE at peak
+    const lift = (perceived - 1) * -22;          // subtle rise toward you
     b.el.style.transform =
       `translate3d(-50%,calc(-50% + ${lift.toFixed(1)}px),0) scale(${b.cur.toFixed(3)})`;
-    // Paint order: the resolved bubble is forced above its overlappers
-    // (FOCUS_Z) so an interior pick can't be re-buried by a bigger
-    // neighbour's larger distance-driven z. Still capped well below the
-    // scrim (900) so an emphasised bubble can never obscure the card.
-    b.el.style.zIndex = (focused ? 400 : 0) + (10 + ((b.cur-1)*60|0));
+    // Paint order: the resolved bubble is forced above its overlappers so
+    // an interior pick can't be re-buried by a bigger neighbour's larger
+    // distance-driven z. Still capped well below the scrim (900).
+    b.el.style.zIndex = (focused ? 400 : 0) + (10 + ((perceived-1)*60|0));
   }
   // hover-cursor reads the SAME resolved index (no DOM hit-test).
   // One style write on the scroller, only when the state actually flips.
@@ -323,35 +457,116 @@ function frame(){
     scroller.style.cursor = wantPointer ? 'pointer' : 'default';
     cursorIsPointer = wantPointer;
   }
+  // WRITE-PHASE: scroll rail. Thumb length = viewport/content ratio,
+  // position = scroll fraction. transform-only (scaleX+translateX) so it
+  // stays on the compositor. Hidden unless the canvas actually overflows.
+  if(_sw > _cw + 2){
+    if(!srailOn){ srail.classList.add('on'); srailOn=true; }
+    const ratio=_cw/_sw, max=_sw-_cw, frac= max>0 ? _sl/max : 0;
+    const thumbW=RAIL_W*ratio;
+    sthumb.style.transform =
+      `translateX(${(frac*(RAIL_W-thumbW)).toFixed(1)}px) scaleX(${ratio.toFixed(3)})`;
+    if(!sawScroll && _sl>4){ sawScroll=true; srail.classList.remove('hintpulse'); }
+  } else if(srailOn){ srail.classList.remove('on'); srailOn=false; }
   requestAnimationFrame(frame);
 }
 measure();
 requestAnimationFrame(frame);
 
-/* ---- detail card (stubbed add-to-cart) ---- */
-const scrim=document.getElementById('scrim'), card=document.getElementById('card');
-const cImg=document.getElementById('cardImg'), cName=document.getElementById('cardName');
-const cDesc=document.getElementById('cardDesc'), cPrice=document.getElementById('cardPrice');
-const cAdd=document.getElementById('cardAdd'), toast=document.getElementById('toast');
+/* ---- detail card — data-driven, gp2.shop-styled, STUBBED add-to-cart ---- */
+const scrim=document.getElementById('scrim');
+const cBn=document.getElementById('cBn'), cImg=document.getElementById('cImg');
+const cInc=document.getElementById('cInc'), cGroups=document.getElementById('cGroups');
+const cCrust=document.getElementById('cCrust'), cTot=document.getElementById('cTot');
+const cAdd=document.getElementById('cAdd'), cCancel=document.getElementById('cCancel');
+const toast=document.getElementById('toast');
+
+let curItem=null;
+let sel={};    // groupIndex -> chosen optIndex (size / one)
+let multi={};  // groupIndex -> { optIndex:true } (free / extras)
+
+function sizeGi(it){ return (it.groups||[]).findIndex(g=>g.t==='size'); }
+
+function buildCard(){
+  const it=curItem;
+  cBn.textContent = it.name.toUpperCase();
+  cImg.src = `images/small/${it.img}`;
+  if(it.inc){ cInc.style.display='block'; cInc.innerHTML=`<strong>Includes:</strong> ${it.inc}`; }
+  else cInc.style.display='none';
+
+  // Selected size key drives the size-dependent extra prices (e.g. stromboli
+  // Extra Cheese: +$2 Small / +$3 Large — matches live extraCheese map).
+  const szi = sizeGi(it);
+  const selSize = szi>=0 ? it.groups[szi].o[sel[szi]].size : null;
+  const resolveAdd = (o) => o.addBy ? (o.addBy[selSize]||0) : (o.add||0);
+
+  cGroups.innerHTML='';
+  (it.groups||[]).forEach((g,gi)=>{
+    const h=document.createElement('div'); h.className='gh'; h.textContent=g.h;
+    const row=document.createElement('div'); row.className='row';
+    // Groups with many options (flavors, sauces) get vertical list layout —
+    // 6-7 radio rows don't fit in a horizontal segmented bar.
+    if(g.o.length > 4) row.classList.add('list');
+    g.o.forEach((o,oi)=>{
+      const b=document.createElement('button'); b.className='opt'; b.type='button';
+      let html=`<span class="ol">${o.k}</span>`;
+      if(g.t==='size')        html+=`<span class="op">$${o.price}</span>`;
+      else if(g.t==='multi'){ const a=resolveAdd(o);
+                              html+=`<span class="os">${a>0?('+$'+a):'FREE'}</span>`; }
+      else if(o.s)            html+=`<span class="os">${o.s}</span>`;
+      b.innerHTML=html;
+      const on = g.t==='multi' ? !!(multi[gi]&&multi[gi][oi]) : sel[gi]===oi;
+      if(on) b.classList.add('sel');
+      b.onclick=()=>{
+        if(g.t==='multi'){ multi[gi]=multi[gi]||{}; multi[gi][oi]=!multi[gi][oi]; }
+        else sel[gi]=oi;
+        buildCard();   // modal-only re-render; nowhere near the rAF path
+      };
+      row.appendChild(b);
+    });
+    cGroups.appendChild(h); cGroups.appendChild(row);
+  });
+
+  // crust note: pizzas with a size group only (Demetrios asked to keep this)
+  if(it.kind==='pizza' && szi>=0){
+    const o=it.groups[szi].o[sel[szi]];
+    cCrust.style.display='block';
+    cCrust.innerHTML=`<b>${o.size}</b> — ${CRUST[o.size]||''}.`+
+      `<span class="cam">📷 Photo is the <b>${it.photo}</b> size</span>`;
+  } else cCrust.style.display='none';
+
+  // total = base (selected size price, or flat) + selected EXTRAS (size-aware)
+  let base = szi>=0 ? it.groups[szi].o[sel[szi]].price : (it.flat||0);
+  let add=0;
+  (it.groups||[]).forEach((g,gi)=>{ if(g.t==='multi'&&multi[gi])
+    g.o.forEach((o,oi)=>{ if(multi[gi][oi]) add+=resolveAdd(o); }); });
+  cTot.textContent = `$${(base+add).toFixed(2)}`;
+}
 
 function openCard(it){
-  cImg.src=`images/small/${it.img}`; cName.textContent=it.name;
-  cDesc.textContent=it.desc; cPrice.textContent=it.price;
+  curItem=it; sel={}; multi={};
+  (it.groups||[]).forEach((g,gi)=>{
+    if(g.t==='size')      sel[gi]=Math.max(0, g.o.findIndex(o=>o.size===it.photo));
+    else if(g.t==='one')  sel[gi]=Math.max(0, g.o.findIndex(o=>o.k===g.def));
+  });
   cAdd.textContent='Add to Cart'; cAdd.classList.remove('added');
-  pointer.active=false;          // relax the bubbles behind the scrim
-  scrim.classList.add('on'); card.classList.add('on');
+  buildCard();
+  pointer.active=false;            // relax the bubbles behind the scrim
+  scrim.classList.add('on');
 }
-function closeCard(){ scrim.classList.remove('on'); card.classList.remove('on'); }
-scrim.addEventListener('click', closeCard);
-document.getElementById('cardX').addEventListener('click', closeCard);
+function closeCard(){ scrim.classList.remove('on'); }
+scrim.addEventListener('click', e=>{ if(e.target===scrim) closeCard(); });
+cCancel.addEventListener('click', closeCard);
 
 cAdd.addEventListener('click', ()=>{
   // STUB. Real cart wiring = Milestone 4 (flag-gated, separate @archie consult).
-  cAdd.textContent='✓ Added'; cAdd.classList.add('added');
-  toast.innerHTML = `Added to cart &nbsp;<small>· stubbed demo, no real cart</small>`;
+  cAdd.textContent='✓ ADDED'; cAdd.classList.add('added');
+  const szi=sizeGi(curItem);
+  const pre = szi>=0 ? curItem.groups[szi].o[sel[szi]].size+' ' : '';
+  toast.innerHTML = `Added: ${pre}${curItem.name} &nbsp;<small>· stubbed demo, no real cart</small>`;
   toast.classList.add('on');
-  setTimeout(()=>toast.classList.remove('on'), 1600);
-  setTimeout(closeCard, 480);
+  setTimeout(()=>toast.classList.remove('on'), 1700);
+  setTimeout(closeCard, 520);
 });
 </script>
 </body>
