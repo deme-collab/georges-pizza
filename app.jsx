@@ -2147,7 +2147,9 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
         style={{
           position: 'relative', height: 480,
           overflowX: 'auto', overflowY: 'hidden',
-          background: '#0a0a0c',
+          // Background inherits the page (cream #F5F0E6) for visual integration.
+          // The drop-shadow on each bubble image carries the "sticker on a table"
+          // depth; we no longer need a dark stage to make the food pop.
           WebkitOverflowScrolling: 'touch',
           touchAction: 'pan-x',
         }}
@@ -2183,7 +2185,9 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
                   style={{
                     width: '100%', height: '100%', objectFit: 'contain', display: 'block',
                     pointerEvents: 'none',
-                    filter: 'drop-shadow(0 6px 11px rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(255,170,90,.13))',
+                    // Single depth shadow — the warm-glow second shadow was tuned for
+                    // the previous dark stage; on cream it'd read as a faint orange halo.
+                    filter: 'drop-shadow(0 6px 11px rgba(0,0,0,.5))',
                   }}
                 />
               </div>
