@@ -439,6 +439,24 @@ function GeorgesPizza() {
   const [cart, setCart] = useState([]);
   const [currentView, setCurrentView] = useState('home');
   const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // === Floating Menu Hero (M4) — additive, behind default-OFF feature flag ===
+  // Staff preview ON:  gp2.shop/?hero=1    (persists to localStorage)
+  // Kill-switch OFF:   gp2.shop/?hero=0    (overrides localStorage)
+  // Full launch later = change the `=== '1'` default to `true` (one-line edit).
+  const fullMenuRef = useRef(null);
+  const [floatingMenuEnabled] = useState(() => {
+    try {
+      const url = new URLSearchParams(window.location.search);
+      // ?hero=1 is SESSION-ONLY ON — does NOT persist. Prevents a leaked staff
+      // share-link from permanently flipping random customers into the experiment.
+      // ?hero=0 IS persisted (real kill-switch — once flipped off, stays off).
+      if (url.get('hero') === '1') return true;
+      if (url.get('hero') === '0') { localStorage.setItem('gp_floating_hero', '0'); return false; }
+      return localStorage.getItem('gp_floating_hero') === '1';
+    } catch { return false; }
+  });
+
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -1490,6 +1508,15 @@ function GeorgesPizza() {
               </p>
             </div>
 
+            {/* === FLOATING MENU HERO (M4) — feature-flag-gated, additive === */}
+            {floatingMenuEnabled && (
+              <FloatingMenuHero
+                menus={{ pizzaMenu, whitePizzaMenu, stromboliMenu, sidesMenu, drinksMenu, dessertsMenu }}
+                onAddToCart={addToCart}
+                onScrollToFullMenu={() => fullMenuRef.current && fullMenuRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              />
+            )}
+
             {/* Set-Price Meals — bundles, tax included, free delivery */}
             <div style={{ marginBottom: 24 }}>
               <div className="red-banner">Set Price Meals</div>
@@ -1552,7 +1579,7 @@ function GeorgesPizza() {
               </div>
             </div>
 
-            <div className="red-banner">Full Menu</div>
+            <div ref={fullMenuRef} className="red-banner">Full Menu</div>
             {/* Category Grid */}
             <div style={{
               display: 'grid',
@@ -1815,6 +1842,346 @@ function GeorgesPizza() {
           to place your order.
         </div>
       </footer>
+    </div>
+  );
+}
+
+// ============================================================================
+// FLOATING MENU HERO (M4) — additive hero block at the top of the home view
+// ============================================================================
+// Apple-Watch-style proximity-bubble menu validated on Android in BUILD 7 of
+// the unlinked probe at `floating menu/floating-menu-test.html`. This integration
+// replaces the probe's stubbed cart with the REAL customizer flow + addToCart.
+//
+// PERF CONTRACT — DO NOT VIOLATE:
+//   • Motion state lives in `useRef`, NEVER in `useState`. Pointer position is
+//     a plain object behind a ref.
+//   • One single rAF loop per mount. Reads refs, writes element.style.transform
+//     directly. Never calls setState. Pauses via IntersectionObserver when the
+//     hero scrolls off-screen or the tab is hidden.
+//   • Hit resolution = pure nearest-center Voronoi within PICK_MAX. NO on/off
+//     visual-radius gate (gated models failed in M1 — see memory project_floating_menu).
+//   • Animate transform / opacity only. No width/height/left/top inside the loop.
+
+// HERO_ITEMS — 15-row selector table. Each entry resolves to a real menu
+// object via name-based .find(). Survives reordering of the menu data; fails
+// loud (logs + skips the bubble) on rename. Adding bubble #16 = one row +
+// drop image in `images/small/`. No other code changes.
+const HERO_ITEMS = [
+  { img: 'XL_Cheese_pizza.webp',                tier: 'xl', resolve: m => m.pizzaMenu.classic.find(p => p.name === 'Plain') },
+  { img: 'XL_pepperoni_pizza.webp',             tier: 'xl', resolve: m => m.pizzaMenu.classic.find(p => p.name === 'Pepperoni') },
+  { img: 'Large_ricotta_mozzarella_pizza.webp', tier: 'lg', resolve: m => m.whitePizzaMenu.items.find(p => p.name === 'Ricotta & Mozzarella') },
+  { img: 'Small_groundbeef_pizza.webp',         tier: 'lg', resolve: m => m.pizzaMenu.classic.find(p => p.name === 'Ground Beef') },
+  { img: 'small_spinach_white_pizza.webp',      tier: 'md', resolve: m => m.whitePizzaMenu.items.find(p => p.name === 'Spinach') },
+  { img: 'large_veggiewhite_pizza.webp',        tier: 'lg', resolve: m => m.whitePizzaMenu.items.find(p => p.name === 'Vegetarian') },
+  { img: 'Large_georgesspecial_pizza.webp',     tier: 'lg', resolve: m => m.pizzaMenu.specialty.find(p => p.name === "George's Special") },
+  { img: 'Sm_Steak_Stromboli.webp',             tier: 'md', resolve: m => m.stromboliMenu.items.find(p => p.name === 'Steak Cheese & Sauce') },
+  { img: 'small_fries_apps.webp',               tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'French Fries') },
+  { img: 'megafries.webp',                      tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'Mega Fries') },
+  { img: 'garlicknots.webp',                    tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'Garlic Knots (3)') },
+  { img: 'cansoda_drinks.webp',                 tier: 'md', resolve: m => m.drinksMenu.find(p => p.name === 'Soda (Can)') },
+  { img: '20ozsoda_drinks.webp',                tier: 'md', resolve: m => m.drinksMenu.find(p => p.name === 'Soda (20 oz.)') },
+  { img: '2Liter_drinks.webp',                  tier: 'md', resolve: m => m.drinksMenu.find(p => p.name === 'Soda (2 Liter)') },
+  { img: 'cherrycheesecake_dessert.webp',       tier: 'md', resolve: m => m.dessertsMenu.find(p => p.name === 'Cheesecake') },
+];
+
+// Layout constants — bubble box diameters (px) and spot positions.
+const HERO_TIER = { xl: 170, lg: 148, md: 120, sm: 96 };
+const HERO_SPOTS = [
+  { x: 120, y: 47 }, { x: 235, y: 64 }, { x: 350, y: 41 }, { x: 460, y: 60 },
+  { x: 560, y: 44 }, { x: 660, y: 62 }, { x: 770, y: 46 },
+  { x: 875, y: 63 },
+  { x: 960, y: 46 }, { x: 1045, y: 62 }, { x: 1130, y: 46 },
+  { x: 1215, y: 62 }, { x: 1295, y: 46 }, { x: 1375, y: 62 },
+  { x: 1455, y: 46 },
+];
+
+// Proximity tuning — settled on Android across probe BUILDs 1-22. Don't fiddle.
+const HERO_RADIUS = 230;                                 // px pointer influence
+const HERO_BOOST = 0.62;                                 // ambient max scale boost
+const HERO_FOCUS = 0.30;                                 // additive focus on resolved bubble
+const HERO_EASE = 0.18;                                  // lerp factor / frame (fluid trailing)
+const HERO_MAX_SCALE = 1 + HERO_BOOST + HERO_FOCUS;      // ≈ 1.92
+const HERO_BASE_SCALE = 1 / HERO_MAX_SCALE;              // ≈ 0.521 (rasterize-large-scale-down)
+const HERO_PICK_MAX = HERO_RADIUS * 1.15;                // beyond → whitespace, no pick
+
+function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
+  // Items are resolved inline in the render below (per-bubble). Missed entries
+  // (renamed menu item) render as null — the slot stays empty so the hand-tuned
+  // alternating-y rhythm of HERO_SPOTS isn't disturbed by a left-shift reflow.
+
+  const containerRef = useRef(null);
+  const scrollerRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  // Customizer-state DUPLICATED here (debt-tagged) — same dispatch pattern as
+  // CategoryView L2116-2168. TODO(consolidation): lift `customizing` /
+  // `genericCustomizing` to top-level GeorgesPizza() state in a separate PR,
+  // then delete this block AND the 7+ scattered copies across the section
+  // components. Doing it now would mean editing 7 live-ordering files in the
+  // same PR — too much blast radius. Cleanup is its own future commit.
+  const [customizing, setCustomizing] = useState(null);
+  const [genericCustomizing, setGenericCustomizing] = useState(null);
+
+  // === Motion in refs only — perf contract ===
+  const pointerRef = useRef({ x: -9999, y: -9999, active: false });
+  const bubblesRef = useRef([]);
+  const rafRef = useRef(null);
+  const draggedRef = useRef(false);
+  const downPosRef = useRef({ x: 0, y: 0 });
+  const needMeasureRef = useRef(true);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const scroller = scrollerRef.current;
+    const container = containerRef.current;
+    if (!canvas || !scroller || !container) return;
+
+    bubblesRef.current = Array.from(canvas.querySelectorAll('.gp-hero-bubble')).map(el => ({
+      el, cx: 0, cy: 0, cur: HERO_BASE_SCALE, target: HERO_BASE_SCALE,
+    }));
+
+    const measure = () => {
+      const cr = canvas.getBoundingClientRect();
+      const arr = bubblesRef.current;
+      for (let i = 0; i < arr.length; i++) {
+        const r = arr[i].el.getBoundingClientRect();
+        arr[i].cx = (r.left - cr.left) + r.width / 2;
+        arr[i].cy = (r.top - cr.top) + r.height / 2;
+      }
+      needMeasureRef.current = false;
+    };
+
+    const resolveHit = (px, py) => {
+      const arr = bubblesRef.current;
+      let best = -1, bestD = Infinity;
+      for (let i = 0; i < arr.length; i++) {
+        const dx = px - arr[i].cx, dy = py - arr[i].cy;
+        const d = Math.hypot(dx, dy);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      return bestD <= HERO_PICK_MAX ? best : -1;
+    };
+
+    let cursorIsPointer = null;
+    let running = false;
+    let hoverIdx = -1;
+
+    const frame = () => {
+      if (!running) return;
+      if (needMeasureRef.current) measure();
+      const p = pointerRef.current;
+      hoverIdx = p.active ? resolveHit(p.x, p.y) : -1;
+      const arr = bubblesRef.current;
+      for (let i = 0; i < arr.length; i++) {
+        const b = arr[i];
+        let infl = 0;
+        if (p.active) {
+          const dx = p.x - b.cx, dy = p.y - b.cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist < HERO_RADIUS) {
+            const t = 1 - dist / HERO_RADIUS;
+            infl = t * t * (3 - 2 * t);                 // smoothstep — Apple-Watch ease
+          }
+        }
+        const focused = i === hoverIdx;
+        const perceivedTarget = 1 + infl * HERO_BOOST + (focused ? HERO_FOCUS : 0);
+        b.target = perceivedTarget / HERO_MAX_SCALE;
+        b.cur += (b.target - b.cur) * HERO_EASE;
+        if (Math.abs(b.cur - b.target) < 0.001) b.cur = b.target;
+        const perceived = b.cur * HERO_MAX_SCALE;
+        const lift = (perceived - 1) * -22;
+        b.el.style.transform =
+          'translate3d(-50%,calc(-50% + ' + lift.toFixed(1) + 'px),0) scale(' + b.cur.toFixed(3) + ')';
+        b.el.style.zIndex = (focused ? 400 : 0) + (10 + ((perceived - 1) * 60 | 0));
+      }
+      const wantPointer = hoverIdx >= 0;
+      if (wantPointer !== cursorIsPointer) {
+        scroller.style.cursor = wantPointer ? 'pointer' : 'default';
+        cursorIsPointer = wantPointer;
+      }
+      rafRef.current = requestAnimationFrame(frame);
+    };
+
+    const startRaf = () => {
+      if (running) return;
+      running = true;
+      rafRef.current = requestAnimationFrame(frame);
+    };
+    const stopRaf = () => {
+      running = false;
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    };
+
+    // Pause rAF when scrolled off-screen, resume when back in view.
+    const io = new IntersectionObserver(
+      ([entry]) => { entry.isIntersecting ? startRaf() : stopRaf(); },
+      { threshold: 0 }
+    );
+    io.observe(container);
+
+    // Belt-and-suspenders: also pause when the tab is hidden.
+    const onVis = () => { document.visibilityState === 'hidden' ? stopRaf() : startRaf(); };
+    document.addEventListener('visibilitychange', onVis);
+
+    const setPointer = (e) => {
+      const cr = canvas.getBoundingClientRect();
+      pointerRef.current.x = e.clientX - cr.left;
+      pointerRef.current.y = e.clientY - cr.top;
+      pointerRef.current.active = true;
+    };
+    const onPointerLeave = () => { pointerRef.current.active = false; };
+    const onPointerDown = (e) => {
+      downPosRef.current = { x: e.clientX, y: e.clientY };
+      draggedRef.current = false;
+      setPointer(e);
+    };
+    const onPointerMove = (e) => {
+      const d = downPosRef.current;
+      if (Math.abs(e.clientX - d.x) > 8 || Math.abs(e.clientY - d.y) > 8) draggedRef.current = true;
+      setPointer(e);
+    };
+    const onScroll = () => { draggedRef.current = true; needMeasureRef.current = true; };
+    const onResize = () => { needMeasureRef.current = true; };
+
+    scroller.addEventListener('pointermove', onPointerMove, { passive: true });
+    scroller.addEventListener('pointerdown', onPointerDown, { passive: true });
+    scroller.addEventListener('pointerleave', onPointerLeave, { passive: true });
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      stopRaf();
+      io.disconnect();
+      document.removeEventListener('visibilitychange', onVis);
+      scroller.removeEventListener('pointermove', onPointerMove);
+      scroller.removeEventListener('pointerdown', onPointerDown);
+      scroller.removeEventListener('pointerleave', onPointerLeave);
+      scroller.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []); // mount-only — items are a static 15-row list, no re-init needed
+
+  // Tap dispatch — open the right real customizer by item flags.
+  // Set items (Garlic Knots / anything flat & flagless) → direct add to cart.
+  const onTap = (it) => {
+    if (draggedRef.current) return;                                        // ignore drag-end clicks
+    if (it.prices) { setCustomizing(it); return; }                         // pizzas, fries w/ size
+    if (it.hasStromboliMods) { setCustomizing(it); return; }
+    if (it.hasCondiments || it.hasDippingSauce || it.hasSize) { setCustomizing(it); return; }
+    if (it.hasCanChoice || it.has20ozChoice || it.has2LiterChoice
+        || it.hasCheesecakeChoice || it.hasIceCreamChoice || it.hasMilkshakeChoice
+        || it.hasChipsChoice) {
+      setGenericCustomizing(it); return;
+    }
+    onAddToCart({ name: it.name, price: it.price, mods: [] });             // flat set item
+  };
+
+  const canvasMinWidth = HERO_SPOTS[HERO_SPOTS.length - 1].x + 200;
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', margin: '0 0 24px 0' }}>
+      <div className="red-banner" style={{ marginBottom: 8 }}>Order from Our Visual Menu</div>
+      <div style={{ fontSize: 13, color: '#555', textAlign: 'center', marginBottom: 12 }}>
+        Tap a dish to add. Swipe across to explore →
+      </div>
+      <div
+        ref={scrollerRef}
+        style={{
+          position: 'relative', height: 360,
+          overflowX: 'auto', overflowY: 'hidden',
+          background: '#0a0a0c',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x',
+        }}
+      >
+        <div ref={canvasRef} style={{ position: 'relative', height: '100%', minWidth: canvasMinWidth }}>
+          {HERO_ITEMS.map((h, i) => {
+            // Resolve per-bubble so a single miss can't reflow the whole row.
+            const item = h.resolve(menus);
+            if (!item) { console.warn('[FloatingMenuHero] could not resolve', h.img); return null; }
+            const spot = HERO_SPOTS[i];
+            if (!spot) return null;
+            const d = HERO_TIER[h.tier];
+            const box = Math.round(d * HERO_MAX_SCALE);
+            return (
+              <div
+                key={h.img}
+                className="gp-hero-bubble"
+                onClick={() => onTap(item)}
+                style={{
+                  position: 'absolute',
+                  width: box, height: box,
+                  left: spot.x, top: spot.y + '%',
+                  willChange: 'transform',
+                  transform: 'translate3d(-50%,-50%,0) scale(' + HERO_BASE_SCALE + ')',
+                  cursor: 'pointer',
+                }}
+              >
+                <img
+                  src={'images/small/' + h.img}
+                  alt={item.name}
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    width: '100%', height: '100%', objectFit: 'contain', display: 'block',
+                    pointerEvents: 'none',
+                    filter: 'drop-shadow(0 6px 11px rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(255,170,90,.13))',
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 8 }}>
+        <button
+          type="button"
+          onClick={onScrollToFullMenu}
+          style={{
+            background: 'transparent', border: '1px solid #C41E3A', color: '#C41E3A',
+            padding: '8px 18px', fontFamily: "'Oswald', sans-serif", fontSize: 13, fontWeight: 600,
+            textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '.5px',
+          }}
+        >
+          See full menu ↓
+        </button>
+      </div>
+
+      {/* === MODAL DISPATCH — duplicated from CategoryView L2116-2168 ===
+          See the "Customizer-state DUPLICATED" comment above for the
+          consolidation TODO. */}
+      {customizing && customizing.prices && (
+        <PizzaCustomizer
+          item={customizing}
+          onClose={() => setCustomizing(null)}
+          onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
+        />
+      )}
+      {customizing && customizing.hasStromboliMods && (
+        <StromboliCustomizer
+          item={customizing}
+          extraToppingPrices={menus.stromboliMenu.extraTopping}
+          extraCheesePrices={menus.stromboliMenu.extraCheese}
+          onClose={() => setCustomizing(null)}
+          onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
+        />
+      )}
+      {customizing && !customizing.prices && !customizing.hasStromboliMods &&
+       (customizing.hasCondiments || customizing.hasDippingSauce || customizing.hasSize) && (
+        <SidesCustomizer
+          item={customizing}
+          onClose={() => setCustomizing(null)}
+          onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
+        />
+      )}
+      {genericCustomizing && (
+        <GenericCustomizer
+          item={genericCustomizing}
+          onClose={() => setGenericCustomizing(null)}
+          onAdd={(item) => { onAddToCart(item); setGenericCustomizing(null); }}
+        />
+      )}
     </div>
   );
 }
