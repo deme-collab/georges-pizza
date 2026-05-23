@@ -680,6 +680,57 @@ cash"
             orderError.style.display = 'block';
         }
         
+        // Generation counter — prevents a late response from a previous parse
+        // from painting a stale banner over a newer (re-parsed) summary.
+        let blocklistGen = 0;
+
+        // Fires the delivery-blocklist check against the parsed order's phone
+        // and address. If flagged, inserts a red CF warning banner ABOVE the
+        // deliveryInfo card so staff see it before committing the order.
+        // Fail-open: any error (network / auth / no delivery info) → no banner;
+        // the printed ticket's `** CF **` is still the downstream safety net.
+        async function checkBlocklistForOrder(order) {
+            const myGen = ++blocklistGen;
+
+            // Clear any prior warning so re-parses don't stack them.
+            const prior = document.getElementById('blocklistWarning');
+            if (prior) prior.remove();
+
+            if (!order.delivery || (!order.delivery.phone && !order.delivery.address)) return;
+
+            try {
+                const resp = await fetch(`${API_URL}/api/internal/quick-order/check-blocklist`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pin: currentPin,
+                        phone: order.delivery.phone || '',
+                        address: order.delivery.address || '',
+                    }),
+                });
+                const data = await resp.json();
+                // If a newer parse fired in the meantime, abandon this stale result.
+                if (myGen !== blocklistGen) return;
+                if (!data.success || !data.flagged) return;
+
+                const warnDiv = document.createElement('div');
+                warnDiv.id = 'blocklistWarning';
+                warnDiv.innerHTML = `
+                    <div style="background:#FFEBEE; border:3px solid #C41E3A; border-radius:8px; padding:14px; margin:8px 0; font-weight:700;">
+                        <div style="color:#C41E3A; font-size:18px; margin-bottom:6px;">⚠️ FLAGGED CUSTOMER — COLLECT FIRST</div>
+                        <div style="font-size:14px; color:#333; font-weight:500;">${data.reason || '(no reason recorded)'}</div>
+                    </div>
+                `;
+                // Place ABOVE deliveryInfo so it's the first thing the eye lands on.
+                const deliveryInfoEl = document.getElementById('deliveryInfo');
+                if (deliveryInfoEl && deliveryInfoEl.parentElement) {
+                    deliveryInfoEl.parentElement.insertBefore(warnDiv, deliveryInfoEl);
+                }
+            } catch (err) {
+                console.warn('[blocklist check] failed:', err);
+            }
+        }
+
         function showSummary(order) {
             // Build items HTML
             let itemsHTML = '';
@@ -779,6 +830,10 @@ cash"
                 deliveryDiv.innerHTML = deliveryHTML;
                 badgeContainer.insertBefore(deliveryDiv, orderTypeBadge.nextSibling);
             }
+
+            // Blocklist check (fires concurrently; banner appears within ~200ms
+            // if customer is flagged). Also clears any prior warning on re-parse.
+            checkBlocklistForOrder(order);
             
             // Vendor badge (3rd party delivery)
             let vendorBadgeHTML = '';
