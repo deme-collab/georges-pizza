@@ -1065,7 +1065,7 @@ function GeorgesPizza() {
     { name: 'Fried Broccoli & Cheese (8)', price: 8 },
     { name: 'Jalapeno Poppers (6)', price: 8, hasDippingSauce: true, dippingOptions: ['Marinara Sauce', 'Salsa'] },
     { name: 'Fried Mini Tacos (12)', desc: 'Crispy beef tacos', price: 8 },
-    { name: 'Garlic Knots (3)', desc: 'Comes with a side of marinara', price: 3, badge: 'NEW!' },
+    { name: 'Garlic Knots (3)', desc: 'Three garlic knots drizzled with olive oil, oregano & parmesan. Side of marinara.', price: 3, badge: 'NEW!' },
     { name: 'Plain Slice of Pizza', price: 3 },
     { name: 'Cole Slaw', price: 1 },
   ];
@@ -1900,13 +1900,58 @@ const HERO_SPOTS = [
 ];
 
 // Proximity tuning — settled on Android across probe BUILDs 1-22. Don't fiddle.
-const HERO_RADIUS = 230;                                 // px pointer influence
+const HERO_RADIUS = 240;                                 // px pointer influence (bumped from 230 after height/spread widening)
 const HERO_BOOST = 0.62;                                 // ambient max scale boost
 const HERO_FOCUS = 0.30;                                 // additive focus on resolved bubble
 const HERO_EASE = 0.18;                                  // lerp factor / frame (fluid trailing)
 const HERO_MAX_SCALE = 1 + HERO_BOOST + HERO_FOCUS;      // ≈ 1.92
 const HERO_BASE_SCALE = 1 / HERO_MAX_SCALE;              // ≈ 0.521 (rasterize-large-scale-down)
 const HERO_PICK_MAX = HERO_RADIUS * 1.15;                // beyond → whitespace, no pick
+
+// ============ HERO INFO POPUP — minimal desc + Add card ============
+// For hero bubbles whose item is a "set" (no customization flags) but carries
+// a `desc` — e.g. Garlic Knots (3). Lets the customer see what's in it before
+// committing. Mirrors PizzaCustomizer's modal shell + Includes box pattern.
+function HeroInfoPopup({ item, image, onClose, onAdd }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="red-banner">{item.name}</div>
+        <div style={{ padding: 16 }}>
+          {image && (
+            <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 0 12px' }}>
+              <img src={'images/small/' + image} alt={item.name}
+                   style={{ maxHeight: '100%', maxWidth: '72%',
+                            filter: 'drop-shadow(0 8px 14px rgba(60,30,10,.28))' }} />
+            </div>
+          )}
+          {item.desc && (
+            <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', color: '#8B4513',
+                          padding: 10, marginBottom: 16, fontSize: 13, lineHeight: 1.45 }}>
+              <strong>Includes:</strong> {item.desc}
+            </div>
+          )}
+          <div style={{ borderTop: '2px solid #C41E3A', marginTop: 4, paddingTop: 12,
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 12, color: '#555' }}>Total</div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 700, color: '#C41E3A' }}>
+                ${(item.price || 0).toFixed(2)}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="button" className="btn-outline" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn-red"
+                onClick={() => onAdd({ name: item.name, price: item.price, mods: [] })}>
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   // Items are resolved inline in the render below (per-bubble). Missed entries
@@ -1925,6 +1970,9 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   // same PR — too much blast radius. Cleanup is its own future commit.
   const [customizing, setCustomizing] = useState(null);
   const [genericCustomizing, setGenericCustomizing] = useState(null);
+  // For "set" items (no customization flags but carries a `desc`) — opens a
+  // tiny HeroInfoPopup with Includes line + Add button. Stores { item, img }.
+  const [infoItem, setInfoItem] = useState(null);
 
   // === Motion in refs only — perf contract ===
   const pointerRef = useRef({ x: -9999, y: -9999, active: false });
@@ -2071,7 +2119,7 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   // has `prices` + `hasSize`; strombolis have `prices` + `hasStromboliMods`).
   // The JSX modal dispatch below mirrors this priority with mutually-exclusive
   // guards so we can't double-render two modals.
-  const onTap = (it) => {
+  const onTap = (it, img) => {
     if (draggedRef.current) return;                                        // ignore drag-end clicks
     if (it.hasCondiments || it.hasDippingSauce || it.hasSize) { setCustomizing(it); return; }
     if (it.hasStromboliMods) { setCustomizing(it); return; }
@@ -2081,7 +2129,9 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
         || it.hasChipsChoice) {
       setGenericCustomizing(it); return;
     }
-    onAddToCart({ name: it.name, price: it.price, mods: [] });             // flat set item
+    // Set item with description → info popup with Add button (Garlic Knots etc.)
+    if (it.desc) { setInfoItem({ item: it, img }); return; }
+    onAddToCart({ name: it.name, price: it.price, mods: [] });             // truly flat set item
   };
 
   const canvasMinWidth = HERO_SPOTS[HERO_SPOTS.length - 1].x + 200;
@@ -2115,7 +2165,7 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
               <div
                 key={h.img}
                 className="gp-hero-bubble"
-                onClick={() => onTap(item)}
+                onClick={() => onTap(item, h.img)}
                 style={{
                   position: 'absolute',
                   width: box, height: box,
@@ -2192,6 +2242,14 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
           item={genericCustomizing}
           onClose={() => setGenericCustomizing(null)}
           onAdd={(item) => { onAddToCart(item); setGenericCustomizing(null); }}
+        />
+      )}
+      {infoItem && (
+        <HeroInfoPopup
+          item={infoItem.item}
+          image={infoItem.img}
+          onClose={() => setInfoItem(null)}
+          onAdd={(it) => { onAddToCart(it); setInfoItem(null); }}
         />
       )}
     </div>
@@ -3311,7 +3369,15 @@ function SidesCustomizer({ item, onClose, onAdd }) {
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="red-banner">{item.name}</div>
         <div style={{ padding: 16 }}>
-          
+          {/* Includes — same shape as PizzaCustomizer's Includes box. Renders
+              for any side item carrying a `desc` (Mega Fries, Mozzarella Fries…). */}
+          {item.desc && (
+            <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', color: '#8B4513',
+                          padding: 10, marginBottom: 16, fontSize: 13, lineHeight: 1.45 }}>
+              <strong>Includes:</strong> {item.desc}
+            </div>
+          )}
+
           {/* Size Selection */}
           {item.hasSize && (
             <>
