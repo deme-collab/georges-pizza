@@ -1887,13 +1887,16 @@ const HERO_ITEMS = [
 
 // Layout constants — bubble box diameters (px) and spot positions.
 const HERO_TIER = { xl: 170, lg: 148, md: 120, sm: 96 };
+// y-range widened to 35-70% (from 41-64%) to give alternating-y lg bubbles
+// enough vertical separation at 480px container height. Each old y mapped:
+// 41→35, 44→38, 46→40, 47→41 (lows); 60→66, 62→68, 63→69, 64→70 (highs).
 const HERO_SPOTS = [
-  { x: 120, y: 47 }, { x: 235, y: 64 }, { x: 350, y: 41 }, { x: 460, y: 60 },
-  { x: 560, y: 44 }, { x: 660, y: 62 }, { x: 770, y: 46 },
-  { x: 875, y: 63 },
-  { x: 960, y: 46 }, { x: 1045, y: 62 }, { x: 1130, y: 46 },
-  { x: 1215, y: 62 }, { x: 1295, y: 46 }, { x: 1375, y: 62 },
-  { x: 1455, y: 46 },
+  { x: 120, y: 41 }, { x: 235, y: 70 }, { x: 350, y: 35 }, { x: 460, y: 66 },
+  { x: 560, y: 38 }, { x: 660, y: 68 }, { x: 770, y: 40 },
+  { x: 875, y: 69 },
+  { x: 960, y: 40 }, { x: 1045, y: 68 }, { x: 1130, y: 40 },
+  { x: 1215, y: 68 }, { x: 1295, y: 40 }, { x: 1375, y: 68 },
+  { x: 1455, y: 40 },
 ];
 
 // Proximity tuning — settled on Android across probe BUILDs 1-22. Don't fiddle.
@@ -2063,12 +2066,16 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   }, []); // mount-only — items are a static 15-row list, no re-init needed
 
   // Tap dispatch — open the right real customizer by item flags.
-  // Set items (Garlic Knots / anything flat & flagless) → direct add to cart.
+  // ORDER MATTERS: sides flags + stromboli flags claim ownership BEFORE the
+  // catch-all `.prices` check, because some items carry BOTH (French Fries
+  // has `prices` + `hasSize`; strombolis have `prices` + `hasStromboliMods`).
+  // The JSX modal dispatch below mirrors this priority with mutually-exclusive
+  // guards so we can't double-render two modals.
   const onTap = (it) => {
     if (draggedRef.current) return;                                        // ignore drag-end clicks
-    if (it.prices) { setCustomizing(it); return; }                         // pizzas, fries w/ size
-    if (it.hasStromboliMods) { setCustomizing(it); return; }
     if (it.hasCondiments || it.hasDippingSauce || it.hasSize) { setCustomizing(it); return; }
+    if (it.hasStromboliMods) { setCustomizing(it); return; }
+    if (it.prices) { setCustomizing(it); return; }                         // pizzas (anything left with prices)
     if (it.hasCanChoice || it.has20ozChoice || it.has2LiterChoice
         || it.hasCheesecakeChoice || it.hasIceCreamChoice || it.hasMilkshakeChoice
         || it.hasChipsChoice) {
@@ -2082,13 +2089,13 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   return (
     <div ref={containerRef} style={{ position: 'relative', margin: '0 0 24px 0' }}>
       <div className="red-banner" style={{ marginBottom: 8 }}>Order from Our Visual Menu</div>
-      <div style={{ fontSize: 13, color: '#555', textAlign: 'center', marginBottom: 12 }}>
-        Tap a dish to add. Swipe across to explore →
+      <div style={{ fontSize: 13, color: '#555', textAlign: 'center', lineHeight: 1.4, padding: '0 16px', maxWidth: 460, margin: '0 auto 12px' }}>
+        Real photos of our most popular dishes. Tap to customize and add to cart. Swipe to explore →
       </div>
       <div
         ref={scrollerRef}
         style={{
-          position: 'relative', height: 360,
+          position: 'relative', height: 480,
           overflowX: 'auto', overflowY: 'hidden',
           background: '#0a0a0c',
           WebkitOverflowScrolling: 'touch',
@@ -2148,17 +2155,22 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
         </button>
       </div>
 
-      {/* === MODAL DISPATCH — duplicated from CategoryView L2116-2168 ===
-          See the "Customizer-state DUPLICATED" comment above for the
-          consolidation TODO. */}
-      {customizing && customizing.prices && (
-        <PizzaCustomizer
+      {/* === MODAL DISPATCH — mutually exclusive guards ===
+          Sides claim ownership first (French Fries has both .prices and .hasSize),
+          then stromboli (also has both .prices and .hasStromboliMods), then
+          pizza (.prices only, with no side/stromboli flags). The defensive
+          guards make it impossible to double-render two modals stacked, and
+          surviving any future menu addition with overlapping flags. See the
+          "Customizer-state DUPLICATED" comment above for the consolidation TODO. */}
+      {customizing && (customizing.hasCondiments || customizing.hasDippingSauce || customizing.hasSize) && (
+        <SidesCustomizer
           item={customizing}
           onClose={() => setCustomizing(null)}
           onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
         />
       )}
-      {customizing && customizing.hasStromboliMods && (
+      {customizing && customizing.hasStromboliMods
+        && !customizing.hasCondiments && !customizing.hasDippingSauce && !customizing.hasSize && (
         <StromboliCustomizer
           item={customizing}
           extraToppingPrices={menus.stromboliMenu.extraTopping}
@@ -2167,9 +2179,9 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
           onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
         />
       )}
-      {customizing && !customizing.prices && !customizing.hasStromboliMods &&
-       (customizing.hasCondiments || customizing.hasDippingSauce || customizing.hasSize) && (
-        <SidesCustomizer
+      {customizing && customizing.prices && !customizing.hasStromboliMods
+        && !customizing.hasCondiments && !customizing.hasDippingSauce && !customizing.hasSize && (
+        <PizzaCustomizer
           item={customizing}
           onClose={() => setCustomizing(null)}
           onAdd={(item) => { onAddToCart(item); setCustomizing(null); }}
