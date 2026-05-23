@@ -1908,6 +1908,43 @@ const HERO_MAX_SCALE = 1 + HERO_BOOST + HERO_FOCUS;      // ≈ 1.92
 const HERO_BASE_SCALE = 1 / HERO_MAX_SCALE;              // ≈ 0.521 (rasterize-large-scale-down)
 const HERO_PICK_MAX = HERO_RADIUS * 1.15;                // beyond → whitespace, no pick
 
+// Hero background A/B variants — CSS-only, zero bytes/zero requests.
+// Toggle via URL param: ?hero=1&bg=check  (or bg=linen / bg=bold)
+// Default (no bg param) = cream-inherits-page (current production state).
+// Picked variant becomes default once Demetrios chooses (one-line edit).
+const HERO_BG_VARIANTS = {
+  // Subtle muted-red 45° checker — gentle "Italian tablecloth" warmth without
+  // competing with the food photos. Tiles small (28px) so it reads as texture.
+  check: {
+    backgroundColor: '#F5F0E6',
+    backgroundImage:
+      'linear-gradient(45deg, rgba(196,30,58,0.09) 25%, transparent 25%, transparent 75%, rgba(196,30,58,0.09) 75%, rgba(196,30,58,0.09)),' +
+      'linear-gradient(45deg, rgba(196,30,58,0.09) 25%, transparent 25%, transparent 75%, rgba(196,30,58,0.09) 75%, rgba(196,30,58,0.09))',
+    backgroundSize: '28px 28px',
+    backgroundPosition: '0 0, 14px 14px',
+  },
+  // Warm paper / butcher-paper grain — neutral background with faint diagonal
+  // crosshatch. Closest to "deli wrap" or "linen" feel without going checkered.
+  linen: {
+    backgroundColor: '#F0E6D2',
+    backgroundImage:
+      'repeating-linear-gradient(45deg, rgba(139,69,19,0.04) 0, rgba(139,69,19,0.04) 1px, transparent 1px, transparent 6px),' +
+      'repeating-linear-gradient(-45deg, rgba(139,69,19,0.04) 0, rgba(139,69,19,0.04) 1px, transparent 1px, transparent 6px)',
+  },
+  // Bold traditional red+white pizzeria checker — big tiles (44px), full
+  // contrast. Maximum "Italian-American family pizzeria" signal but loudest.
+  bold: {
+    backgroundColor: '#FFFFFF',
+    backgroundImage:
+      'linear-gradient(45deg, #C41E3A 25%, transparent 25%),' +
+      'linear-gradient(-45deg, #C41E3A 25%, transparent 25%),' +
+      'linear-gradient(45deg, transparent 75%, #C41E3A 75%),' +
+      'linear-gradient(-45deg, transparent 75%, #C41E3A 75%)',
+    backgroundSize: '44px 44px',
+    backgroundPosition: '0 0, 0 22px, 22px -22px, -22px 0',
+  },
+};
+
 // ============ HERO INFO POPUP — minimal desc + Add card ============
 // For hero bubbles whose item is a "set" (no customization flags) but carries
 // a `desc` — e.g. Garlic Knots (3). Lets the customer see what's in it before
@@ -1973,6 +2010,17 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   // For "set" items (no customization flags but carries a `desc`) — opens a
   // tiny HeroInfoPopup with Includes line + Add button. Stores { item, img }.
   const [infoItem, setInfoItem] = useState(null);
+
+  // Background A/B variant — read once at mount from ?bg=check|linen|bold.
+  // No param = cream-inherits-page (current production default).
+  const [bgVariant] = useState(() => {
+    try {
+      const url = new URLSearchParams(window.location.search);
+      const v = url.get('bg');
+      return HERO_BG_VARIANTS[v] ? v : null;
+    } catch { return null; }
+  });
+  const bgStyle = bgVariant ? HERO_BG_VARIANTS[bgVariant] : null;
 
   // === Motion in refs only — perf contract ===
   const pointerRef = useRef({ x: -9999, y: -9999, active: false });
@@ -2147,13 +2195,24 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
         style={{
           position: 'relative', height: 480,
           overflowX: 'auto', overflowY: 'hidden',
-          // Background inherits the page (cream #F5F0E6) for visual integration.
-          // The drop-shadow on each bubble image carries the "sticker on a table"
-          // depth; we no longer need a dark stage to make the food pop.
+          // No ?bg= param → background inherits page cream (current production).
+          // ?bg=check|linen|bold → variant style is spread in below, overriding.
           WebkitOverflowScrolling: 'touch',
           touchAction: 'pan-x',
+          ...(bgStyle || {}),
         }}
       >
+        {bgVariant && (
+          <div style={{
+            position: 'absolute', top: 6, right: 6, zIndex: 5,
+            background: 'rgba(0,0,0,0.6)', color: '#fff',
+            padding: '2px 8px', borderRadius: 4,
+            fontSize: 10, fontFamily: "'Oswald', sans-serif",
+            letterSpacing: '0.5px', pointerEvents: 'none',
+          }}>
+            BG: {bgVariant.toUpperCase()}
+          </div>
+        )}
         <div ref={canvasRef} style={{ position: 'relative', height: '100%', minWidth: canvasMinWidth }}>
           {HERO_ITEMS.map((h, i) => {
             // Resolve per-bubble so a single miss can't reflow the whole row.
