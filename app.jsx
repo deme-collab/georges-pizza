@@ -4948,9 +4948,15 @@ function StromboliCustomizer({ item, extraToppingPrices, extraCheesePrices, onCl
           </div>
 
           {/* Allergen opt-out — FASTER Act sesame disclosure. Structured flag,
-              not freeform notes, so kitchen sees "NO SESAME SEEDS" on the ticket. */}
+              not freeform notes, so kitchen sees "NO SESAME SEEDS" on the ticket.
+              Inline notice mirrors the category-page disclaimer so customers
+              who deep-link into this modal (e.g. via the hero bubble) still
+              see the sesame-on-by-default context. */}
           <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
             ALLERGEN PREFERENCE
+          </div>
+          <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', color: '#8B4513', padding: 8, marginBottom: 8, fontSize: 12, lineHeight: 1.4, borderRadius: 3 }}>
+            ⚠️ <strong>Topped with sesame seeds by default.</strong>
           </div>
           <div style={{ marginBottom: 16 }}>
             <label className="checkbox-row">
