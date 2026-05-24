@@ -4810,6 +4810,13 @@ function StromboliMenu({ stromboliMenu, onAddToCart }) {
       <div className="green-stripe" />
       <div className="red-banner">Strombolis</div>
       <div className="menu-section-content">
+        {/* Sesame-seed allergen disclosure — FASTER Act 2023 lists sesame as a
+            major US allergen. Customers can opt out via the customizer (each
+            stromboli has a "No sesame seeds" checkbox in the preferences section). */}
+        <div style={{ background: '#FFF8DC', border: '1px solid #DAA520', color: '#8B4513', padding: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.5, borderRadius: 4 }}>
+          <strong>⚠️ Please note:</strong> all strombolis come topped with <strong>sesame seeds</strong>.
+          To opt out, tap or click any stromboli and check <em>"No sesame seeds"</em> in the customizer.
+        </div>
         <div style={{ fontSize: 12, color: '#555', fontStyle: 'italic', marginBottom: 12 }}>
           Small or Large • Green Peppers, Mushrooms, Grilled Onions available FREE • Extra Cheese: Sm +$2 / Lg +$3
         </div>
@@ -4854,6 +4861,10 @@ function StromboliCustomizer({ item, extraToppingPrices, extraCheesePrices, onCl
   const [size, setSize] = useState('small');
   const [freeAddons, setFreeAddons] = useState([]);
   const [extraCheese, setExtraCheese] = useState(false);
+  // Default OFF (=sesame seeds INCLUDED). Customer opts IN to opt-out.
+  // Ticket prints "NO SESAME SEEDS" in caps when checked — kitchen sees the
+  // allergen flag clearly during prep, not buried in freeform notes.
+  const [noSesameSeeds, setNoSesameSeeds] = useState(false);
 
   const freeAddonOptions = [
     { id: 'green-peppers', name: 'Green Peppers' },
@@ -4880,6 +4891,8 @@ function StromboliCustomizer({ item, extraToppingPrices, extraCheesePrices, onCl
       if (opt) mods.push(opt.name);
     });
     if (extraCheese) mods.push('Extra Cheese');
+    // Allergen opt-out — caps for emphasis on the printed kitchen ticket.
+    if (noSesameSeeds) mods.push('NO SESAME SEEDS');
     return mods;
   };
 
@@ -4931,6 +4944,19 @@ function StromboliCustomizer({ item, extraToppingPrices, extraCheesePrices, onCl
               <input type="checkbox" checked={extraCheese} onChange={() => setExtraCheese(!extraCheese)} />
               <span style={{ flex: 1 }}>Extra Cheese</span>
               <span style={{ color: '#C41E3A', fontWeight: 600 }}>+${(extraCheesePrices && extraCheesePrices[size]) || 2}</span>
+            </label>
+          </div>
+
+          {/* Allergen opt-out — FASTER Act sesame disclosure. Structured flag,
+              not freeform notes, so kitchen sees "NO SESAME SEEDS" on the ticket. */}
+          <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#555' }}>
+            ALLERGEN PREFERENCE
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={noSesameSeeds} onChange={() => setNoSesameSeeds(!noSesameSeeds)} />
+              <span style={{ flex: 1 }}>No sesame seeds <span style={{ fontSize: 11, color: '#888', fontStyle: 'italic' }}>(default: with sesame)</span></span>
+              <span style={{ color: '#228B22', fontWeight: 600 }}>FREE</span>
             </label>
           </div>
 
