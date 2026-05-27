@@ -3633,8 +3633,14 @@ function ClubCustomizer({ item, onClose, onAdd }) {
     if (removed.length > 0) {
       mods.push('NO: ' + removed.map(id => ingredientNames[id] || id).join(', '));
     }
-    
-    friesOptions.forEach(id => { const f = friesOpts.find(x => x.id === id); if (f) mods.push(f.name); });
+
+    // Kitchen-clarity: group fries condiments onto one line (was 3 separate
+    // ">  Salt on Fries / Pepper on Fries / Ketchup on Fries" lines).
+    const friesNames = friesOptions.map(id => {
+      const f = friesOpts.find(x => x.id === id);
+      return f ? f.name.replace(/ on Fries$/, '') : null;
+    }).filter(Boolean);
+    if (friesNames.length > 0) mods.push('Fries: ' + friesNames.join(', '));
     return mods;
   };
 
@@ -3998,10 +4004,12 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
       if (friesOptions.length === 0) {
         mods.push('Fries: Plain');
       } else {
-        friesOptions.forEach(id => {
+        // Group on one line instead of N separate "Fries: X" lines.
+        const friesNames = friesOptions.map(id => {
           const f = friesOpts.find(x => x.id === id);
-          if (f) mods.push('Fries: ' + f.name);
-        });
+          return f ? f.name.replace(/ on Fries$/, '') : null;
+        }).filter(Boolean);
+        if (friesNames.length > 0) mods.push('Fries: ' + friesNames.join(', '));
       }
     }
     
@@ -5244,7 +5252,12 @@ function CaliforniaBurgerCustomizer({ item, onClose, onAdd }) {
   const getMods = () => {
     const mods = ['With Fries'];
     burgerAddons.forEach(id => { const a = burgerOpts.find(x => x.id === id); if (a) mods.push(a.name); });
-    friesOptions.forEach(id => { const f = friesOpts.find(x => x.id === id); if (f) mods.push(f.name); });
+    // Group fries condiments onto one "Fries: X, Y, Z" line for kitchen clarity.
+    const friesNames = friesOptions.map(id => {
+      const f = friesOpts.find(x => x.id === id);
+      return f ? f.name.replace(/ on Fries$/, '') : null;
+    }).filter(Boolean);
+    if (friesNames.length > 0) mods.push('Fries: ' + friesNames.join(', '));
     return mods;
   };
 
@@ -5866,7 +5879,12 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
     const mods = ['With Fries', toast === 'toasted' ? 'TOASTED' : 'Not Toasted'];
     if (cheese !== 'none') mods.push(cheeseOpts.find(c => c.id === cheese).name);
     addons.forEach(id => { const a = addonOpts.find(x => x.id === id); if (a) mods.push(a.name); });
-    friesOptions.forEach(id => { const f = friesOpts.find(x => x.id === id); if (f) mods.push(f.name); });
+    // Group fries condiments onto one "Fries: X, Y, Z" line for kitchen clarity.
+    const friesNames = friesOptions.map(id => {
+      const f = friesOpts.find(x => x.id === id);
+      return f ? f.name.replace(/ on Fries$/, '') : null;
+    }).filter(Boolean);
+    if (friesNames.length > 0) mods.push('Fries: ' + friesNames.join(', '));
     return mods;
   };
 
