@@ -440,20 +440,23 @@ function GeorgesPizza() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // === Floating Menu Hero (M4) — additive, behind default-OFF feature flag ===
-  // Staff preview ON:  gp2.shop/?hero=1    (persists to localStorage)
-  // Kill-switch OFF:   gp2.shop/?hero=0    (overrides localStorage)
-  // Full launch later = change the `=== '1'` default to `true` (one-line edit).
+  // === Floating Menu Hero (M4) — DEFAULT ON (launched 2026-05-26) ===
+  // ?hero=1  → force ON for the current session (no-op now that default is ON, but
+  //            kept so historical staff-share links don't 404 the behavior).
+  // ?hero=0  → kill-switch: hides the hero AND persists '0' to localStorage so
+  //            it stays hidden on every subsequent visit from that browser.
+  // To temporarily turn the hero OFF for ALL customers in a hurry, flip the
+  // catch-all return from `!== '0'` to `=== '__never__'` and push. Otherwise
+  // a `git revert` of the launch commit is the cleaner full rollback.
   const fullMenuRef = useRef(null);
   const [floatingMenuEnabled] = useState(() => {
     try {
       const url = new URLSearchParams(window.location.search);
-      // ?hero=1 is SESSION-ONLY ON — does NOT persist. Prevents a leaked staff
-      // share-link from permanently flipping random customers into the experiment.
-      // ?hero=0 IS persisted (real kill-switch — once flipped off, stays off).
       if (url.get('hero') === '1') return true;
       if (url.get('hero') === '0') { localStorage.setItem('gp_floating_hero', '0'); return false; }
-      return localStorage.getItem('gp_floating_hero') === '1';
+      // DEFAULT ON for everyone — except browsers that have explicitly
+      // kill-switched themselves via ?hero=0 (localStorage has '0').
+      return localStorage.getItem('gp_floating_hero') !== '0';
     } catch { return false; }
   });
 
@@ -1863,7 +1866,7 @@ function GeorgesPizza() {
 //     visual-radius gate (gated models failed in M1 — see memory project_floating_menu).
 //   • Animate transform / opacity only. No width/height/left/top inside the loop.
 
-// HERO_ITEMS — 15-row selector table. Each entry resolves to a real menu
+// HERO_ITEMS — 16-row selector table. Each entry resolves to a real menu
 // object via name-based .find(). Survives reordering of the menu data; fails
 // loud (logs + skips the bubble) on rename. Adding bubble #16 = one row +
 // drop image in `images/small/`. No other code changes.
@@ -1875,10 +1878,11 @@ const HERO_ITEMS = [
   { img: 'small_spinach_white_pizza.webp',      tier: 'md', resolve: m => m.whitePizzaMenu.items.find(p => p.name === 'Spinach') },
   { img: 'large_veggiewhite_pizza.webp',        tier: 'lg', resolve: m => m.whitePizzaMenu.items.find(p => p.name === 'Vegetarian') },
   { img: 'Large_georgesspecial_pizza.webp',     tier: 'lg', resolve: m => m.pizzaMenu.specialty.find(p => p.name === "George's Special") },
-  { img: 'Sm_Steak_Stromboli.webp',             tier: 'md', resolve: m => m.stromboliMenu.items.find(p => p.name === 'Steak Cheese & Sauce Stromboli') },
+  { img: 'large_stromboli.webp',                tier: 'md', resolve: m => m.stromboliMenu.items.find(p => p.name === 'Steak Cheese & Sauce Stromboli') },
   { img: 'small_fries_apps.webp',               tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'French Fries') },
   { img: 'megafries.webp',                      tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'Mega Fries') },
   { img: 'garlicknots.webp',                    tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'Garlic Knots (3)') },
+  { img: 'onionrings.webp',                     tier: 'md', resolve: m => m.sidesMenu.find(p => p.name === 'Onion Rings (12)') },
   { img: 'cansoda_drinks.webp',                 tier: 'md', resolve: m => m.drinksMenu.find(p => p.name === 'Soda (Can)') },
   { img: '20ozsoda_drinks.webp',                tier: 'md', resolve: m => m.drinksMenu.find(p => p.name === 'Soda (20 oz.)') },
   { img: '2Liter_drinks.webp',                  tier: 'md', resolve: m => m.drinksMenu.find(p => p.name === 'Soda (2 Liter)') },
@@ -1895,8 +1899,9 @@ const HERO_SPOTS = [
   { x: 560, y: 38 }, { x: 660, y: 68 }, { x: 770, y: 40 },
   { x: 875, y: 69 },
   { x: 960, y: 40 }, { x: 1045, y: 68 }, { x: 1130, y: 40 },
-  { x: 1215, y: 68 }, { x: 1295, y: 40 }, { x: 1375, y: 68 },
-  { x: 1455, y: 40 },
+  { x: 1215, y: 68 },                                            // (Onion Rings inserted here, shifts the rest right by one index)
+  { x: 1295, y: 40 }, { x: 1375, y: 68 }, { x: 1455, y: 40 },
+  { x: 1535, y: 68 },                                            // new slot for Cheesecake at the end
 ];
 
 // Proximity tuning — settled on Android across probe BUILDs 1-22. Don't fiddle.
@@ -1907,43 +1912,6 @@ const HERO_EASE = 0.18;                                  // lerp factor / frame 
 const HERO_MAX_SCALE = 1 + HERO_BOOST + HERO_FOCUS;      // ≈ 1.92
 const HERO_BASE_SCALE = 1 / HERO_MAX_SCALE;              // ≈ 0.521 (rasterize-large-scale-down)
 const HERO_PICK_MAX = HERO_RADIUS * 1.15;                // beyond → whitespace, no pick
-
-// Hero background A/B variants — CSS-only, zero bytes/zero requests.
-// Toggle via URL param: ?hero=1&bg=check  (or bg=linen / bg=bold)
-// Default (no bg param) = cream-inherits-page (current production state).
-// Picked variant becomes default once Demetrios chooses (one-line edit).
-const HERO_BG_VARIANTS = {
-  // Subtle muted-red 45° checker — gentle "Italian tablecloth" warmth without
-  // competing with the food photos. Tiles small (28px) so it reads as texture.
-  check: {
-    backgroundColor: '#F5F0E6',
-    backgroundImage:
-      'linear-gradient(45deg, rgba(196,30,58,0.09) 25%, transparent 25%, transparent 75%, rgba(196,30,58,0.09) 75%, rgba(196,30,58,0.09)),' +
-      'linear-gradient(45deg, rgba(196,30,58,0.09) 25%, transparent 25%, transparent 75%, rgba(196,30,58,0.09) 75%, rgba(196,30,58,0.09))',
-    backgroundSize: '28px 28px',
-    backgroundPosition: '0 0, 14px 14px',
-  },
-  // Warm paper / butcher-paper grain — neutral background with faint diagonal
-  // crosshatch. Closest to "deli wrap" or "linen" feel without going checkered.
-  linen: {
-    backgroundColor: '#F0E6D2',
-    backgroundImage:
-      'repeating-linear-gradient(45deg, rgba(139,69,19,0.04) 0, rgba(139,69,19,0.04) 1px, transparent 1px, transparent 6px),' +
-      'repeating-linear-gradient(-45deg, rgba(139,69,19,0.04) 0, rgba(139,69,19,0.04) 1px, transparent 1px, transparent 6px)',
-  },
-  // Bold traditional red+white pizzeria checker — big tiles (44px), full
-  // contrast. Maximum "Italian-American family pizzeria" signal but loudest.
-  bold: {
-    backgroundColor: '#FFFFFF',
-    backgroundImage:
-      'linear-gradient(45deg, #C41E3A 25%, transparent 25%),' +
-      'linear-gradient(-45deg, #C41E3A 25%, transparent 25%),' +
-      'linear-gradient(45deg, transparent 75%, #C41E3A 75%),' +
-      'linear-gradient(-45deg, transparent 75%, #C41E3A 75%)',
-    backgroundSize: '44px 44px',
-    backgroundPosition: '0 0, 0 22px, 22px -22px, -22px 0',
-  },
-};
 
 // ============ HERO INFO POPUP — minimal desc + Add card ============
 // For hero bubbles whose item is a "set" (no customization flags) but carries
@@ -2010,17 +1978,6 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   // For "set" items (no customization flags but carries a `desc`) — opens a
   // tiny HeroInfoPopup with Includes line + Add button. Stores { item, img }.
   const [infoItem, setInfoItem] = useState(null);
-
-  // Background A/B variant — read once at mount from ?bg=check|linen|bold.
-  // No param = cream-inherits-page (current production default).
-  const [bgVariant] = useState(() => {
-    try {
-      const url = new URLSearchParams(window.location.search);
-      const v = url.get('bg');
-      return HERO_BG_VARIANTS[v] ? v : null;
-    } catch { return null; }
-  });
-  const bgStyle = bgVariant ? HERO_BG_VARIANTS[bgVariant] : null;
 
   // === Motion in refs only — perf contract ===
   const pointerRef = useRef({ x: -9999, y: -9999, active: false });
@@ -2169,6 +2126,12 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
   // guards so we can't double-render two modals.
   const onTap = (it, img) => {
     if (draggedRef.current) return;                                        // ignore drag-end clicks
+    // Hero-attribution telemetry — fires for every real tap, regardless of
+    // which downstream dispatch path the item routes to. Post-launch the
+    // funnel can compare hero_tap → add_to_cart vs. full-menu → add_to_cart
+    // to answer "did the hero actually drive conversions, or did customers
+    // just scroll past it?"
+    trackEvent('hero_tap', { item_name: it.name });
     if (it.hasCondiments || it.hasDippingSauce || it.hasSize) { setCustomizing(it); return; }
     if (it.hasStromboliMods) { setCustomizing(it); return; }
     if (it.prices) { setCustomizing(it); return; }                         // pizzas (anything left with prices)
@@ -2195,24 +2158,12 @@ function FloatingMenuHero({ menus, onAddToCart, onScrollToFullMenu }) {
         style={{
           position: 'relative', height: 480,
           overflowX: 'auto', overflowY: 'hidden',
-          // No ?bg= param → background inherits page cream (current production).
-          // ?bg=check|linen|bold → variant style is spread in below, overriding.
+          // Background inherits page cream — the bubble drop-shadows carry
+          // the "sticker on a table" depth; no dark stage needed.
           WebkitOverflowScrolling: 'touch',
           touchAction: 'pan-x',
-          ...(bgStyle || {}),
         }}
       >
-        {bgVariant && (
-          <div style={{
-            position: 'absolute', top: 6, right: 6, zIndex: 5,
-            background: 'rgba(0,0,0,0.6)', color: '#fff',
-            padding: '2px 8px', borderRadius: 4,
-            fontSize: 10, fontFamily: "'Oswald', sans-serif",
-            letterSpacing: '0.5px', pointerEvents: 'none',
-          }}>
-            BG: {bgVariant.toUpperCase()}
-          </div>
-        )}
         <div ref={canvasRef} style={{ position: 'relative', height: '100%', minWidth: canvasMinWidth }}>
           {HERO_ITEMS.map((h, i) => {
             // Resolve per-bubble so a single miss can't reflow the whole row.
