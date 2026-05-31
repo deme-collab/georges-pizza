@@ -7413,17 +7413,25 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
           {/* Free-2L promo suppressed when any meal-deal bundle is in the cart —
               every bundle already includes a 2-Liter, so the nudge would just
-              confuse the customer. */}
+              confuse the customer.
+              Server-side: backend/promos.js authoritatively injects this line
+              into order.items so kitchen ticket + emails + DB all see it. The
+              UI line below is the customer-facing surface of the same promo. */}
           {!cart.some(i => i.isMealDeal) && subtotal >= 45 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, color: '#228B22' }}>
-              <span>🎉 FREE 2 Liter Soda!</span>
-              <span style={{ fontWeight: 600 }}>$0.00</span>
+            <div style={{ paddingTop: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#228B22' }}>
+                <span style={{ fontWeight: 600 }}>🎉 1 FREE 2L Soda <span style={{ fontWeight: 400 }}>(added to order)</span></span>
+                <span style={{ fontWeight: 600 }}>$0.00</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#555', marginTop: 2, fontStyle: 'italic' }}>
+                One per order · kitchen picks the flavor based on what's in stock.
+              </div>
             </div>
           )}
 
           {!cart.some(i => i.isMealDeal) && subtotal > 0 && subtotal < 45 && (
             <div style={{ fontSize: 12, color: '#555', paddingTop: 8, fontStyle: 'italic' }}>
-              💡 Add ${(45 - subtotal).toFixed(2)} more for a FREE 2 Liter Soda!
+              💡 Add ${(45 - subtotal).toFixed(2)} more for 1 FREE 2L Soda!
             </div>
           )}
           
