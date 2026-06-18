@@ -1707,7 +1707,7 @@ function GeorgesPizza() {
             <div style={{ background: '#1a1a1a', color: 'white', padding: 20, marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, textAlign: 'center', fontSize: 13 }}>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>LOCATION</div>201 W. Girard Ave<br/>Philadelphia, PA</div>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>HOURS</div>Mon-Thu: 11am-10pm<br/>Fri-Sat: 11am-11pm<br/>Sun: 2pm-10pm</div>
-              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>${DELIVERY_MINIMUM} min • {DELIVERY_FEE === 0 ? <span style={{ color: '#90EE90', fontWeight: 700 }}>FREE</span> : `$${DELIVERY_FEE} fee`}<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span></div>
+              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>${DELIVERY_MINIMUM} min • {DELIVERY_FEE === 0 ? <span style={{ color: '#90EE90', fontWeight: 700 }}>FREE</span> : `$${DELIVERY_FEE} fee`}<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span><br/><span style={{ opacity: 0.55, fontSize: 10 }}>excludes lunch specials</span></div>
             </div>
           </>
         )}
@@ -7435,7 +7435,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
           {!cart.some(i => i.isMealDeal) && !cart.some(i => Array.isArray(i.mods) && i.mods.includes('Lunch Special')) && subtotal > 0 && subtotal < 45 && (
             <div style={{ fontSize: 12, color: '#555', paddingTop: 8, fontStyle: 'italic' }}>
-              💡 Add ${(45 - subtotal).toFixed(2)} more for 1 FREE 2L Soda!
+              💡 Add ${(45 - subtotal).toFixed(2)} more for 1 FREE 2L Soda! <span style={{ opacity: 0.7 }}>(excludes lunch specials)</span>
             </div>
           )}
           
