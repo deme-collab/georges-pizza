@@ -7413,11 +7413,15 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
 
           {/* Free-2L promo suppressed when any meal-deal bundle is in the cart —
               every bundle already includes a 2-Liter, so the nudge would just
-              confuse the customer.
+              confuse the customer. Also suppressed when any lunch special is in
+              the cart: lunch specials are already discounted, so they don't earn
+              the freebie (mirrors backend/promos.js, which won't add the soda).
+              Keeping both gates in sync prevents the banner from promising a 2L
+              the kitchen ticket won't show.
               Server-side: backend/promos.js authoritatively injects this line
               into order.items so kitchen ticket + emails + DB all see it. The
               UI line below is the customer-facing surface of the same promo. */}
-          {!cart.some(i => i.isMealDeal) && subtotal >= 45 && (
+          {!cart.some(i => i.isMealDeal) && !cart.some(i => Array.isArray(i.mods) && i.mods.includes('Lunch Special')) && subtotal >= 45 && (
             <div style={{ paddingTop: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: '#228B22' }}>
                 <span style={{ fontWeight: 600 }}>🎉 1 FREE 2L Soda <span style={{ fontWeight: 400 }}>(added to order)</span></span>
@@ -7429,7 +7433,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
             </div>
           )}
 
-          {!cart.some(i => i.isMealDeal) && subtotal > 0 && subtotal < 45 && (
+          {!cart.some(i => i.isMealDeal) && !cart.some(i => Array.isArray(i.mods) && i.mods.includes('Lunch Special')) && subtotal > 0 && subtotal < 45 && (
             <div style={{ fontSize: 12, color: '#555', paddingTop: 8, fontStyle: 'italic' }}>
               💡 Add ${(45 - subtotal).toFixed(2)} more for 1 FREE 2L Soda!
             </div>
