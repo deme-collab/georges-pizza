@@ -849,7 +849,7 @@ function GeorgesPizza() {
   const hoagiesMenu = [
     { name: 'Regular Hoagie', price: 10, hasHoagieMods: true, ingredients: ['lettuce', 'tomato', 'onion', 'oil', 'mayo'] },
     { name: 'The Submarine', desc: 'American Cheese, Ham, Turkey', price: 10, hasHoagieMods: true, ingredients: ['american-cheese', 'ham', 'turkey', 'lettuce', 'tomato', 'onion', 'oil', 'mayo'] },
-    { name: 'Italian', desc: 'Provolone, Ham, Genoa Salami & Cappicola', price: 12, hasHoagieMods: true, ingredients: ['provolone', 'ham', 'genoa-salami', 'cappicola', 'lettuce', 'tomato', 'onion', 'oil'] },
+    { name: 'Italian Hoagie', desc: 'Provolone, Ham, Genoa Salami & Cappicola', price: 12, hasHoagieMods: true, ingredients: ['provolone', 'ham', 'genoa-salami', 'cappicola', 'lettuce', 'tomato', 'onion', 'oil'] },
     { name: 'Turkey & Cheese', price: 12, hasHoagieMods: true, ingredients: ['turkey', 'american-cheese', 'lettuce', 'tomato', 'onion', 'oil', 'mayo'] },
     { name: 'Tuna & Cheese', price: 12, hasHoagieMods: true, ingredients: ['tuna', 'american-cheese', 'lettuce', 'tomato', 'onion', 'oil', 'mayo'] },
     { name: 'Ham & Cheese', price: 10, hasHoagieMods: true, ingredients: ['ham', 'american-cheese', 'lettuce', 'tomato', 'onion', 'oil', 'mayo'] },
