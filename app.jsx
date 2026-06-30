@@ -3811,6 +3811,8 @@ function LunchSpecialCustomizer({ item, onClose, onAdd }) {
   // Steak cheese choice (for #2, #4, #6) - American included; Cooper Sharp upgrade.
   const steakCheeseOptions = [
     { name: 'American', price: 0 },
+    { name: 'Provolone', price: 1.5 },
+    { name: 'Whiz', price: 2 },
     { name: 'Cooper Sharp', price: 2 },
   ];
   const [steakCheese, setSteakCheese] = useState('American');
@@ -5712,8 +5714,8 @@ function SteakCustomizer({ item, onClose, onAdd }) {
 
   const cheeseOpts = [
     { id: 'american', name: 'American', price: 0 },
-    { id: 'provolone', name: 'Provolone', price: 0 },
-    { id: 'whiz', name: 'Cheese Whiz', price: 0 },
+    { id: 'provolone', name: 'Provolone', price: 1.5 },
+    { id: 'whiz', name: 'Cheese Whiz', price: 2 },
     { id: 'cooper-sharp', name: 'Cooper Sharp', price: 2 },
     { id: 'none', name: 'No Cheese', price: 0 },
   ];
@@ -5835,8 +5837,8 @@ function SteakPlatterCustomizer({ item, onClose, onAdd }) {
 
   const cheeseOpts = [
     { id: 'american', name: 'American', price: 0 },
-    { id: 'provolone', name: 'Provolone', price: 0 },
-    { id: 'whiz', name: 'Cheese Whiz', price: 0 },
+    { id: 'provolone', name: 'Provolone', price: 1.5 },
+    { id: 'whiz', name: 'Cheese Whiz', price: 2 },
     { id: 'cooper-sharp', name: 'Cooper Sharp', price: 2 },
     { id: 'none', name: 'No Cheese', price: 0 },
   ];
