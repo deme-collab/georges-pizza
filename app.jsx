@@ -181,6 +181,9 @@ function MaintenancePage({ message }) {
               <span>Sunday:</span><span>2pm - 10pm</span>
             </div>
           </div>
+          <p style={{ fontSize: 12, color: '#777', margin: '10px 0 0 0', textAlign: 'center' }}>
+            Online orders accepted until 30 minutes before closing
+          </p>
         </div>
         
         {/* Alternative Ordering */}
@@ -268,11 +271,24 @@ const STORE_HOURS = {
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Online orders stop this many minutes before closing (kitchen needs time to make the last orders)
+const LAST_ORDER_CUTOFF_MIN = 30;
+
 // Format hour to readable string
 function formatHour(hour) {
   if (hour === 0 || hour === 12) return '12pm';
   if (hour < 12) return `${hour}am`;
   return `${hour - 12}pm`;
+}
+
+// Format minutes-since-midnight to readable string (e.g. 1290 -> '9:30pm')
+function formatMinutes(totalMin) {
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  const suffix = h >= 12 ? 'pm' : 'am';
+  let displayH = h % 12;
+  if (displayH === 0) displayH = 12;
+  return m === 0 ? `${displayH}${suffix}` : `${displayH}:${m.toString().padStart(2, '0')}${suffix}`;
 }
 
 // =============================================================================
@@ -371,25 +387,36 @@ function getStoreStatus() {
     }
   }
   
-  const isOpen = hour >= hours.open && hour < hours.close;
-  
+  // Work in minutes-since-midnight so the last-order cutoff (e.g. 9:30pm) works
+  const nowMin = hour * 60 + now.getMinutes();
+  const openMin = hours.open * 60;
+  const closeMin = hours.close * 60;
+  const lastOrderMin = closeMin - LAST_ORDER_CUTOFF_MIN;
+
+  // isOpen means "accepting online orders" — it turns off at the cutoff,
+  // even though the shop itself stays open until closing
+  const isOpen = nowMin >= openMin && nowMin < lastOrderMin;
+
   if (isOpen) {
     return {
       isOpen: true,
-      message: `Open until ${formatHour(hours.close)}`,
+      message: `Open until ${formatHour(hours.close)} • Last online orders ${formatMinutes(lastOrderMin)}`,
       isHoliday: false
     };
   } else {
     // If before today's opening
-    if (hour < hours.open) {
+    if (nowMin < openMin) {
       return {
         isOpen: false,
         message: `Opens today at ${formatHour(hours.open)}`,
         isHoliday: false
       };
     }
-    
-    // After closing, find next opening (check for holidays)
+
+    // Between the cutoff and closing: shop is open for walk-ins, online ordering is done for tonight
+    const pastCutoff = nowMin >= lastOrderMin && nowMin < closeMin;
+
+    // After the cutoff or closing, find next opening (check for holidays)
     for (let i = 1; i <= 7; i++) {
       const nextDate = new Date(now);
       nextDate.setDate(now.getDate() + i);
@@ -399,14 +426,18 @@ function getStoreStatus() {
         const dayName = i === 1 ? 'tomorrow' : DAY_NAMES[nextDay];
         return {
           isOpen: false,
-          message: `Opens ${dayName} at ${formatHour(nextHours.open)}`,
+          pastCutoff,
+          message: pastCutoff
+            ? `Online ordering closed for tonight • Opens ${dayName} at ${formatHour(nextHours.open)}`
+            : `Opens ${dayName} at ${formatHour(nextHours.open)}`,
           isHoliday: false
         };
       }
     }
-    
+
     return {
       isOpen: false,
+      pastCutoff,
       message: `Opens soon`,
       isHoliday: false
     };
@@ -1706,7 +1737,7 @@ function GeorgesPizza() {
             {/* Info Bar */}
             <div style={{ background: '#1a1a1a', color: 'white', padding: 20, marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, textAlign: 'center', fontSize: 13 }}>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>LOCATION</div>201 W. Girard Ave<br/>Philadelphia, PA</div>
-              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>HOURS</div>Mon-Thu: 11am-10pm<br/>Fri-Sat: 11am-11pm<br/>Sun: 2pm-10pm</div>
+              <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>HOURS</div>Mon-Thu: 11am-10pm<br/>Fri-Sat: 11am-11pm<br/>Sun: 2pm-10pm<br/><span style={{ opacity: 0.6, fontSize: 11 }}>Last online orders 30 min before close</span></div>
               <div><div style={{ opacity: 0.6, fontSize: 11, marginBottom: 4 }}>DELIVERY</div>${DELIVERY_MINIMUM} min • {DELIVERY_FEE === 0 ? <span style={{ color: '#90EE90', fontWeight: 700 }}>FREE</span> : `$${DELIVERY_FEE} fee`}<br/><span style={{ color: '#90EE90' }}>Free 2L w/ $45+</span><br/><span style={{ opacity: 0.55, fontSize: 10 }}>excludes specials & deals</span></div>
             </div>
           </>
@@ -6568,9 +6599,11 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     }
     if (cart.length === 0) return alert('Your cart is empty');
     
-    // Check ASAP when store is closed
+    // Check ASAP when store is closed (or past the last-order cutoff)
     if (scheduleType === 'asap' && !storeStatus.isOpen) {
-      return alert("We're currently closed. Please schedule your order for when we're open.");
+      return alert(storeStatus.pastCutoff
+        ? "We've stopped taking online orders for tonight. You can schedule an order for our next open day."
+        : "We're currently closed. Please schedule your order for when we're open.");
     }
     
     if (scheduleType === 'scheduled' && (!scheduledDate || !scheduledTime)) {
@@ -6962,7 +6995,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         
         {scheduleType === 'asap' && !storeStatus.isOpen && (
           <div style={{ background: '#FFF3E0', padding: 12, fontSize: 14, color: '#E65100' }}>
-            We're currently closed. Please schedule your order for when we're open.
+            {storeStatus.pastCutoff
+              ? "We've stopped taking online orders for tonight. You can schedule an order below."
+              : "We're currently closed. Please schedule your order for when we're open."}
           </div>
         )}
 
