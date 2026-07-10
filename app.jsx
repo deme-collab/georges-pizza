@@ -576,6 +576,11 @@ function GeorgesPizza() {
     return () => clearInterval(interval);
   }, []);
 
+  // Reset scroll to top when opening a menu category (covers card, keyboard, and the
+  // checkout "view related category" path, which also flips currentView). Without this
+  // the new CategoryView inherits the home grid's scroll offset and lands mid/bottom.
+  useEffect(() => { if (selectedCategory) window.scrollTo(0, 0); }, [selectedCategory]);
+
   // REDIRECT RECOVERY: Handle CashApp/Venmo/bank redirect returns
   // When payment methods require a redirect, the page reloads and all React state is lost.
   // Stripe appends ?payment_intent=xxx&redirect_status=succeeded to the URL on return.
