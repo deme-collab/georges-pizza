@@ -30,6 +30,27 @@ function trackEvent(eventName, params = {}) {
   }
 }
 
+// Google Ads "Purchase" conversion action (the AW tag itself is loaded in index.html).
+// GA4 and Google Ads share the same dataLayer; send_to routes this event to Ads only.
+const ADS_PURCHASE_SEND_TO = 'AW-17962727150/CjokCO_kgvsbEO7tpfVC';
+
+// Fire purchase tracking to BOTH GA4 and Google Ads. transaction_id lets Google
+// dedupe if a confirmation path ever fires twice for the same order.
+function trackPurchase({ orderNumber, total, items }) {
+  trackEvent('purchase', {
+    transaction_id: orderNumber,
+    value: total,
+    currency: 'USD',
+    items: items?.map(i => ({ item_name: i.name, price: i.price })) || [],
+  });
+  trackEvent('conversion', {
+    send_to: ADS_PURCHASE_SEND_TO,
+    value: total,
+    currency: 'USD',
+    transaction_id: orderNumber,
+  });
+}
+
 // =============================================================================
 // MARKETING ATTRIBUTION CAPTURE
 // =============================================================================
@@ -598,7 +619,12 @@ function GeorgesPizza() {
     
     const completeRedirectOrder = async () => {
       const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
-      
+
+      // Read the pending order up front — STEP 1 removes it from sessionStorage
+      // before we'd otherwise get the order total for conversion tracking.
+      let pendingOrder = null;
+      try { pendingOrder = JSON.parse(sessionStorage.getItem('gp2_pending_order')); } catch (e) {}
+
       try {
         // STEP 1: Check if the webhook already processed this order
         // Give webhook a moment to fire (it's usually faster than the redirect)
@@ -616,13 +642,15 @@ function GeorgesPizza() {
             webhookCompleted: true,
           });
           setCurrentView('confirmation');
+          // Track purchase (GA4 + Ads). No order number client-side here, so the
+          // Stripe payment intent ID serves as the unique transaction_id.
+          trackPurchase({ orderNumber: paymentIntentId, total: pendingOrder?.total, items: pendingOrder?.items });
           return;
         }
-        
+
         // STEP 2: Webhook hasn't processed yet. Try submitting via sessionStorage
-        const saved = sessionStorage.getItem('gp2_pending_order');
-        if (saved) {
-          const orderData = JSON.parse(saved);
+        if (pendingOrder) {
+          const orderData = pendingOrder;
           orderData.paymentIntentId = paymentIntentId;
           
           const response = await fetch(`${API_URL}/api/orders`, {
@@ -648,6 +676,7 @@ function GeorgesPizza() {
               discount: orderData.discount || 0,
             });
             setCurrentView('confirmation');
+            trackPurchase({ orderNumber: paymentIntentId, total: orderData.total, items: orderData.items });
             return;
           }
         }
@@ -665,6 +694,7 @@ function GeorgesPizza() {
               webhookCompleted: true,
             });
             setCurrentView('confirmation');
+            trackPurchase({ orderNumber: paymentIntentId, total: pendingOrder?.total, items: pendingOrder?.items });
             return;
           }
         }
@@ -1785,13 +1815,8 @@ function GeorgesPizza() {
             onOrderSuccess={(orderData) => {
               setConfirmedOrder(orderData);
               setCurrentView('confirmation');
-              // GA4: track completed purchase
-              trackEvent('purchase', {
-                transaction_id: orderData.orderNumber,
-                value: orderData.total,
-                currency: 'USD',
-                items: orderData.items?.map(i => ({ item_name: i.name, price: i.price })) || [],
-              });
+              // Track completed purchase (GA4 + Google Ads conversion)
+              trackPurchase(orderData);
               setCart([]);
               setSelectedCategory(null);
               setCouponApplied(null);
