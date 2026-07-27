@@ -62,6 +62,17 @@ function trackPurchase({ orderNumber, total, items }) {
 
 const ATTRIBUTION_KEY = 'gp_attribution';
 
+// Valid category ids for ?category= deep links (Google Ads landing URLs send
+// shoppers straight to a section, e.g. /?category=steaks). Kept as a hoisted
+// module constant — the in-component `categories` array (~line 763) is defined
+// AFTER the useState that reads this, so validating against it from the lazy
+// initializer would throw a TDZ ReferenceError. Keep this list in sync with
+// that array's ids.
+const VALID_CATEGORY_IDS = new Set([
+  'pizza', 'steaks', 'hoagies', 'sandwiches', 'wings', 'stromboli',
+  'salads', 'pasta-seafood', 'burgers', 'gyros', 'sides', 'drinks',
+]);
+
 (function captureAttribution() {
   if (typeof window === 'undefined') return;
   try {
@@ -490,7 +501,18 @@ function GeorgesPizza() {
   const [orderType, setOrderType] = useState(''); // No default — customer must explicitly choose pickup or delivery
   const [cart, setCart] = useState([]);
   const [currentView, setCurrentView] = useState('home');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  // Deep-link support: /?category=steaks (or wings, etc.) lands the visitor
+  // directly in that section instead of the home/hero view. Lazy initializer
+  // (not a mount effect) so the correct section shows on the FIRST render — no
+  // flash of the home grid on a paid ad click. Invalid/missing → null (home).
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    try {
+      const cat = new URLSearchParams(window.location.search).get('category');
+      if (!cat) return null;
+      const id = cat.toLowerCase();
+      return VALID_CATEGORY_IDS.has(id) ? id : null;
+    } catch { return null; } // no window / Safari private mode → default home
+  });
 
   // === Floating Menu Hero (M4) — DEFAULT ON (launched 2026-05-26) ===
   // ?hero=1  → force ON for the current session (no-op now that default is ON, but
