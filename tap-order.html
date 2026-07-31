@@ -346,6 +346,14 @@ const ICECREAM_GROUPS = [ { label:'Flavor', type:'single', options:[{label:'Choc
 const MILKSHAKE_GROUPS = [ { label:'Flavor', type:'single', options:[{label:'Chocolate',token:'chocolate'},{label:'Vanilla',token:'vanilla'},{label:'Strawberry',token:'strawberry'},{label:'Black & White',token:'black and white'}] } ];
 const CHIPS_GROUPS = [ { label:'Flavor', type:'single', options:[{label:'BBQ',token:'bbq chips'},{label:'Classic',token:'classic chips'},{label:'Sour Cream & Onion',token:'sour cream chips'}] } ];
 
+// Half & Half pizza: Large/XL only (website rule); priced at the MORE EXPENSIVE half by
+// the engine. No extra-topping group (engine doesn't charge whole-pie toppings here — leak).
+const HALF_PIZZAS = ['Plain','Pepperoni','Mushroom','Sausage','Ham','Onion','Green Peppers','Ground Beef','Black Olives','Bacon','Steak',"George's Special",'Grilled Chicken','BBQ Chicken','Buffalo Chicken','Meat Lover'];
+const HALFHALF_GROUPS = [
+  { label:'First Half', type:'single', bucket:'half1', required:true, options: HALF_PIZZAS.map(n=>({label:n,token:n})) },
+  { label:'Second Half', type:'single', bucket:'half2', required:true, options: HALF_PIZZAS.map(n=>({label:n,token:n})) },
+];
+
 const PASTA_GROUPS = [
   { label:'Pasta', type:'single', options:[{label:'Spaghetti',token:'spaghetti'},{label:'Ravioli',token:'ravioli'}] },
   { label:'Dressing', type:'single', options:[{label:'Ranch',token:'ranch dressing'},{label:'Thousand Island',token:'thousand island'},{label:'Creamy Italian',token:'creamy italian'},{label:'Lite Ranch',token:'lite ranch'},{label:'Honey Mustard',token:'honey mustard'},{label:'Bleu Cheese',token:'bleu cheese dressing'},{label:'Oil & Vinegar',token:'oil & vinegar'},{label:'No Dressing',token:'no dressing'}] },
@@ -361,9 +369,10 @@ const nm = arr => arr.map(name => ({ name }));                    // name-only (
 
 const MENU = {
   pizza: { label:'Pizza', cat:'pizza', sizes: PIZZA_SIZES, sizeRequired:true, groups:[{label:'Extra Toppings', type:'multi', options: PIZZA_TOPPINGS}],
-    items: nm(['Plain','Pepperoni','Mushroom','Sausage','Ham','Onion','Green Peppers','Ground Beef','Imported Anchovies','Black Olives','Bacon','Steak',
+    items: [ ...nm(['Plain','Pepperoni','Mushroom','Sausage','Ham','Onion','Green Peppers','Ground Beef','Imported Anchovies','Black Olives','Bacon','Steak',
            "George's Special",'Grilled Chicken','BBQ Chicken','Buffalo Chicken','Meat Lover',
-           'Plain White','Spinach','Broccoli','Vegetarian','Ricotta & Mozzarella','Greek','Hawaiian']) },
+           'Plain White','Spinach','Broccoli','Vegetarian','Ricotta & Mozzarella','Greek','Hawaiian']),
+           { name:'half & half', label:'Half & Half', cat:'half_half_pizza', sizes: [{label:'Large',token:'large'},{label:'X-Large',token:'xlarge'}], groups: HALFHALF_GROUPS } ] },
   steaks: { label:'Steaks', cat:'steaks', groups: STEAK_GROUPS,
     items: fp([['Steak',10],['Cheese Steak',11],['Cheese Steak Hoagie',12],['Pizza Steak',12],['Pepperoni Cheese Steak',12],
            ['Chicken Steak',11],['Chicken Cheese Steak',12],['Grilled Chicken Cheese Steak',13],['Buffalo Chicken Cheese Steak',13],
@@ -507,7 +516,7 @@ function openItem(it) {
       o.innerHTML = `<span>${op.label}</span>${op.note?`<span class="op-price">${op.note}</span>`:''}`;
       o.onclick = () => {
         if (grp.type==='single') {
-          [...opts.children].forEach(c=>c.classList.remove('sel')); o.classList.add('sel'); modal.single[gi]=op.token;
+          [...opts.children].forEach(c=>c.classList.remove('sel')); o.classList.add('sel'); modal.single[gi]=op.token; refreshAdd();
         } else {
           if (!modal.multi[gi]) modal.multi[gi] = new Set();
           const set = modal.multi[gi];
@@ -534,19 +543,27 @@ function openItem(it) {
   refreshAdd();
 }
 function bumpQty(d){ modal.qty = Math.max(1, Math.min(20, modal.qty + d)); document.getElementById('qval').textContent = modal.qty; }
-function refreshAdd(){ document.getElementById('addBtn').disabled = !!(modal.sizes && !modal.size); }
+function refreshAdd(){
+  let blocked = !!(modal.sizes && !modal.size);
+  modal.groups.forEach((grp, gi) => { if (grp.required && !modal.single[gi]) blocked = true; });
+  document.getElementById('addBtn').disabled = blocked;
+}
 function closeModal(){ document.getElementById('modalBg').classList.remove('active'); modal=null; }
 
 function addToCart() {
   if (!modal) return;
   const buckets = { main: [], fries: [], drink: [] };
+  const halves = {};
   modal.groups.forEach((grp, gi) => {
     const bucket = grp.bucket || 'main';
+    if (bucket === 'half1' || bucket === 'half2') { const t = modal.single[gi]; if (t) halves[bucket] = t; return; }
     if (grp.type === 'single') { const t = modal.single[gi]; if (t) buckets[bucket].push(t); }
     else { (modal.multi[gi] || new Set()).forEach(t => buckets[bucket].push(t)); }
   });
+  const label = halves.half1 ? `Half ${halves.half1} / Half ${halves.half2}` : (modal.item.label || modal.item.name);
   cart.push({ category: modal.cat, item: modal.item.name, size: modal.size || null,
-    mods: buckets, qty: modal.qty, _label: modal.item.name, _sizeLabel: sizeLabel(modal) });
+    half1: halves.half1 || null, half2: halves.half2 || null,
+    mods: buckets, qty: modal.qty, _label: label, _sizeLabel: sizeLabel(modal) });
   closeModal(); renderCart();
 }
 function sizeLabel(m){ if(!m.size) return ''; const s=(m.sizes||[]).find(x=>x.token===m.size); return s?s.label:''; }
@@ -575,7 +592,8 @@ function removeLine(i){ cart.splice(i,1); renderCart(); }
 async function reprice() {
   const totals = document.getElementById('totals');
   if (!cart.length) { totals.style.display='none'; lastPricedOrder=null; updateSendState(); return; }
-  const parsed = { items: cart.map(c => ({ category:c.category, item:c.item, size:c.size, mods:c.mods, qty:c.qty })),
+  const parsed = { items: cart.map(c => { const it = { category:c.category, item:c.item, size:c.size, mods:c.mods, qty:c.qty };
+    if (c.half1) { it.half1 = c.half1; it.half2 = c.half2; } return it; }),
     orderType: orderType, paymentType: payType };
   if (orderType === 'delivery') parsed.delivery = {
     address: (document.getElementById('delAddress').value || '').trim(),
