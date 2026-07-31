@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>George's Tap Order — PILOT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================================
+     TAP-TO-BUILD ORDER — ISOLATED PILOT (steaks/pizza/appetizers)
+     - Standalone, not linked from the site. Plain JS, no React/Babel.
+     - NEVER computes prices itself: emits a `parsed` object and asks the
+       backend /price endpoint to price it. Prices always from the engine.
+     - "Send" is STUBBED to screen — does NOT print or create a real order.
+     - Designed for 50+ users: large tiles, large type, high contrast.
+     ========================================================================= */
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --red: #c1272d; --red-dark: #9e1f24; --ink: #1a1a1a; --muted: #666;
+    --line: #ddd; --bg: #f4f4f4; --green: #1e8f4e; --tile: #fff;
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif; background: var(--bg);
+    color: var(--ink); font-size: 20px; -webkit-text-size-adjust: 100%;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; }
+
+  /* ---- PIN screen ---- */
+  .pin-screen {
+    position: fixed; inset: 0; background: var(--ink); color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; z-index: 100;
+  }
+  .pin-screen h1 { font-size: 44px; font-weight: 700; letter-spacing: 1px; }
+  .pin-screen p { font-size: 22px; color: #bbb; }
+  .pin-input {
+    font-family: inherit; font-size: 40px; text-align: center; letter-spacing: 10px;
+    width: 260px; padding: 16px; border-radius: 12px; border: 3px solid #555; background: #222; color: #fff;
+  }
+  .pin-btn {
+    font-size: 26px; font-weight: 600; background: var(--red); color: #fff;
+    padding: 18px 60px; border-radius: 12px; min-width: 260px;
+  }
+  .pin-btn:disabled { opacity: .5; }
+  .pin-error { color: #ff8080; font-size: 20px; min-height: 24px; }
+
+  /* ---- App shell ---- */
+  #app { display: none; height: 100vh; grid-template-columns: 1fr 400px; grid-template-rows: auto 1fr; }
+  #app.active { display: grid; }
+  header {
+    grid-column: 1 / 3; background: var(--red); color: #fff; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header .title { font-size: 30px; font-weight: 700; }
+  header .pilot { font-size: 15px; background: #fff; color: var(--red-dark); padding: 5px 12px; border-radius: 20px; font-weight: 600; letter-spacing: .5px; }
+
+  /* ---- Menu column ---- */
+  .menu-col { grid-row: 2; overflow: hidden; display: flex; flex-direction: column; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px 6px; flex: 0 0 auto; }
+  .tab {
+    font-size: 19px; font-weight: 600; padding: 12px 18px; border-radius: 10px;
+    background: #e2e2e2; color: #444;
+  }
+  .tab.active { background: var(--ink); color: #fff; }
+  .items { flex: 1; overflow-y: auto; padding: 16px 20px 40px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; align-content: start; }
+  .tile {
+    background: var(--tile); border: 2px solid var(--line); border-radius: 14px;
+    min-height: 120px; padding: 16px 14px; display: flex; flex-direction: column; justify-content: space-between;
+    text-align: left; transition: transform .05s;
+  }
+  .tile:active { transform: scale(.97); border-color: var(--red); }
+  .tile .name { font-size: 22px; font-weight: 600; line-height: 1.15; }
+  .tile .price { font-size: 19px; color: var(--muted); margin-top: 8px; }
+
+  /* ---- Cart column ---- */
+  .cart-col { grid-row: 2; background: #fff; border-left: 2px solid var(--line); display: flex; flex-direction: column; }
+  .cart-head { padding: 16px 20px 10px; font-size: 24px; font-weight: 700; }
+  .order-meta { padding: 0 20px 12px; border-bottom: 2px solid var(--line); }
+  .seg { display: flex; gap: 8px; margin-bottom: 8px; }
+  .seg-btn { flex: 1; font-size: 19px; font-weight: 600; padding: 13px; border-radius: 10px; background: #e2e2e2; color: #444; }
+  .seg-btn.active { background: var(--red); color: #fff; }
+  .del-input { width: 100%; font-family: inherit; font-size: 19px; padding: 13px 14px; border: 2px solid var(--line); border-radius: 10px; margin-top: 8px; }
+  .del-input:focus { outline: none; border-color: var(--red); }
+  .cart-items { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .cart-empty { color: var(--muted); text-align: center; padding: 40px 20px; font-size: 20px; }
+  .cart-line { padding: 12px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .cart-line .ci-name { font-size: 20px; font-weight: 600; }
+  .cart-line .ci-mods { font-size: 16px; color: var(--muted); margin-top: 3px; }
+  .cart-line .ci-price { font-size: 20px; font-weight: 600; white-space: nowrap; }
+  .ci-remove { background: none; color: var(--red); font-size: 15px; margin-top: 4px; text-decoration: underline; padding: 4px 0; }
+  .totals { border-top: 2px solid var(--line); padding: 14px 20px; font-size: 20px; }
+  .totals .row { display: flex; justify-content: space-between; margin: 4px 0; }
+  .totals .grand { font-size: 30px; font-weight: 700; color: var(--green); margin-top: 6px; }
+  .cart-actions { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-primary { background: var(--green); color: #fff; font-size: 24px; font-weight: 600; padding: 20px; border-radius: 12px; }
+  .btn-secondary { background: #e2e2e2; color: #333; font-size: 20px; font-weight: 600; padding: 16px; border-radius: 12px; }
+  .btn-primary:disabled { opacity: .45; }
+
+  /* ---- Modal ---- */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+  .modal-bg.active { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 720px; max-height: 92vh; display: flex; flex-direction: column; }
+  .modal-head { padding: 20px 24px; border-bottom: 2px solid var(--line); font-size: 30px; font-weight: 700; }
+  .modal-body { overflow-y: auto; padding: 12px 24px; }
+  .mgroup { margin: 18px 0; }
+  .mgroup h3 { font-size: 22px; font-weight: 600; margin-bottom: 10px; color: var(--red-dark); }
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .opt {
+    border: 2px solid var(--line); border-radius: 12px; padding: 16px 14px; font-size: 20px;
+    background: #fff; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .opt.sel { border-color: var(--green); background: #eafaf0; font-weight: 600; }
+  .opt .op-price { font-size: 17px; color: var(--muted); }
+  .qty-row { display: flex; align-items: center; gap: 18px; margin: 18px 0 6px; }
+  .qty-row h3 { font-size: 22px; font-weight: 600; color: var(--red-dark); }
+  .qbtn { width: 60px; height: 60px; font-size: 34px; font-weight: 700; background: #e2e2e2; border-radius: 12px; }
+  .qval { font-size: 30px; font-weight: 700; min-width: 40px; text-align: center; }
+  .modal-foot { padding: 16px 24px; border-top: 2px solid var(--line); display: flex; gap: 12px; }
+  .modal-foot button { flex: 1; font-size: 24px; font-weight: 600; padding: 18px; border-radius: 12px; }
+  .m-cancel { background: #e2e2e2; color: #333; }
+  .m-add { background: var(--green); color: #fff; }
+  .m-add:disabled { opacity: .45; }
+  .hint { font-size: 17px; color: var(--red); margin-top: 6px; }
+
+  /* ---- Ticket (stub) overlay ---- */
+  .ticket-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 60; padding: 20px; }
+  .ticket-bg.active { display: flex; }
+  .ticket { background: #fff; border-radius: 16px; max-width: 460px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .ticket .th { background: var(--ink); color: #fff; padding: 16px 20px; font-size: 24px; font-weight: 700; text-align: center; border-radius: 16px 16px 0 0; }
+  .ticket .stub-note { background: #fff3cd; color: #7a5b00; padding: 10px 20px; font-size: 16px; text-align: center; }
+  .ticket .tbody { padding: 16px 22px; font-size: 19px; }
+  .ticket .tline { padding: 8px 0; border-bottom: 1px dashed #ccc; }
+  .ticket .tt { font-weight: 700; font-size: 24px; text-align: right; padding: 14px 22px; }
+  .ticket .tclose { margin: 0 22px 22px; }
+  .spinner { display:inline-block; width:20px; height:20px; border:3px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div class="pin-screen" id="pinScreen">
+  <h1>George's Tap Order</h1>
+  <p>Enter staff PIN</p>
+  <input class="pin-input" id="pinInput" type="tel" inputmode="numeric" maxlength="8" autocomplete="off">
+  <div class="pin-error" id="pinError"></div>
+  <button class="pin-btn" id="pinBtn" onclick="verifyPin()">ENTER</button>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="title">George's Tap Order</div>
+    <div class="pilot">PILOT · not a live order</div>
+  </header>
+
+  <div class="menu-col">
+    <div class="tabs" id="tabs"></div>
+    <div class="items" id="items"></div>
+  </div>
+
+  <div class="cart-col">
+    <div class="cart-head">Order</div>
+    <div class="order-meta">
+      <div class="seg">
+        <button class="seg-btn active" id="typePickup" onclick="setType('to_go')">Pickup</button>
+        <button class="seg-btn" id="typeDelivery" onclick="setType('delivery')">Delivery</button>
+      </div>
+      <div id="pickupFields">
+        <input class="del-input" id="custName" placeholder="Name (optional)" autocomplete="off">
+      </div>
+      <div id="deliveryFields" style="display:none;">
+        <div class="seg">
+          <button class="seg-btn active" id="payCash" onclick="setPay('cash')">Cash</button>
+          <button class="seg-btn" id="payCard" onclick="setPay('card')">Card</button>
+        </div>
+        <input class="del-input" id="delAddress" placeholder="Delivery address" autocomplete="off" oninput="updateSendState()">
+        <input class="del-input" id="delPhone" type="tel" inputmode="tel" placeholder="Phone number" autocomplete="off">
+      </div>
+    </div>
+    <div class="cart-items" id="cartItems"><div class="cart-empty">Tap an item to start</div></div>
+    <div class="totals" id="totals" style="display:none;"></div>
+    <div class="cart-actions">
+      <button class="btn-primary" id="sendBtn" onclick="showTicket()" disabled>Review &amp; Print</button>
+      <button class="btn-secondary" onclick="newOrder()">Clear Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Item modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="m-cancel" onclick="closeModal()">Cancel</button>
+      <button class="m-add" id="addBtn" onclick="addToCart()">Add to Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ticket / Print -->
+<div class="ticket-bg" id="ticketBg">
+  <div class="ticket">
+    <div class="th">Review Order</div>
+    <div class="tbody" id="ticketBody"></div>
+    <div class="tt" id="ticketTotal"></div>
+    <div style="padding:0 22px 22px; display:flex; gap:10px;">
+      <button class="btn-secondary" style="flex:1;" onclick="closeTicket()">Back</button>
+      <button class="btn-primary" style="flex:1;" id="printBtn" onclick="sendPrint()">🖨️ Print</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://georges-pizza-backend-production.up.railway.app';
+let currentPin = '';
+
+// ---- MENU DATA — every name/token below is asserted in
+//      georges-pizza-backend/test/tap-order.golden.js (91 cases). ----
+const PIZZA_SIZES = [
+  { label: 'Small', token: 'small' }, { label: 'Large', token: 'large' }, { label: 'X-Large', token: 'xlarge' }
+];
+const TWO_SIZES = [ { label:'Small', token:'small' }, { label:'Large', token:'large' } ];
+const PIZZA_TOPPINGS = [
+  ['Pepperoni','pepperoni'],['Mushroom','mushroom'],['Sausage','sausage'],['Ham','ham'],
+  ['Onion','onion'],['Green Peppers','green_peppers'],['Ground Beef','ground_beef'],
+  ['Black Olives','black_olives'],['Bacon','bacon'],['Spinach','spinach'],['Broccoli','broccoli'],
+  ['Anchovies','anchovies'],['Extra Cheese','extra_cheese']
+].map(([label,token]) => ({ label, token, note:'+topping' }));
+
+const STEAK_GROUPS = [
+  { label:'Quick', type:'multi', options:[ { label:'⭐ The Works', token:'the works' } ] },
+  { label:'Cheese', type:'single', options:[
+    { label:'American', token:'', note:'free' },
+    { label:'Provolone', token:'provolone', note:'+$1.50' },
+    { label:'Whiz', token:'whiz', note:'+$2' },
+    { label:'Cooper Sharp', token:'cooper_sharp', note:'+$2' },
+  ]},
+  { label:'Condiments (free)', type:'multi', options:[
+    { label:'Fried Onions', token:'fried_onions' },{ label:'Ketchup', token:'ketchup' },
+    { label:'Mayo', token:'mayo' },{ label:'Extra Mayo', token:'extra mayo' },{ label:'Mustard', token:'mustard' },
+    { label:'Salt', token:'salt' },{ label:'Pepper', token:'pepper' },{ label:'SPK', token:'spk' },
+    { label:'Hots', token:'hots' },{ label:'Pickles', token:'pickles' },
+    { label:'Toasted Roll', token:'toast' },{ label:'Well Done', token:'well_done' },
+  ]},
+  { label:'Add-ons', type:'multi', options:[
+    { label:'Lettuce', token:'lettuce', note:'+$1' },{ label:'Tomato', token:'tomato', note:'+$1' },
+    { label:'Sweet Peppers', token:'sweet_peppers', note:'+$1' },{ label:'Mushrooms', token:'mushrooms', note:'+$2' },
+    { label:'Green Peppers', token:'green_peppers', note:'+$2' },{ label:'Bacon', token:'bacon', note:'+$2' },
+    { label:'Pepperoni', token:'pepperoni', note:'+$2' },{ label:'Pizza Sauce', token:'pizza_sauce', note:'+$2' },
+    { label:'Extra Cheese', token:'extra_cheese', note:'+$1' },{ label:'Extra Meat', token:'extra_meat', note:'+$3' },
+  ]},
+];
+const FRIES_SIZES = [ { label:'Small', token:'small' }, { label:'Large', token:'large' } ];
+const WING_DIP = [ { label:'Dips (extra)', type:'multi', options:[
+  { label:'Bleu Cheese', token:'bleu_cheese', note:'+$1' }, { label:'Ranch', token:'ranch', note:'+$1' }
+]}];
+// Lunch specials — PER-SPECIAL customizers (matches the website's LunchSpecialCustomizer).
+// Bucket routes each to the ticket's MAIN/FRIES/DRINK section. In lunch context only
+// premium cheese, wings bleu/ranch, and fries cheese-whiz upcharge — validated vs engine.
+const L_DRINK = { label:"Drink — Day's", type:'single', bucket:'drink', default:'can', options:[
+  {label:'Can Soda',token:'can'},{label:'Orange',token:'can orange'},{label:'Orange Mango',token:'can orange mango'},{label:'Grape',token:'can grape'},
+  {label:'Black Cherry',token:'can black cherry'},{label:'Fruit Punch',token:'can fruit punch'},{label:'Cola',token:'can cola'},{label:'Ginger Ale',token:'can ginger ale'} ]};
+const L_FRIES = { label:'Side — Fries', type:'multi', bucket:'fries', options:[
+  {label:'Plain',token:'plain'},{label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Ketchup',token:'ketchup'},{label:'Cheese Whiz',token:'whiz',note:'+$2'} ]};
+const L_CHIPS = { label:'Side — Chips', type:'single', bucket:'fries', options:[
+  {label:"Herr's BBQ",token:'bbq chips'},{label:"Herr's Classic",token:'classic chips'},{label:"Herr's Sour Cream & Onion",token:'sour cream chips'} ]};
+const L_STEAK = [
+  { label:'Cheese', type:'single', bucket:'main', default:'', options:[
+    {label:'American',token:'',note:'incl'},{label:'Provolone',token:'provolone',note:'+$1.50'},{label:'Whiz',token:'whiz',note:'+$2'},{label:'Cooper Sharp',token:'cooper_sharp',note:'+$2'} ]},
+  { label:'Add-ons (free)', type:'multi', bucket:'main', options:[
+    {label:'No Toast',token:'no_toast'},{label:'Toasted',token:'toast'},{label:'Fried Onions',token:'fried_onions'},{label:'Ketchup',token:'ketchup'},{label:'Mayo',token:'mayo'},
+    {label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'SPK',token:'spk'},{label:'Hots',token:'hots'},{label:'Pickles',token:'pickles'},
+    {label:'Sweet Peppers',token:'sweet_peppers'},{label:'Green Peppers',token:'green_peppers'},{label:'Mushrooms',token:'mushrooms'},{label:'Bacon',token:'bacon'} ]},
+];
+const L_HOAGIE = [ { label:'Turkey Hoagie (free)', type:'multi', bucket:'main', options:[
+  {label:'No Turkey',token:'no_turkey'},{label:'No Cheese',token:'no_cheese'},{label:'No Lettuce',token:'no_lettuce'},{label:'No Tomato',token:'no_tomato'},{label:'No Onion',token:'no_onions'},{label:'No Oil',token:'no_oil'},{label:'No Mayo',token:'no_mayo'},
+  {label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Olive Oil',token:'olive_oil'},{label:'Hot Peppers',token:'hot_peppers'},{label:'Oregano',token:'oregano'} ]} ];
+const L_DIP = [ { label:'Dipping Sauce', type:'single', bucket:'main', options:[
+  {label:'Honey Mustard',token:'honey mustard'},{label:'BBQ',token:'bbq'},{label:'Ranch',token:'ranch dressing'},{label:'No Sauce',token:'no sauce'} ]} ];
+const L_SALAD = [ { label:'Dressing', type:'single', bucket:'main', options:[
+  {label:'Ranch',token:'ranch dressing'},{label:'Thousand Island',token:'thousand island'},{label:'Creamy Italian',token:'creamy italian'},{label:'Lite Ranch',token:'lite ranch'},
+  {label:'Honey Mustard',token:'honey mustard'},{label:'Bleu Cheese',token:'bleu cheese dressing'},{label:'Oil & Vinegar',token:'oil & vinegar'},{label:'No Dressing',token:'no dressing'} ]} ];
+const L_WINGS = [ { label:'Wing Options', type:'multi', bucket:'main', options:[
+  {label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Ketchup',token:'ketchup'},{label:'Hot Sauce (side)',token:'hot_sauce_side'},{label:'Bleu Cheese',token:'bleu_cheese',note:'+$1'},{label:'Ranch',token:'ranch',note:'+$1'} ]} ];
+const L_BURGER = [ { label:'Burger Options (free)', type:'multi', bucket:'main', options:[
+  {label:'Lettuce & Tomato',token:'lt'},{label:'Pickles',token:'pickles'},{label:'Raw Onions',token:'raw_onions'},{label:'Grilled Onions',token:'grilled_onions'},{label:'Ketchup',token:'ketchup'},{label:'Mustard',token:'mustard'},{label:'Mayo',token:'mayo'},{label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'} ]} ];
+const L_WRAP = [ { label:'Wrap (free)', type:'multi', bucket:'main', options:[
+  {label:'No Chicken',token:'no_chicken'},{label:'No Lettuce',token:'no_lettuce'},{label:'No Tomato',token:'no_tomato'},{label:'No Onion',token:'no_onions'} ]} ];
+
+// ===== Category customizers — from the website spec; EVERY token validated vs the pricing engine =====
+const HOAGIE_GROUPS = [
+  { label:'Remove (free)', type:'multi', options:[
+    {label:'No Onion',token:'no_onions'},{label:'No Tomato',token:'no_tomato'},{label:'No Lettuce',token:'no_lettuce'},{label:'No Mayo',token:'no_mayo'},{label:'No Oil',token:'no_oil'} ]},
+  { label:'Extras', type:'multi', options:[
+    {label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Olive Oil',token:'olive_oil'},{label:'Hot Peppers',token:'hot_peppers'},{label:'Oregano',token:'oregano'},
+    {label:'Extra Meat',token:'extra_meat',note:'+$3'},{label:'Extra Cheese',token:'extra_cheese',note:'+$1.50'} ]},
+];
+const HOTSAND_GROUPS = [ { label:'Extras', type:'multi', options:[{label:'Extra Cheese',token:'extra_cheese',note:'+$1.50'}] } ];
+const SANDWICH_GROUPS = [
+  { label:'Bread', type:'single', options:[{label:'Kaiser Roll',token:'kaiser roll'},{label:'Rye',token:'rye'},{label:'Wheat',token:'wheat'},{label:'White',token:'white'}] },
+  { label:'Extras', type:'multi', options:[{label:'Mayo',token:'mayo'},{label:'Mustard',token:'mustard'},{label:'Onion',token:'onion'},{label:'No Lettuce',token:'no_lettuce'},{label:'No Tomato',token:'no_tomato'}] },
+];
+const CLUB_GROUPS = [ { label:'Extras', type:'multi', options:[{label:'Mayo',token:'mayo'},{label:'No Lettuce',token:'no_lettuce'},{label:'No Tomato',token:'no_tomato'},{label:'No Bacon',token:'no_bacon'}] } ];
+const BURGER_GROUPS = [
+  { label:'Toppings', type:'multi', options:[
+    {label:'Grilled Onions',token:'grilled_onions'},{label:'Raw Onions',token:'raw_onions'},{label:'Pickles',token:'pickles'},{label:'Ketchup',token:'ketchup'},{label:'Mustard',token:'mustard'},
+    {label:'Mayo',token:'mayo'},{label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Lettuce & Tomato',token:'lt',note:'+$1'},{label:'Extra Cheese',token:'extra_cheese',note:'+$1'},{label:'Extra Patty',token:'extra_patty',note:'+$2'} ]},
+];
+const SALAD_GROUPS = [
+  { label:'Dressing', type:'single', options:[
+    {label:'Ranch',token:'ranch dressing'},{label:'French',token:'french dressing'},{label:'Russian',token:'russian dressing'},{label:'Caesar',token:'caesar dressing'},
+    {label:'Blue Cheese',token:'blue cheese dressing'},{label:'Italian',token:'italian dressing'},{label:'Oil & Vinegar',token:'oil & vinegar'},{label:'No Dressing',token:'no dressing'} ]},
+  { label:'Extras', type:'multi', options:[{label:'Extra Egg',token:'extra_egg',note:'+$2'}] },
+];
+const GYRO_GROUPS = [ { label:'Extras', type:'multi', options:[{label:'Extra Tzatziki',token:'extra_tzatziki'},{label:'Hot Sauce',token:'hot_sauce'},{label:'No Onion',token:'no_onions'},{label:'No Tomato',token:'no_tomato'}] } ];
+const QUESADILLA_GROUPS = [ { label:'Remove (free)', type:'multi', options:[{label:'No Tomatoes',token:'no_tomatoes'},{label:'No Mushrooms',token:'no_mushrooms'},{label:'No Green Peppers',token:'no_green_peppers'},{label:'No Fried Onions',token:'no_fried_onions'},{label:'No Sour Cream',token:'no_sour_cream'}] } ];
+const WRAP_GROUPS = [ { label:'Remove (free)', type:'multi', options:[{label:'No Lettuce',token:'no_lettuce'},{label:'No Tomato',token:'no_tomato'},{label:'No Onion',token:'no_onions'}] } ];
+const STROMBOLI_GROUPS = [
+  { label:'Add-ons (free)', type:'multi', options:[{label:'Green Peppers',token:'green_peppers'},{label:'Mushrooms',token:'mushrooms'},{label:'Grilled Onions',token:'grilled_onions'},{label:'No Sesame',token:'no_sesame'}] },
+  { label:'Extra', type:'multi', options:[{label:'Extra Cheese',token:'extra_cheese',note:'+$2 sm / +$3 lg'}] },
+];
+// Wings
+const BUFFALO_GROUPS = [
+  { label:'Sauce', type:'single', options:[{label:'Mild',token:'mild'},{label:'Hot',token:'hot'},{label:'BBQ',token:'bbq'},{label:'Plain',token:'plain'}] },
+  { label:'Extras', type:'multi', options:[{label:'Sauce on Side',token:'sauce_on_side'},{label:'Celery',token:'celery'},{label:'Extra Sauce',token:'extra_sauce',note:'+$0.75'},{label:'Bleu Cheese',token:'bleu_cheese',note:'+$1'},{label:'Ranch',token:'ranch',note:'+$1'}] },
+];
+const CHICKENWING_GROUPS = [ { label:'Extras', type:'multi', options:[{label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Ketchup',token:'ketchup'},{label:'Hot Sauce (side)',token:'hot_sauce_side'},{label:'Bleu Cheese',token:'bleu_cheese',note:'+$1'},{label:'Ranch',token:'ranch',note:'+$1'}] } ];
+const DIP_GROUPS = [ { label:'Dipping Sauce', type:'single', options:[{label:'Honey Mustard',token:'honey mustard'},{label:'BBQ',token:'bbq'},{label:'Ranch',token:'ranch dressing'},{label:'No Sauce',token:'no sauce'}] } ];
+// Sides (fries condiments go in the FRIES bucket, which the engine prices for the item)
+const FRIES_COND = [
+  { label:'Condiments (free)', type:'multi', bucket:'fries', options:[{label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Ketchup',token:'ketchup'},{label:'Hot Sauce',token:'hot_sauce'}] },
+  { label:'Extra', type:'multi', bucket:'fries', options:[{label:'Cheese Whiz',token:'whiz',note:'+$2'}] },
+];
+const POPPER_GROUPS = [ { label:'Dipping Sauce', type:'single', options:[{label:'Marinara',token:'marinara'},{label:'Salsa',token:'salsa'},{label:'No Sauce',token:'no sauce'}] } ];
+// Soda flavor pickers (flavor is free — priced by the base soda item)
+const SODA20_GROUPS = [ { label:'Flavor', type:'single', options:[['Pepsi','pepsi'],['7up','7up'],['Diet Pepsi','diet pepsi'],['Mtn Dew','mountain dew'],['Canada Dry','canada dry'],['Arizona Iced Tea','arizona'],['Sunkist Orange','sunkist'],['Diet Sunkist','diet sunkist'],['Root Beer','root beer']].map(([label,token])=>({label,token})) } ];
+const SODACAN_GROUPS = [ { label:"Flavor (Day's)", type:'single', options:[['Orange','orange'],['Orange Mango','orange mango'],['Grape','grape'],['Black Cherry','black cherry'],['Fruit Punch','fruit punch'],['Cola','cola'],['Ginger Ale','ginger ale']].map(([label,token])=>({label,token})) } ];
+const SODA2L_GROUPS = [ { label:'Flavor', type:'single', options:[['Pepsi','pepsi'],['Ginger Ale','ginger ale'],['Grape','grape'],['Orange','orange'],['Pineapple','pineapple'],['Black Cherry','black cherry']].map(([label,token])=>({label,token})) } ];
+// Desserts
+const CHEESECAKE_GROUPS = [ { label:'Topping', type:'single', options:[{label:'Plain',token:'plain'},{label:'Pineapple',token:'pineapple'},{label:'Cherry',token:'cherry'},{label:'Strawberry',token:'strawberry'}] } ];
+const ICECREAM_GROUPS = [ { label:'Flavor', type:'single', options:[{label:'Chocolate',token:'chocolate'},{label:'Vanilla',token:'vanilla'},{label:'Strawberry',token:'strawberry'}] } ];
+const MILKSHAKE_GROUPS = [ { label:'Flavor', type:'single', options:[{label:'Chocolate',token:'chocolate'},{label:'Vanilla',token:'vanilla'},{label:'Strawberry',token:'strawberry'},{label:'Black & White',token:'black and white'}] } ];
+const CHIPS_GROUPS = [ { label:'Flavor', type:'single', options:[{label:'BBQ',token:'bbq chips'},{label:'Classic',token:'classic chips'},{label:'Sour Cream & Onion',token:'sour cream chips'}] } ];
+
+const PASTA_GROUPS = [
+  { label:'Pasta', type:'single', options:[{label:'Spaghetti',token:'spaghetti'},{label:'Ravioli',token:'ravioli'}] },
+  { label:'Dressing', type:'single', options:[{label:'Ranch',token:'ranch dressing'},{label:'Thousand Island',token:'thousand island'},{label:'Creamy Italian',token:'creamy italian'},{label:'Lite Ranch',token:'lite ranch'},{label:'Honey Mustard',token:'honey mustard'},{label:'Bleu Cheese',token:'bleu cheese dressing'},{label:'Oil & Vinegar',token:'oil & vinegar'},{label:'No Dressing',token:'no dressing'}] },
+  { label:'Extras (free)', type:'multi', options:[{label:'Extra Sauce',token:'extra sauce'},{label:'Extra Parmesan',token:'extra parmesan'}] },
+];
+const SEAFOOD_GROUPS = [
+  { label:'Fries (free)', type:'multi', bucket:'fries', options:[{label:'Salt',token:'salt'},{label:'Pepper',token:'pepper'},{label:'Ketchup',token:'ketchup'}] },
+  { label:'Platter', type:'multi', options:[{label:'Extra Tartar',token:'extra_tartar'},{label:'No Cole Slaw',token:'no_cole_slaw'}] },
+];
+
+const fp = arr => arr.map(([name, price]) => ({ name, price })); // flat-priced items
+const nm = arr => arr.map(name => ({ name }));                    // name-only (sized) items
+
+const MENU = {
+  pizza: { label:'Pizza', cat:'pizza', sizes: PIZZA_SIZES, sizeRequired:true, groups:[{label:'Extra Toppings', type:'multi', options: PIZZA_TOPPINGS}],
+    items: nm(['Plain','Pepperoni','Mushroom','Sausage','Ham','Onion','Green Peppers','Ground Beef','Imported Anchovies','Black Olives','Bacon','Steak',
+           "George's Special",'Grilled Chicken','BBQ Chicken','Buffalo Chicken','Meat Lover',
+           'Plain White','Spinach','Broccoli','Vegetarian','Ricotta & Mozzarella','Greek','Hawaiian']) },
+  steaks: { label:'Steaks', cat:'steaks', groups: STEAK_GROUPS,
+    items: fp([['Steak',10],['Cheese Steak',11],['Cheese Steak Hoagie',12],['Pizza Steak',12],['Pepperoni Cheese Steak',12],
+           ['Chicken Steak',11],['Chicken Cheese Steak',12],['Grilled Chicken Cheese Steak',13],['Buffalo Chicken Cheese Steak',13],
+           ['Chicken Cheese Steak Hoagie',13],['Cheese Steak Platter',15],['Chicken Cheese Steak Platter',15],['Grilled Chicken Cheese Steak Platter',15]]) },
+  hoagies: { label:'Hoagies', cat:'hoagies', groups: HOAGIE_GROUPS,
+    items: [ ...fp([['Regular Hoagie',10],['The Submarine',10],['Italian Hoagie',12],['Turkey & Cheese',12],['Tuna & Cheese',12],
+             ['Ham & Cheese',10],['Vegetable & American Cheese',10],['Mixed Cheese',10],['Flounder & Cheese',12],['BLT',10]]),
+             ...[['Meatball',12],['Italian Sausage',12],['Chicken Parmesan',12]].map(([name,price])=>({name,price,groups:HOTSAND_GROUPS})) ] },
+  sandwiches: { label:'Sandwiches', cat:'sandwiches',
+    items: [ ...[['Grilled Cheese',5],['Ham & Cheese Sandwich',7],['Turkey & Cheese Sandwich',7],['Tuna & Cheese Sandwich',7],['BLT Sandwich',7],['Flounder Sandwich',12]].map(([name,price])=>({name,price,groups:SANDWICH_GROUPS})),
+             ...[['Turkey Club',12],['Ham & American Cheese Club',12],['Tuna Fish Salad Club',12],['Grilled Chicken Club',13]].map(([name,price])=>({name,price,groups:CLUB_GROUPS})) ] },
+  wings: { label:'Wings & Tenders', cat:'wings',
+    items: [ ...[['5 Chicken Wings',10],['5 Chicken Wings Platter',15]].map(([name,price])=>({name,price,groups:CHICKENWING_GROUPS})),
+             ...[['10 Buffalo Wings',12],['10 Buffalo Wings Platter',15],['10 Wing Dings',15],['10 Wing Dings Platter',18]].map(([name,price])=>({name,price,groups:BUFFALO_GROUPS})),
+             ...[['10 Nuggets',8],['10 Nuggets Platter',14],['20 Nuggets',16],['20 Nuggets Platter',18],['5 Chicken Fingers',10],['5 Chicken Fingers Platter',15]].map(([name,price])=>({name,price,groups:DIP_GROUPS})) ] },
+  stromboli: { label:'Stromboli', cat:'stromboli', sizes: TWO_SIZES, sizeRequired:true, groups: STROMBOLI_GROUPS,
+    items: nm(['Cheese & Sauce Stromboli','Steak Cheese & Sauce Stromboli','Ground Beef Stromboli','Sausage Stromboli',
+           'Italian Cappicola Genoa Stromboli','Pepperoni Stromboli','Ham & Cheese Stromboli','Special Steak Stromboli',
+           'Vegetarian Stromboli','Grilled Chicken Stromboli','Chicken Cheese Steak Stromboli','Buffalo Chicken Stromboli']) },
+  salads: { label:'Salads', cat:'salads', sizes: TWO_SIZES, sizeRequired:true, groups: SALAD_GROUPS,
+    items: nm(['Garden Salad','Grilled Chicken Caesar','Chef Salad','Chicken Tender Salad','Antipasto','Cheese Salad',
+           'Grilled Chicken Salad','Tuna & Cheese Salad','Flounder Salad','Greek Salad']) },
+  pasta: { label:'Pasta & Seafood', cat:'pasta',
+    items: [ ...[['Pasta with Tomato Sauce',11],['Pasta with Meatballs',14],['Pasta with Italian Sausage',14],['Pasta with Chicken Breast',14]].map(([name,price])=>({name,price,groups:PASTA_GROUPS})),
+             ...[['Fried Scallops',15],['Fried Flounder',15],['Fried Shrimp',15],['Crab Cakes',15],['Fish & Chips',15],['Shrimp in the Basket',15]].map(([name,price])=>({name,price,groups:SEAFOOD_GROUPS})) ] },
+  burgers: { label:'Burgers', cat:'burgers', groups: BURGER_GROUPS,
+    items: fp([['Plain Burger',6],['Cheeseburger',7],['Bacon Cheeseburger',8],['Turkey Burger',8],['Pizza Burger',8],['California Burger Platter',12],['Double Cheeseburger',9]]) },
+  gyros: { label:'Gyros & Wraps', cat:'gyros',
+    items: [ ...[['Gyro',10],['Gyro Platter',12],['Chicken Gyro',10],['Chicken Gyro Platter',12],['Grilled Chicken Gyro',10]].map(([name,price])=>({name,price,groups:GYRO_GROUPS})),
+             ...[['Italian Hoagie Wrap',12],['Turkey & Spinach Wrap',12],['Chicken Caesar Wrap',12],['Tuna Wrap',12],['Veggie Wrap',12],['Cheese Steak Wrap',13],["George's Special Cheese Steak Wrap",14]].map(([name,price])=>({name,price,groups:WRAP_GROUPS})),
+             ...[['Veggie Quesadilla',11],['Grilled Chicken Quesadilla',13],['Ground Beef Quesadilla',13]].map(([name,price])=>({name,price,groups:QUESADILLA_GROUPS})) ] },
+  sides: { label:'Sides', cat:'sides',
+    items: [ { name:'French Fries', sizes: FRIES_SIZES, sizePrices:{small:4,large:7}, groups: FRIES_COND }, { name:'Cheese Fries', sizes: FRIES_SIZES, sizePrices:{small:6,large:8}, groups: FRIES_COND },
+             { name:'Pizza Fries', sizes: FRIES_SIZES, sizePrices:{small:7,large:9}, groups: FRIES_COND }, { name:'Mozzarella Fries', sizes: FRIES_SIZES, sizePrices:{small:7,large:9}, groups: FRIES_COND },
+             { name:'Mega Fries', price:9, groups: [FRIES_COND[0]] }, ...fp([['Onion Rings',6],['Mozzarella Sticks',7],['Fried Broccoli & Cheese',8]]),
+             { name:'Jalapeno Poppers', price:8, groups: POPPER_GROUPS }, ...fp([['Fried Mini Tacos',8],['Garlic Knots',3],['Cole Slaw',1]]) ] },
+  drinks: { label:'Drinks', cat:'drinks',
+    items: [ { name:'Soda 20oz', price:2.5, groups: SODA20_GROUPS }, { name:'Soda Can', price:1, groups: SODACAN_GROUPS }, { name:'Soda 2 Liter', price:4, groups: SODA2L_GROUPS },
+             ...fp([['Water',1],['Hot Coffee Small',2],['Hot Coffee Large',3],['Arizona',2]]) ] },
+  desserts: { label:'Desserts', cat:'desserts',
+    items: [ { name:'Cheesecake', price:5, groups: CHEESECAKE_GROUPS }, ...fp([['Strawberry Shortcake',5],['Carrot Cake',5]]),
+             { name:'Ice Cream Pint', price:5.5, groups: ICECREAM_GROUPS }, { name:'Milk Shake', price:5.5, groups: MILKSHAKE_GROUPS },
+             { name:'Chips', price:1, label:'Small Chips', groups: CHIPS_GROUPS }, { name:'Large Chips', price:2.69, groups: CHIPS_GROUPS }, { name:'Ice Cream Cone', price:2, noDelivery:true } ] },
+  lunch: { label:'Lunch Specials', cat:'lunch_specials',
+    items: [
+      { name:'Chicken Parm, Chips & Soda', price:10, groups:[L_CHIPS, L_DRINK] },
+      { name:'Cheese Steak, Fries & Soda', price:10, groups:[...L_STEAK, L_FRIES, L_DRINK] },
+      { name:'Turkey Hoagie, Chips & Soda', price:10, groups:[...L_HOAGIE, L_CHIPS, L_DRINK] },
+      { name:'Chicken Cheese Steak, Fries & Soda', price:10, groups:[...L_STEAK, L_FRIES, L_DRINK] },
+      { name:'4 Chicken Fingers, Fries & Soda', price:10, groups:[...L_DIP, L_FRIES, L_DRINK] },
+      { name:'Pizza Steak, Chips & Soda', price:10, groups:[...L_STEAK, L_CHIPS, L_DRINK] },
+      { name:'Chef Salad & Soda', price:10, groups:[...L_SALAD, L_DRINK] },
+      { name:'Small Plain Pizza, Fries & Soda', price:10, groups:[L_FRIES, L_DRINK] },
+      { name:'4 Wings, Fries & Soda', price:10, groups:[...L_WINGS, L_FRIES, L_DRINK] },
+      { name:'Cheeseburger, Fries & Soda', price:10, groups:[...L_BURGER, L_FRIES, L_DRINK] },
+      { name:'Grilled Chicken Caesar Salad & Soda', price:10, groups:[L_DRINK] },
+      { name:'Grilled Chicken Wrap, Fries & Soda', price:10, groups:[...L_WRAP, L_FRIES, L_DRINK] },
+    ] },
+};
+
+let cart = [];
+let modal = null; // { def, item, size, single:{}, multi:Set, qty }
+let lastPricedOrder = null; // priced order from /price, shown in the ticket stub
+let orderType = 'to_go';    // 'to_go' (pickup, default) | 'delivery'
+let payType = 'cash';       // 'cash' (default) | 'card'
+
+async function verifyPin() {
+  const pin = document.getElementById('pinInput').value.trim();
+  const err = document.getElementById('pinError');
+  if (!pin) { err.textContent = 'Please enter PIN'; return; }
+  const btn = document.getElementById('pinBtn'); btn.disabled = true; btn.textContent = 'Checking...';
+  try {
+    const r = await fetch(`${API_URL}/api/internal/quick-order/verify-pin`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin }) });
+    const d = await r.json();
+    if (d.success) { currentPin = pin; document.getElementById('pinScreen').style.display='none';
+      document.getElementById('app').classList.add('active'); initTabs(); }
+    else { err.textContent = d.error || 'Invalid PIN'; document.getElementById('pinInput').value=''; }
+  } catch(e) { err.textContent = 'Connection error. Try again.'; }
+  btn.disabled = false; btn.textContent = 'ENTER';
+}
+document.getElementById('pinInput').addEventListener('keydown', e => { if (e.key==='Enter') verifyPin(); });
+
+let activeTab = 'pizza';
+function initTabs() {
+  const tabs = document.getElementById('tabs'); tabs.innerHTML = '';
+  Object.keys(MENU).forEach(key => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (key===activeTab ? ' active' : '');
+    b.textContent = MENU[key].label; b.onclick = () => { activeTab = key; initTabs(); renderItems(); };
+    tabs.appendChild(b);
+  });
+  renderItems();
+}
+function renderItems() {
+  const box = document.getElementById('items'); box.innerHTML = '';
+  MENU[activeTab].items.forEach(it => {
+    const t = document.createElement('button'); t.className = 'tile';
+    const blocked = it.noDelivery && orderType === 'delivery';
+    let priceLabel = '';
+    if (blocked) priceLabel = 'pickup only';
+    else if (it.price != null) priceLabel = '$' + it.price;
+    else if (it.sizes) priceLabel = 'choose size';
+    else if (MENU[activeTab].sizeRequired) priceLabel = 'choose size';
+    t.innerHTML = `<div class="name">${it.label || it.name}</div><div class="price">${priceLabel}</div>`;
+    if (blocked) { t.style.opacity = '0.4'; t.disabled = true; }
+    else t.onclick = () => openItem(it);
+    box.appendChild(t);
+  });
+}
+
+function openItem(it) {
+  const def = MENU[activeTab];
+  const sizes = it.sizes || (def.sizeRequired ? def.sizes : null);
+  const groups = it.groups || def.groups || [];
+  modal = { def, item: it, cat: it.cat || def.cat, sizes, groups, size: null, single:{}, multi:{}, qty:1 };
+  document.getElementById('modalTitle').textContent = it.name;
+  const body = document.getElementById('modalBody'); body.innerHTML = '';
+
+  if (sizes) {
+    const g = document.createElement('div'); g.className='mgroup';
+    g.innerHTML = `<h3>Size${' '}<span class="hint" id="sizeHint">— required</span></h3>`;
+    const opts = document.createElement('div'); opts.className='opts';
+    sizes.forEach(s => {
+      const o = document.createElement('button'); o.className='opt';
+      const sp = it.sizePrices && it.sizePrices[s.token];
+      o.innerHTML = `<span>${s.label}</span>${sp!=null?`<span class="op-price">$${sp}</span>`:''}`;
+      o.onclick = () => { modal.size = s.token; [...opts.children].forEach(c=>c.classList.remove('sel')); o.classList.add('sel');
+        const h=document.getElementById('sizeHint'); if(h) h.remove(); refreshAdd(); };
+      opts.appendChild(o);
+    });
+    g.appendChild(opts); body.appendChild(g);
+  }
+
+  groups.forEach((grp, gi) => {
+    const g = document.createElement('div'); g.className='mgroup';
+    g.innerHTML = `<h3>${grp.label}</h3>`;
+    const opts = document.createElement('div'); opts.className='opts';
+    grp.options.forEach(op => {
+      const o = document.createElement('button'); o.className='opt';
+      o.innerHTML = `<span>${op.label}</span>${op.note?`<span class="op-price">${op.note}</span>`:''}`;
+      o.onclick = () => {
+        if (grp.type==='single') {
+          [...opts.children].forEach(c=>c.classList.remove('sel')); o.classList.add('sel'); modal.single[gi]=op.token;
+        } else {
+          if (!modal.multi[gi]) modal.multi[gi] = new Set();
+          const set = modal.multi[gi];
+          if (set.has(op.token)) { set.delete(op.token); o.classList.remove('sel'); }
+          else { set.add(op.token); o.classList.add('sel'); }
+        }
+      };
+      opts.appendChild(o);
+    });
+    // preselect a single-group default (e.g. lunch drink = Can Soda)
+    if (grp.type==='single' && grp.default != null) {
+      modal.single[gi] = grp.default;
+      grp.options.forEach((op, oi) => { if (op.token === grp.default) opts.children[oi].classList.add('sel'); });
+    }
+    g.appendChild(opts); body.appendChild(g);
+  });
+
+  // qty stepper
+  const q = document.createElement('div'); q.className='qty-row';
+  q.innerHTML = `<h3>Qty</h3><button class="qbtn" onclick="bumpQty(-1)">–</button><span class="qval" id="qval">1</span><button class="qbtn" onclick="bumpQty(1)">+</button>`;
+  body.appendChild(q);
+
+  document.getElementById('modalBg').classList.add('active');
+  refreshAdd();
+}
+function bumpQty(d){ modal.qty = Math.max(1, Math.min(20, modal.qty + d)); document.getElementById('qval').textContent = modal.qty; }
+function refreshAdd(){ document.getElementById('addBtn').disabled = !!(modal.sizes && !modal.size); }
+function closeModal(){ document.getElementById('modalBg').classList.remove('active'); modal=null; }
+
+function addToCart() {
+  if (!modal) return;
+  const buckets = { main: [], fries: [], drink: [] };
+  modal.groups.forEach((grp, gi) => {
+    const bucket = grp.bucket || 'main';
+    if (grp.type === 'single') { const t = modal.single[gi]; if (t) buckets[bucket].push(t); }
+    else { (modal.multi[gi] || new Set()).forEach(t => buckets[bucket].push(t)); }
+  });
+  cart.push({ category: modal.cat, item: modal.item.name, size: modal.size || null,
+    mods: buckets, qty: modal.qty, _label: modal.item.name, _sizeLabel: sizeLabel(modal) });
+  closeModal(); renderCart();
+}
+function sizeLabel(m){ if(!m.size) return ''; const s=(m.sizes||[]).find(x=>x.token===m.size); return s?s.label:''; }
+
+function renderCart() {
+  const box = document.getElementById('cartItems');
+  if (!cart.length) {
+    box.innerHTML = '<div class="cart-empty">Tap an item to start</div>';
+  } else {
+    box.innerHTML = '';
+    cart.forEach((c, i) => {
+      const mods = [...(c.mods.main||[]), ...(c.mods.fries||[]), ...(c.mods.drink||[])].map(prettyTok).filter(Boolean).join(', ');
+      const line = document.createElement('div'); line.className='cart-line';
+      line.innerHTML = `<div><div class="ci-name">${c.qty>1?c.qty+'× ':''}${c._sizeLabel?c._sizeLabel+' ':''}${c._label}</div>${mods?`<div class="ci-mods">${mods}</div>`:''}<button class="ci-remove" onclick="removeLine(${i})">remove</button></div><div class="ci-price" id="price-${i}">…</div>`;
+      box.appendChild(line);
+    });
+  }
+  reprice(); // live-price the whole order after any change
+}
+function prettyTok(t){ return t ? t.replace(/_/g,' ').replace(/\b\w/g, m=>m.toUpperCase()) : ''; }
+function removeLine(i){ cart.splice(i,1); renderCart(); }
+
+// Re-price the entire cart through the engine after every add/remove so the
+// running total + per-line prices update live. Prices ALWAYS come from the
+// server — the UI never computes them itself.
+async function reprice() {
+  const totals = document.getElementById('totals');
+  if (!cart.length) { totals.style.display='none'; lastPricedOrder=null; updateSendState(); return; }
+  const parsed = { items: cart.map(c => ({ category:c.category, item:c.item, size:c.size, mods:c.mods, qty:c.qty })),
+    orderType: orderType, paymentType: payType };
+  if (orderType === 'delivery') parsed.delivery = {
+    address: (document.getElementById('delAddress').value || '').trim(),
+    phone: (document.getElementById('delPhone').value || '').trim() };
+  try {
+    const r = await fetch(`${API_URL}/api/internal/quick-order/price`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin: currentPin, parsed }) });
+    const d = await r.json();
+    const order = d.order || d;
+    if (order && order.items) {
+      lastPricedOrder = order;
+      order.items.forEach((it, i) => { const el = document.getElementById('price-'+i); if (el) el.textContent = '$' + (it.price||0).toFixed(2); });
+      totals.style.display='block';
+      totals.innerHTML =
+        `<div class="row"><span>Subtotal</span><span>$${(order.subtotal||0).toFixed(2)}</span></div>`+
+        (order.deliveryFee ? `<div class="row"><span>Delivery</span><span>$${Number(order.deliveryFee).toFixed(2)}</span></div>` : '')+
+        (order.cardFee ? `<div class="row"><span>Card fee</span><span>$${Number(order.cardFee).toFixed(2)}</span></div>` : '')+
+        `<div class="row"><span>Tax</span><span>$${(order.tax||0).toFixed(2)}</span></div>`+
+        `<div class="row grand"><span>Total</span><span>$${(order.total||0).toFixed(2)}</span></div>`;
+    }
+  } catch(e) { /* keep last shown prices on a transient error */ }
+  updateSendState();
+}
+
+function setType(t) {
+  orderType = t;
+  document.getElementById('typePickup').classList.toggle('active', t==='to_go');
+  document.getElementById('typeDelivery').classList.toggle('active', t==='delivery');
+  document.getElementById('deliveryFields').style.display = t==='delivery' ? 'block' : 'none';
+  document.getElementById('pickupFields').style.display = t==='delivery' ? 'none' : 'block';
+  renderItems(); // reflect pickup-only items (e.g. Ice Cream Cone) for the current mode
+  reprice();
+}
+function setPay(p) {
+  payType = p;
+  document.getElementById('payCash').classList.toggle('active', p==='cash');
+  document.getElementById('payCard').classList.toggle('active', p==='card');
+  reprice();
+}
+// Send is enabled only with priced items, and (for delivery) a non-empty address.
+function updateSendState() {
+  const sendBtn = document.getElementById('sendBtn');
+  const hasItems = !!(lastPricedOrder && cart.length);
+  const needAddr = orderType==='delivery' && !(document.getElementById('delAddress').value || '').trim();
+  sendBtn.disabled = !hasItems || needAddr;
+}
+
+function showTicket() {
+  const order = lastPricedOrder; if (!order) return;
+  const isDel = order.orderType === 'delivery' || !!order.delivery;
+  const pay = (order.paymentType || payType) === 'card' ? 'CARD' : 'CASH';
+  const name = (document.getElementById('custName').value || '').trim();
+  const b = document.getElementById('ticketBody');
+  let head = `<div class="tline" style="font-weight:700;font-size:22px;text-align:center;">${isDel?'&gt;&gt;&gt; DELIVERY &lt;&lt;&lt;':'&gt;&gt;&gt; PICKUP &lt;&lt;&lt;'}${isDel?' &middot; '+pay:''}</div>`;
+  if (isDel) head += `<div class="tline" style="text-align:center;color:#7a5b00;font-size:15px;">prints 2 slips: kitchen + driver</div>`;
+  if (!isDel && name) head += `<div class="tline" style="text-align:center;font-weight:700;">${name.toUpperCase()}</div>`;
+  if (isDel && order.delivery) head += `<div class="tline"><b>${(order.delivery.address||'').toUpperCase()}</b>${order.delivery.phone?'<br>Phone: '+order.delivery.phone:''}</div>`;
+  const lines = order.items.map(i => {
+    const main = (Array.isArray(i.mods) ? i.mods : []).filter(Boolean);
+    let sub = main.length ? `<br><span style="color:#666;font-size:16px">${main.join(', ')}</span>` : '';
+    if (i.specialMods) {
+      if (i.specialMods.fries && i.specialMods.fries.length) sub += `<br><span style="color:#666;font-size:16px">Side: ${i.specialMods.fries.join(', ')}</span>`;
+      if (i.specialMods.drink && i.specialMods.drink.length) sub += `<br><span style="color:#666;font-size:16px">Drink: ${i.specialMods.drink.join(', ')}</span>`;
+    }
+    return `<div class="tline"><b>${i.quantity>1?i.quantity+'× ':''}${i.name}</b> — $${(i.price||0).toFixed(2)}${sub}</div>`;
+  }).join('');
+  let fees = '';
+  if (order.deliveryFee) fees += `<div class="tline">Delivery Fee — $${Number(order.deliveryFee).toFixed(2)}</div>`;
+  if (order.cardFee) fees += `<div class="tline">Card Fee — $${Number(order.cardFee).toFixed(2)}</div>`;
+  b.innerHTML = head + lines + fees;
+  document.getElementById('ticketTotal').textContent = 'TOTAL  $' + (order.total||0).toFixed(2);
+  document.getElementById('ticketBg').classList.add('active');
+}
+function closeTicket(){ document.getElementById('ticketBg').classList.remove('active'); }
+
+// Real print: send the priced order (+ pickup name) to /print → kitchen ticket.
+async function sendPrint() {
+  if (!lastPricedOrder) return;
+  const btn = document.getElementById('printBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Printing...';
+  const order = { ...lastPricedOrder };
+  const name = (document.getElementById('custName').value || '').trim();
+  if (orderType !== 'delivery' && name) order.customerName = name;
+  try {
+    const r = await fetch(`${API_URL}/api/internal/quick-order/print`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pin: currentPin, order }) });
+    const d = await r.json();
+    if (d.success) {
+      closeTicket();
+      alert((d.demo ? 'DEMO — not actually printed\n' : '✓ Printed!  ') + 'Order #' + (d.orderNumber || ''));
+      newOrder();
+    } else { alert('Print failed: ' + (d.error || 'unknown')); }
+  } catch(e) { alert('Connection error. Try again.'); }
+  btn.disabled=false; btn.innerHTML='🖨️ Print';
+}
+
+function newOrder(){
+  cart = [];
+  const a = document.getElementById('delAddress'); if (a) a.value = '';
+  const p = document.getElementById('delPhone'); if (p) p.value = '';
+  const n = document.getElementById('custName'); if (n) n.value = '';
+  setPay('cash');
+  setType('to_go'); // resets pickup + hides delivery fields
+  renderCart();
+}
+</script>
+</body>
+</html>
