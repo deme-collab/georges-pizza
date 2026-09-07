@@ -362,6 +362,14 @@ function getMemorialDay(year) {
   return { month: 4, day: lastMonday };
 }
 
+// Get Labor Day (first Monday of September)
+function getLaborDay(year) {
+  const sep1 = new Date(year, 8, 1);
+  const dayOfWeek = sep1.getDay();
+  const firstMonday = dayOfWeek === 1 ? 1 : 1 + ((8 - dayOfWeek) % 7);
+  return { month: 8, day: firstMonday };
+}
+
 // Check if a specific date is a holiday
 function isHoliday(date) {
   const year = date.getFullYear();
@@ -384,6 +392,10 @@ function isHoliday(date) {
   // Memorial Day
   const memorial = getMemorialDay(year);
   if (month === memorial.month && day === memorial.day) return "Memorial Day";
+  
+  // Labor Day
+  const labor = getLaborDay(year);
+  if (month === labor.month && day === labor.day) return "Labor Day";
   
   return null;
 }
