@@ -6384,12 +6384,10 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   // Create Payment Intent and mount Payment Element when total changes
   const [clientSecret, setClientSecret] = useState(null);
   const paymentIntentIdRef = useRef(null);
-  const lastChargedAmountRef = useRef(null);
-  const updatingPaymentRef = useRef(false);
-  // Monotonic id so older PI-update responses can't clobber newer ones on fast double-toggle.
-  const updateRequestIdRef = useRef(0);
-  // Tracks the in-flight update promise so confirmPayment can await it.
-  const updatePromiseRef = useRef(Promise.resolve());
+  // NOTE: the PaymentIntent amount is set ONCE at creation and then again
+  // exactly once inside handleCheckout right before confirmPayment. It is
+  // deliberately NOT updated as the customer edits the tip — per-keystroke
+  // updates raced each other and overcharged a customer (2026-09-25).
   
   // Create the Payment Intent ONCE when Stripe is ready and we have a valid total
   useEffect(() => {
@@ -6416,7 +6414,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           const piId = data.clientSecret.split('_secret_')[0];
           console.log('[TIP-FIX] PaymentIntent created:', piId, 'Amount: $' + finalTotal.toFixed(2));
           paymentIntentIdRef.current = piId;
-          lastChargedAmountRef.current = Math.round(finalTotal * 100);
           setClientSecret(data.clientSecret);
           
           // Create Elements with the client secret
@@ -6441,49 +6438,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     createIntent();
   }, [stripeReady, testMode]);
 
-  // UPDATE the Payment Intent amount whenever finalTotal changes (e.g. tip added).
-  // Each update gets a monotonic id; only the latest response is allowed to write
-  // lastChargedAmountRef, so a stale slower update can't clobber a newer fast one.
-  // handleCheckout awaits updatePromiseRef before confirmPayment.
-  useEffect(() => {
-    if (!paymentIntentIdRef.current || testMode) return;
-    const newAmount = Math.round(finalTotal * 100);
-    if (newAmount === lastChargedAmountRef.current) return;
-    if (newAmount < 100) return;
-
-    const myRequestId = ++updateRequestIdRef.current;
-    const piId = paymentIntentIdRef.current;
-    console.log('[TIP-FIX] Sending update to Stripe:', piId, '$' + (newAmount / 100).toFixed(2), 'req', myRequestId);
-    updatingPaymentRef.current = true;
-
-    const updatePromise = (async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/update-payment-intent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId: piId, amount: newAmount }),
-        });
-        const data = await res.json();
-        if (myRequestId !== updateRequestIdRef.current) {
-          console.log('[TIP-FIX] Stale update ignored: req', myRequestId, 'latest', updateRequestIdRef.current);
-          return;
-        }
-        if (data.success) {
-          lastChargedAmountRef.current = newAmount;
-        } else {
-          console.error('[TIP-FIX] Failed to update payment intent:', data.error);
-        }
-      } catch (err) {
-        console.error('[TIP-FIX] Update payment intent error:', err);
-      } finally {
-        if (myRequestId === updateRequestIdRef.current) {
-          updatingPaymentRef.current = false;
-        }
-      }
-    })();
-
-    updatePromiseRef.current = updatePromise;
-  }, [finalTotal, testMode]);
 
   // Mount Payment Element when container is ready
   useEffect(() => {
@@ -6679,19 +6633,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     // GA4: track checkout started
     trackEvent('begin_checkout', { value: finalTotal, currency: 'USD', items_count: cart.length });
     
-    // Wait for any in-flight payment intent update to finish (e.g. tip just changed)
-    if (updatingPaymentRef.current) {
-      await new Promise(resolve => {
-        const poll = setInterval(() => {
-          if (!updatingPaymentRef.current) {
-            clearInterval(poll);
-            resolve();
-          }
-        }, 50);
-        // Safety timeout — don't block forever
-        setTimeout(() => { clearInterval(poll); resolve(); }, 3000);
-      });
-    }
     let orderSuccess = false;
     
     // Build order data
@@ -6752,22 +6693,15 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         // Also keep sessionStorage as a fallback
         try { sessionStorage.setItem('gp2_pending_order', JSON.stringify(orderData)); } catch (e) {}
 
-        // Make sure Stripe has the latest amount before we charge.
-        // 1) Wait (up to 5s) for any in-flight PI update to settle.
-        // 2) If state still disagrees with what Stripe holds, fire one final
-        //    synchronous update and wait for it. This closes the race where
-        //    confirmPayment ran before a toggle-induced update had landed.
-        try {
-          await Promise.race([
-            updatePromiseRef.current,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('update-timeout')), 5000)),
-          ]);
-        } catch (e) {
-          console.warn('[TIP-FIX] Timed out waiting for in-flight update; will resync synchronously:', e?.message || e);
-        }
-
+        // Set the FINAL amount on the PaymentIntent, exactly once, right before
+        // confirmPayment, and verify Stripe echoes it back. This is the only
+        // amount update after creation. Incident 2026-09-25 (W-092526.005): the
+        // old per-keystroke tip updates raced; a slow $70.52 write landed at
+        // Stripe after the page believed it held $25.52, and the customer was
+        // charged $70.52. The client's belief is not authoritative — the last
+        // write before confirm must be ours, and verified.
         const expectedAmount = Math.round(finalTotal * 100);
-        if (expectedAmount !== lastChargedAmountRef.current && paymentIntentIdRef.current && expectedAmount >= 100) {
+        if (paymentIntentIdRef.current && expectedAmount >= 100) {
           try {
             const syncRes = await fetch(`${API_URL}/api/update-payment-intent`, {
               method: 'POST',
@@ -6778,13 +6712,12 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
               }),
             });
             const syncData = await syncRes.json();
-            if (!syncData.success) {
+            if (!syncData.success || (typeof syncData.amount === 'number' && syncData.amount !== expectedAmount)) {
+              console.error('[TIP-FIX] Pre-confirm sync mismatch: expected', expectedAmount, 'stripe', syncData.amount);
               setCardError('Could not finalize order total. Please try again.');
               setProcessing(false);
               return;
             }
-            lastChargedAmountRef.current = expectedAmount;
-            updateRequestIdRef.current++;
             console.log('[TIP-FIX] Pre-confirm sync update succeeded:', expectedAmount);
           } catch (err) {
             console.error('[TIP-FIX] Pre-confirm sync update error:', err);
