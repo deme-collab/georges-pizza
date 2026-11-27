@@ -509,6 +509,10 @@ const isValidPhone = (phone) => {
   return digits.length === 10;
 };
 
+// Deliberately permissive: something@something.tld. Used to gate checkout and
+// to avoid sending a half-typed address to Stripe as the receipt email.
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+
 function GeorgesPizza() {
   const [orderType, setOrderType] = useState(''); // No default — customer must explicitly choose pickup or delivery
   const [cart, setCart] = useState([]);
@@ -6335,51 +6339,73 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
   const amountNeededForMinimum = deliveryMinimum - subtotal;
 
   // Stripe state
+  // FAIL CLOSED. testMode is true ONLY when the server explicitly says so.
+  // It starts false ("assume live until told otherwise") and a failure to
+  // reach the server or load Stripe.js sets paymentError instead — it must
+  // never masquerade as test mode, because test mode skips payment.
+  // Incidents: 2026-11-15 (Stripe.js load blip showed "Test Mode") and
+  // 2026-11-25 (W-112526.008 printed PAID with no charge).
   const [stripeReady, setStripeReady] = useState(false);
-  const [testMode, setTestMode] = useState(true);
+  const [testMode, setTestMode] = useState(false);
+  const [paymentError, setPaymentError] = useState(false);
+  const [paymentAttempt, setPaymentAttempt] = useState(0); // bumped by "Try again"
   const [cardError, setCardError] = useState('');
   const paymentElementRef = useRef(null);
   const stripeRef = useRef(null);
   const elementsRef = useRef(null);
   const paymentElementMounted = useRef(false);
+  const intentInFlightRef = useRef(false);
 
-  // Initialize Stripe
+  const PAYMENT_RETRIES = 3;
+  const paymentBackoff = (attempt) => new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+
+  // Initialize Stripe (retries; re-runs when the customer taps "Try again")
   useEffect(() => {
+    let cancelled = false;
     const initStripe = async () => {
-      try {
-        // Get config from server
-        const configRes = await fetch(`${API_URL}/api/stripe-config`);
-        const configData = await configRes.json();
-        
-        if (configData.testMode || !configData.publishableKey) {
-          setTestMode(true);
+      if (stripeRef.current) return; // already initialised
+      for (let attempt = 0; attempt < PAYMENT_RETRIES; attempt++) {
+        try {
+          // Get config from server
+          const configRes = await fetch(`${API_URL}/api/stripe-config`);
+          if (!configRes.ok) throw new Error('stripe-config HTTP ' + configRes.status);
+          const configData = await configRes.json();
+          if (cancelled) return;
+
+          if (configData.testMode === true) {
+            setTestMode(true);
+            return;
+          }
+          if (!configData.publishableKey) throw new Error('Live mode but no publishable key');
+
+          // Load Stripe.js if not already loaded
+          if (!window.Stripe) {
+            const script = document.createElement('script');
+            script.src = 'https://js.stripe.com/v3/';
+            script.async = true;
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = () => { script.remove(); reject(new Error('Stripe.js failed to load')); };
+              document.head.appendChild(script);
+            });
+          }
+          if (cancelled) return;
+
+          stripeRef.current = window.Stripe(configData.publishableKey);
+          setStripeReady(true);
           return;
+        } catch (err) {
+          console.error(`Stripe init error (attempt ${attempt + 1}/${PAYMENT_RETRIES}):`, err);
+          if (attempt < PAYMENT_RETRIES - 1) await paymentBackoff(attempt);
+          if (cancelled) return;
         }
-        
-        setTestMode(false);
-        
-        // Load Stripe.js if not already loaded
-        if (!window.Stripe) {
-          const script = document.createElement('script');
-          script.src = 'https://js.stripe.com/v3/';
-          script.async = true;
-          await new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
-        }
-        
-        stripeRef.current = window.Stripe(configData.publishableKey);
-        setStripeReady(true);
-      } catch (err) {
-        console.error('Stripe init error:', err);
-        setTestMode(true);
       }
+      setPaymentError(true);
     };
-    
+
     initStripe();
-  }, []);
+    return () => { cancelled = true; };
+  }, [paymentAttempt]);
 
   // Create Payment Intent and mount Payment Element when total changes
   const [clientSecret, setClientSecret] = useState(null);
@@ -6394,28 +6420,35 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     if (!stripeReady || !stripeRef.current || testMode || finalTotal <= 0) return;
     // Only create if we haven't created one yet
     if (paymentIntentIdRef.current) return;
-    
+    // Never run two creations at once (would orphan a PaymentIntent)
+    if (intentInFlightRef.current) return;
+    intentInFlightRef.current = true;
+
     const createIntent = async () => {
-      try {
-        console.log('[TIP-FIX] Creating PaymentIntent for $' + finalTotal.toFixed(2));
-        const res = await fetch(`${API_URL}/api/create-payment-intent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: Math.round(finalTotal * 100),
-            orderType,
-            customerEmail: email.trim() || undefined,
-            attribution: getAttribution(),
-          }),
-        });
-        const data = await res.json();
-        if (data.clientSecret) {
+      for (let attempt = 0; attempt < PAYMENT_RETRIES; attempt++) {
+        try {
+          console.log('[TIP-FIX] Creating PaymentIntent for $' + finalTotal.toFixed(2));
+          const res = await fetch(`${API_URL}/api/create-payment-intent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: Math.round(finalTotal * 100),
+              orderType,
+              // Only a complete address — a half-typed one made Stripe reject
+              // the whole intent (incident 2026-11-25).
+              customerEmail: isValidEmail(email) ? email.trim() : undefined,
+              attribution: getAttribution(),
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.clientSecret || data.testMode) {
+            throw new Error('create-payment-intent failed: HTTP ' + res.status + ' ' + (data.error || ''));
+          }
           // Extract the PaymentIntent ID from the client secret (format: pi_xxx_secret_yyy)
           const piId = data.clientSecret.split('_secret_')[0];
           console.log('[TIP-FIX] PaymentIntent created:', piId, 'Amount: $' + finalTotal.toFixed(2));
           paymentIntentIdRef.current = piId;
-          setClientSecret(data.clientSecret);
-          
+
           // Create Elements with the client secret
           const elements = stripeRef.current.elements({
             clientSecret: data.clientSecret,
@@ -6429,14 +6462,20 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           });
           elementsRef.current = elements;
           paymentElementMounted.current = false;
+          setClientSecret(data.clientSecret);
+          intentInFlightRef.current = false;
+          return;
+        } catch (err) {
+          console.error(`Payment intent error (attempt ${attempt + 1}/${PAYMENT_RETRIES}):`, err);
+          if (attempt < PAYMENT_RETRIES - 1) await paymentBackoff(attempt);
         }
-      } catch (err) {
-        console.error('Payment intent error:', err);
       }
+      intentInFlightRef.current = false;
+      setPaymentError(true);
     };
-    
+
     createIntent();
-  }, [stripeReady, testMode]);
+  }, [stripeReady, testMode, paymentAttempt]);
 
 
   // Mount Payment Element when container is ready
@@ -6607,6 +6646,7 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     if (!phone) return alert('Please enter your phone number');
     if (!isValidPhone(phone)) return alert('Please enter a valid 10-digit phone number');
     if (!email) return alert('Please enter your email');
+    if (!isValidEmail(email)) return alert('Please enter a valid email address (for example, name@example.com)');
     if (orderType === 'delivery') {
       if (!deliveryAddress.street) return alert('Please enter your street address');
       if (!deliveryAddress.zip) return alert('Please enter your ZIP code');
@@ -6627,7 +6667,17 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
     if (scheduleType === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       return alert('Please select a date and time for your scheduled order.');
     }
-    
+
+    // FAIL CLOSED: outside genuine (server-declared) test mode, never submit an
+    // order unless the card form is actually set up. The server enforces this
+    // too; this just gives the customer a clear message instead of an error.
+    const paymentReady = !!(stripeReady && stripeRef.current && elementsRef.current && clientSecret);
+    if (!testMode && !paymentReady) {
+      return alert(paymentError
+        ? "We couldn't load secure payment. Please tap \"Try again\" in the Payment box, refresh the page, or call us at (215) 236-5288 to order."
+        : 'Secure payment is still loading. Please wait a moment and try again.');
+    }
+
     setProcessing(true);
     setCardError('');
     // GA4: track checkout started
@@ -6672,7 +6722,8 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       // STEP 1: Process payment (if not test mode)
       let paymentIntentId = null;
       
-      if (!testMode && stripeReady && stripeRef.current && elementsRef.current && clientSecret) {
+      // (paymentReady was checked above — in live mode we always take payment)
+      if (!testMode) {
         // Save order data to SERVER before payment in case of redirect (CashApp, Venmo, etc.)
         // If payment method requires redirect, page reloads and all React state is lost.
         // The server holds the order data and the webhook completes it when payment succeeds.
@@ -7485,16 +7536,37 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
         <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
           PAYMENT
         </div>
-        {stripeReady && !testMode ? (
+        {testMode ? (
+          <div style={{ padding: 12, background: '#E8F5E9', border: '1px solid #4CAF50', borderRadius: 6, textAlign: 'center', color: '#2E7D32', fontSize: 14 }}>
+            Test Mode — No payment will be charged
+          </div>
+        ) : paymentError ? (
+          <div style={{ padding: 12, background: '#FDECEA', border: '1px solid #C41E3A', borderRadius: 6, textAlign: 'center', color: '#8B1A1A', fontSize: 14 }}>
+            <div style={{ marginBottom: 10 }}>
+              We couldn't load secure payment. Please try again, or call us at (215) 236-5288 to place your order.
+            </div>
+            <button type="button"
+              onClick={() => { setPaymentError(false); setPaymentAttempt(n => n + 1); }}
+              style={{ padding: '8px 16px', background: 'white', border: '1px solid #C41E3A', borderRadius: 6, color: '#C41E3A', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
           <>
-            <div style={{ 
-              padding: 12, 
-              background: 'white', 
-              border: '1px solid #ccc', 
+            <div style={{
+              padding: 12,
+              background: 'white',
+              border: '1px solid #ccc',
               borderRadius: 6,
               marginBottom: 8,
               minHeight: 100
             }}>
+              {!clientSecret && (
+                <div style={{ color: '#777', fontSize: 14, textAlign: 'center', padding: '28px 0' }}>
+                  Loading secure payment…
+                </div>
+              )}
               <div ref={paymentElementRef}></div>
             </div>
             {cardError && (
@@ -7504,17 +7576,13 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
               <span>Secured by Stripe</span>
             </div>
           </>
-        ) : (
-          <div style={{ padding: 12, background: '#E8F5E9', border: '1px solid #4CAF50', borderRadius: 6, textAlign: 'center', color: '#2E7D32', fontSize: 14 }}>
-            Test Mode — No payment will be charged
-          </div>
         )}
       </div>
 
       <button type="button"
         className="btn-red" 
         onClick={handleCheckout} 
-        disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum} 
+        disabled={processing || cart.length === 0 || (orderType === 'delivery' && zipError === 'outside') || isBelowDeliveryMinimum || (!testMode && !clientSecret)}
         style={{ width: '100%', marginTop: 16, padding: 14, fontSize: 16 }}
       >
         {processing ? 'Processing Payment...' : (testMode ? `Place Test Order ($${finalTotal.toFixed(2)})` : `Pay $${finalTotal.toFixed(2)}`)}
