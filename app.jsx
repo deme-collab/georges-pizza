@@ -6447,7 +6447,6 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           // Extract the PaymentIntent ID from the client secret (format: pi_xxx_secret_yyy)
           const piId = data.clientSecret.split('_secret_')[0];
           console.log('[TIP-FIX] PaymentIntent created:', piId, 'Amount: $' + finalTotal.toFixed(2));
-          paymentIntentIdRef.current = piId;
 
           // Create Elements with the client secret
           const elements = stripeRef.current.elements({
@@ -6462,6 +6461,9 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
           });
           elementsRef.current = elements;
           paymentElementMounted.current = false;
+          // Record the intent only once the card form exists, so a failure
+          // above leaves "Try again" able to start over.
+          paymentIntentIdRef.current = piId;
           setClientSecret(data.clientSecret);
           intentInFlightRef.current = false;
           return;
@@ -6676,6 +6678,11 @@ function CheckoutView({ cart, onRemove, onBack, onNavigateToCategory, onOrderSuc
       return alert(paymentError
         ? "We couldn't load secure payment. Please tap \"Try again\" in the Payment box, refresh the page, or call us at (215) 236-5288 to order."
         : 'Secure payment is still loading. Please wait a moment and try again.');
+    }
+    // Stripe can't charge under $1, and the pre-confirm amount sync is skipped
+    // below that — which would charge the ORIGINAL (pre-coupon) amount.
+    if (!testMode && Math.round(finalTotal * 100) < 100) {
+      return alert('Online orders must be at least $1.00. Please call us at (215) 236-5288 to place this order.');
     }
 
     setProcessing(true);
